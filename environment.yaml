@@ -1,0 +1,13 @@
+name: cl_splicing_regulation
+channels:
+  - pytorch
+  - conda-forge
+  - nvidia
+dependencies:
+  - python=3.10
+  - pytorch>=1.11.0
+  - torchvision>=0.12.0
+  - lightning
+  - pip
+  - pip:
+      - lightly
