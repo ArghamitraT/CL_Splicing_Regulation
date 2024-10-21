@@ -9,5 +9,9 @@ dependencies:
   - torchvision>=0.12.0
   - lightning
   - pip
+  - pandas
+  - matplotlib
   - pip:
       - lightly
+      - transformers
+      - enformer-pytorch
