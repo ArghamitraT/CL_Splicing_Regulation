@@ -1,1 +1,1 @@
-# CL_Splicing_Regulation
+# Decoding splicing regulation with contrastive learning
