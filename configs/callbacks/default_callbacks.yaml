@@ -1,0 +1,8 @@
+model_checkpoint:
+  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  dirpath: ../../checkpoints/${task._name_}/${backbone._name_}/${dataset.seq_len}
+  filename: best-checkpoint
+  save_top_k: 1
+  verbose: true
+  monitor: val_loss
+  mode: min

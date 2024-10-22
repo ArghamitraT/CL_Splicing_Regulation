@@ -1,0 +1,26 @@
+defaults:
+  - _self_
+  - backbone: ntv2
+  - dataset: dummy
+  - task: introns_cl
+  - trainer: default_trainer
+  - callbacks: default_callbacks
+  - loss: dcl
+  - model: simclr
+  - optimizer: adamw
+
+hydra:
+  run:
+    dir: ./hydra/${now:%Y-%m-%d_%H-%M-%S}
+  job:
+    chdir: true
+
+wandb:
+  api_key: "YOUR_API_KEY"
+
+logger:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  name: ${backbone._name_}-${dataset.seq_len}
+  id: ${task._name_}-${.name}
+  project: INTRONS_CL
+  group: ${task._name_}

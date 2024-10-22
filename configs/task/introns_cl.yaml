@@ -1,0 +1,5 @@
+_name_: introns_cl
+metrics:
+  - accuracy
+val_check_interval: 35
+global_batch_size: 64

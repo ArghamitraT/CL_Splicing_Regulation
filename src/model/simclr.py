@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from src.backbone.utils import get_backbone
 from lightly.models.modules import heads
 
 class SimCLRModule(nn.Module):
@@ -21,3 +22,10 @@ class SimCLRModule(nn.Module):
         embedding = features.mean(dim=1)
         z = self.projection_head(embedding)
         return z
+    
+    
+def get_simclr_model(config):
+    print(f"Instantiating the Backbone")
+    backbone = get_backbone(config)
+    model = SimCLRModule(backbone, hidden_dim=config.model.hidden_dim, projection_dim=config.model.projection_dim)
+    return model

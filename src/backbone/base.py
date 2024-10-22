@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from transformers import AutoModelForMaskedLM
 
 
 class BaseEncoder(nn.Module): #rename to BaseEmbedder
@@ -12,14 +11,17 @@ class BaseEncoder(nn.Module): #rename to BaseEmbedder
         rcps (bool): Whether to use reverse complement processing.
     """
     def __init__(self,
-                 model_name,
+                 name_or_path,
                  bp_per_token,
+                 rcps = False,
                  backbone=None,
+                 _name_ = None,
                  ):
         super().__init__()
-        self.model_name = model_name
+        self.name_or_path = name_or_path
         self.bp_per_token = bp_per_token
         self.backbone = backbone
+        self.rcps = rcps
 
 
     def forward(self, input_ids, **kwargs):
