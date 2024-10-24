@@ -1,10 +1,11 @@
 defaults:
   - _self_
   - backbone: ntv2
-  - dataset: dummy
+  - dataset: introns
   - task: introns_cl
   - trainer: default_trainer
   - callbacks: default_callbacks
+  - tokenizer: custom_tokenizer
   - loss: dcl
   - model: simclr
   - optimizer: adamw
@@ -13,7 +14,7 @@ hydra:
   run:
     dir: ./hydra/${now:%Y-%m-%d_%H-%M-%S}
   job:
-    chdir: true
+    chdir: false
 
 wandb:
   api_key: "YOUR_API_KEY"

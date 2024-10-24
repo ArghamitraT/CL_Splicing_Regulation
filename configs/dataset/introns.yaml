@@ -1,0 +1,8 @@
+seq_len: 199    
+data_dir: "/data/ak5078/MSA/splitted_dataset"
+batch_size_per_device: 8    # Training batch size  # Testing batch size
+num_workers: 4          # Number of workers for data loading
+train_ratio: 0.8       # Train split ratio
+val_ratio:  0.1
+test_ratio: null      # Evaluation split ratio
+cache_dir: "../data"         # Cache directory for the dataset

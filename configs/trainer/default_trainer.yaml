@@ -10,4 +10,4 @@ gradient_clip_val: 1.0
 precision: "16-mixed"
 num_sanity_val_steps: 0
 num_nodes: 1
-accumulate_grad_batches: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices} * ${dataset.train_batch_size} * ${trainer.num_nodes}}}
+accumulate_grad_batches: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices} * ${dataset.batch_size_per_device} * ${trainer.num_nodes}}}

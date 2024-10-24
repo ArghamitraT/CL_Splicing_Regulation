@@ -1,0 +1,2 @@
+_target_: src.tokenizers.custom.CustomTokenizer
+model_max_length: ${dataset.seq_len}
