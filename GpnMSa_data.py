@@ -1,3 +1,7 @@
+"""
+How to read the GPN-MSA data
+"""
+
 # from gpn.data import GenomeMSA, Tokenizer
 from gpn.data import GenomeMSA
 # import gpn.model
@@ -12,11 +16,12 @@ import numpy as np
 model_path = "songlab/gpn-msa-sapiens"
 # see README in https://huggingface.co/datasets/songlab/multiz100way for faster queries
 msa_path = "data/initial_data/99.zarr.zip"
+# msa_path = "data/89.zarr.zip"
 
 genome_msa = GenomeMSA(msa_path)  # can take a minute or two
 # untokenized msa
-raw_msa2 = genome_msa.get_msa("17", 43125250, 43125373, strand="+", tokenize=False)
-
+raw_msa2 = genome_msa.get_msa("17", 43125013, 43125018, strand="+", tokenize=False)
+raw_msa1 = genome_msa.get_msa("17", 43125250, 43125373, strand="+", tokenize=True)
 x = raw_msa2[:, 4]
 x_s = b''.join(x).decode('utf-8')
 

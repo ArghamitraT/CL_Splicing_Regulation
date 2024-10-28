@@ -1,3 +1,7 @@
+"""
+was trying to run simCLR method
+"""
+
 import os
 import urllib.request
 from copy import deepcopy
