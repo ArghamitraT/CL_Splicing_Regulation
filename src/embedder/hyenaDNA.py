@@ -3,8 +3,7 @@
 
 
 from transformers import AutoModelForMaskedLM
-from src.backbone.base import BaseEncoder
-
+from src.embedder.base import BaseEncoder
 
 class HyenaEmbedder(BaseEncoder):
     

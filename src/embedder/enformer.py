@@ -1,5 +1,5 @@
 from enformer_pytorch import from_pretrained
-from src.backbone.base import BaseEncoder
+from src.embedder.base import BaseEncoder
 
 
 class EnformerEmbedder(BaseEncoder):

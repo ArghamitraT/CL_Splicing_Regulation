@@ -224,7 +224,7 @@ def print_config(
         with open("model_config.json", "w") as fp:  # Save config / model config for use in fine-tuning or testing
             model_config = {
                 k: v
-                for k, v in OmegaConf.to_container(config.backbone, resolve=True).items()
+                for k, v in OmegaConf.to_container(config.embedder, resolve=True).items()
                 if not k.startswith("_") or k == "config_path"
             }
             json.dump(model_config, fp, indent=4)

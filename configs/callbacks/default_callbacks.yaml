@@ -1,6 +1,6 @@
 model_checkpoint:
   _target_: lightning.pytorch.callbacks.ModelCheckpoint
-  dirpath: ../../checkpoints/${task._name_}/${backbone._name_}/${dataset.seq_len}
+  dirpath: checkpoints/${task._name_}/${embedder._name_}/${dataset.seq_len}
   filename: best-checkpoint
   save_top_k: 1
   save_last: True
@@ -10,4 +10,4 @@ model_checkpoint:
 
 learning_rate_monitor:
   _target_: lightning.pytorch.callbacks.LearningRateMonitor
-  logging_interval: ste
+  logging_interval: step

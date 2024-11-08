@@ -1,65 +1,69 @@
 import pickle
-import numpy as np
 import os
+import math
 import argparse
 
-def load_data(file_path):
-    print(f"Loading data from {file_path}...")
-    with open(file_path, 'rb') as file:
-        data = pickle.load(file)
-    print("Data loaded successfully.")
-    return np.array(data)
+def get_exons_with_few_introns(datafilepath):
+    exons_with_few_introns = set()  # Set to store exons with 0 or 1 intron
+    
+    with open(datafilepath, 'rb') as merged_intron_seq_file:
+        merged_data = pickle.load(merged_intron_seq_file)
+        print(f"There are {len(merged_data)} exons in the file {datafilepath}")
+        
+        for exon, introns in merged_data.items():
+            total_introns = len(introns)
+            if total_introns <= 1:
+                exons_with_few_introns.add(exon)
+        
+    print(f"Found {len(exons_with_few_introns)} exon(s) with 0 or 1 intron.")
+    return exons_with_few_introns
 
-def process_introns(data):
-    num_introns = data.shape[0]
-    print(f"Processing {num_introns} introns...")
+def merge_and_save_exon_data(data_dir, file_names, exons_to_remove):
+    merged_data = {}
+    all_exon_names = set()
 
-    for intron_idx in range(num_introns):
-        print(f"Processing intron {intron_idx + 1}/{num_introns}...")
-        
-        # Extract data for one intron (shape: (seq_len, species))
-        intron_matrix = data[intron_idx, :, :].copy()
-        
-        # Convert byte characters to strings
-        intron_matrix = np.char.decode(intron_matrix.astype(np.bytes_), 'utf-8')
-        
-        intron_matrix = intron_matrix.T
+    # Load each file, merge contents, and skip exons in exons_to_remove
+    for file_name in file_names:
+        file_path = os.path.join(data_dir, file_name)
+        with open(file_path, 'rb') as file:
+            data = pickle.load(file)
+            # Remove exons found in step 1
+            data = {exon: introns for exon, introns in data.items() if exon not in exons_to_remove}
+            merged_data.update(data)
+            all_exon_names.update(data.keys())
 
-        print(f"Intron {intron_idx + 1} processed.")
-        yield intron_idx, intron_matrix
+    # Save the merged data into a new .pkl file
+    output_pkl_path = os.path.join(data_dir, 'merged_intron_sequences.pkl')
+    with open(output_pkl_path, 'wb') as output_file:
+        pickle.dump(merged_data, output_file)
 
-def save_intron_matrices(data, output_dir):
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
-        print(f"Directory '{output_dir}' created.")
-    else:
-        print(f"Directory '{output_dir}' already exists.")
-        
-    for intron_idx, intron_matrix in process_introns(data):
-        # Create a filename for each intron
-        filename = f"{output_dir}/intron_{intron_idx}_matrix.npy"
-        
-        # Save the matrix as a .npy file
-        np.save(filename, intron_matrix)
-        
-        print(f"Saved {filename} with shape {intron_matrix.shape}")
+    print("Merging complete. The merged data is saved to 'merged_intron_sequences.pkl'")
+    return output_pkl_path, all_exon_names
 
-def main(file_path, output_dir):
-    # Load, process, and save the data
-    data = load_data(file_path)
-    save_intron_matrices(data, output_dir)
-    print("All introns processed and saved successfully.")
+def generate_all_exon_names(output_txt_filepath, exon_names):
+    with open(output_txt_filepath, 'w') as txt_file:
+        for exon_name in sorted(exon_names):
+            txt_file.write(f"{exon_name}\n")
+    print(f"Exon names saved to {output_txt_filepath}")
+
+def main(data_dir, file_names):
+    # Step 1: Identify exons with 0 or 1 intron in each file
+    exons_with_few_introns = set()
+    for file_name in file_names:
+        file_path = os.path.join(data_dir, file_name)
+        exons_with_few_introns.update(get_exons_with_few_introns(file_path))
+
+    # Step 2: Merge all files, excluding exons with 0 or 1 intron
+    output_pkl_path, final_exon_names = merge_and_save_exon_data(data_dir, file_names, exons_with_few_introns)
+
+    # Step 3: Generate text file with all exon names in the final merged .pkl file
+    output_txt_path = os.path.join(data_dir, 'all_exon_names.txt')
+    generate_all_exon_names(output_txt_path, final_exon_names)
 
 if __name__ == "__main__":
-    # Set up argument parsing
-    parser = argparse.ArgumentParser(description="Process and save intron matrices from a pickle file.")
-    
-    # Add arguments for file_path and output_dir
-    parser.add_argument('file_path', type=str, help="Path to the input pickle file.")
-    parser.add_argument('output_dir', type=str, help="Directory to save the processed intron matrices.")
-    
-    # Parse the command-line arguments
+    parser = argparse.ArgumentParser(description="Process exon and intron data files.")
+    parser.add_argument("data_dir", type=str, help="Directory containing the data files")
+    parser.add_argument("file_names", type=str, nargs='+', help="List of data file names")
+
     args = parser.parse_args()
-    
-    # Call main function with parsed arguments
-    main(args.file_path, args.output_dir)
+    main(args.data_dir, args.file_names)

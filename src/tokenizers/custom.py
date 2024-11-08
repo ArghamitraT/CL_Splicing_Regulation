@@ -42,7 +42,7 @@ class CustomTokenizer(PreTrainedTokenizer):
             complement_map (Optional[Dict[str, str]]): Dictionary with string complements for each character.
         """
         if complement_map is None:
-            complement_map = {"A": "T", "C": "G", "G": "C", "T": "A", "-": "-"}
+            complement_map = {"A": "T", "C": "G", "G": "C", "T": "A"}
         self.characters = characters
         self.model_max_length = model_max_length
 

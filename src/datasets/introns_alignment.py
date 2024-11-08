@@ -1,32 +1,31 @@
 import os
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
-import lightning.pytorch as pl
-
-class IntronsDataset(Dataset):
-    def __init__(self, data_dir, tokenizer):
-        self.data_dir = data_dir
-        self.tokenizer = tokenizer  # Pass a tokenizer to the dataset
-        self.files = sorted([
-            f for f in os.listdir(data_dir)
-            if f.startswith('intron_') and f.endswith('_matrix.npy')
-        ])
-
+import random
+import pickle
+from torch.utils.data import Dataset
+    
+class ContrastiveIntronsDataset(Dataset):
+    def __init__(self, data_file, exon_names_path):
+        # Load the merged data and exon names
+        with open(data_file, 'rb') as file:
+            self.data = pickle.load(file)
+        with open(exon_names_path, 'r') as file:
+            self.exon_names = [line.strip() for line in file]
+    
     def __len__(self):
-        return len(self.files)
+        return len(self.data)
 
-    def encode_sequence(self, sequence):
-        # Tokenize the sequence using the tokenizer passed to the dataset
-        return self.tokenizer(sequence, return_tensors='pt', padding='max_length', truncation=True).input_ids
-
+    
     def __getitem__(self, idx):
-        file_name = self.files[idx]
-        file_path = os.path.join(self.data_dir, file_name)
-        gene_data = np.load(file_path)  # Shape: (sequence_length, 100)
+        # Randomly select an exon
+        exon_name = self.exon_names[idx]
+        intronic_sequences = self.data[exon_name]
+                
+        # Randomly sample two augmentations (intronic sequences)
+        species_sample = random.sample(intronic_sequences.keys(), 2)
+        # Retrieve the sequences for the sampled species
+        augmentation1 = intronic_sequences[species_sample[0]]
+        augmentation2 = intronic_sequences[species_sample[1]]
         
-        # Split into two views and tokenize using the tokenizer
-        view1 = torch.cat([self.encode_sequence(''.join(seq)) for seq in gene_data[:50, :]], dim=0)  # First 50 species
-        view2 = torch.cat([self.encode_sequence(''.join(seq)) for seq in gene_data[50:, :]], dim=0)  # Last 50 species
-        
-        return view1, view2
+        return augmentation1, augmentation2

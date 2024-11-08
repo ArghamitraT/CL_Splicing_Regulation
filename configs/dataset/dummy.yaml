@@ -1,4 +1,4 @@
-seq_len: 1024     
+seq_len: 199     
 num_pairs: 100       # Sequence length 
 train_batch_size: 8    # Training batch size
 test_batch_size: 8     # Testing batch size
