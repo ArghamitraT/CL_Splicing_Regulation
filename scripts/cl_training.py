@@ -5,6 +5,7 @@ import torch
 from src.model.lit import create_lit_model
 from src.trainer.utils import create_trainer
 from src.datasets.lit import ContrastiveIntronsDataModule
+import wandb
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
@@ -18,7 +19,6 @@ def main(config: OmegaConf):
 
     # Print and process configuration
     print_config(config, resolve=True)
-
 
     # Initialize the IntronsDataModule with dataset-specific configs
     data_module = ContrastiveIntronsDataModule(config

@@ -8,8 +8,7 @@ import sys
 
 def create_trainer(config: OmegaConf):
         # Initialize the logger
-        wandb.login(key=config.wandb.api_key)
-
+       #wandb.login(key=config.wandb.api_key)
         #Check on the checkpoint directory
         if not os.path.exists(config.callbacks.model_checkpoint.dirpath):
                 print(f"Creating directory {config.callbacks.model_checkpoint.dirpath}")

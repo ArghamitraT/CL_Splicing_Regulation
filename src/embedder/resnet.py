@@ -45,7 +45,7 @@ class Bottleneck1D(nn.Module):
 class ResNet1D(BaseEmbedder):
     def __init__(self,
                  layers=[3, 4, 6, 3],
-                 vocab_size=11,
+                 vocab_size=12,
                  embedding_dim=768,
                  **kwargs):
         super().__init__(name_or_path="ResNet1D", bp_per_token=kwargs.get('bp_per_token', None))

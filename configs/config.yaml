@@ -23,5 +23,5 @@ logger:
   _target_: lightning.pytorch.loggers.WandbLogger
   name: ${embedder._name_}-${dataset.seq_len}
   id: ${task._name_}-${.name}
-  project: INTRONS_CL
+  project: INTRONS_CL_NEW
   group: ${task._name_}

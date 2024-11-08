@@ -12,7 +12,7 @@ class CustomTokenizer(PreTrainedTokenizer):
 
     def __init__(self,
                  model_max_length: int,
-                 characters: Sequence[str] = ("A", "C", "G", "T", "-"),
+                 characters: Sequence[str] = ("A", "C", "G", "T", "N"),
                  complement_map=None,
                  bos_token="[BOS]",
                  eos_token="[SEP]",
@@ -42,7 +42,7 @@ class CustomTokenizer(PreTrainedTokenizer):
             complement_map (Optional[Dict[str, str]]): Dictionary with string complements for each character.
         """
         if complement_map is None:
-            complement_map = {"A": "T", "C": "G", "G": "C", "T": "A"}
+            complement_map = {"A": "T", "C": "G", "G": "C", "T": "A", "N": "N"}
         self.characters = characters
         self.model_max_length = model_max_length
 
