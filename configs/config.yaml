@@ -22,6 +22,6 @@ wandb:
 logger:
   _target_: lightning.pytorch.loggers.WandbLogger
   name: ${embedder._name_}-${dataset.seq_len}
-  id: ${task._name_}-${.name}
-  project: INTRONS_CL_NEW
+  id: ${task._name_}-${embedder._name_}-${dataset.seq_len}-${optimizer._name_}-lr${optimizer.fn.lr}-bs${task.global_batch_size}-${trainer.max_epochs}epochs-
+  project: INTRONS_CL
   group: ${task._name_}

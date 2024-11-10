@@ -79,6 +79,8 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         train_size = int(self.train_ratio * dataset_size)
         val_size = int(self.val_ratio * dataset_size)
         test_size = dataset_size - train_size - val_size
+        
+        print(f"Loaded a dataset of a total of : {dataset_size} exons, with {train_size} stored for training, {val_size} stored for validation, and {test_size} stored for testing.")
 
         # Split dataset into train, validation, and test
         self.train_set, self.val_set, self.test_set = random_split(

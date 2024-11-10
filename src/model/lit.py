@@ -71,7 +71,7 @@ class LitModel(pl.LightningModule):
 
     def configure_optimizers(self):
         params = self.model.parameters()
-        optimizer = hydra.utils.instantiate(self.config.optimizer,params=params)
+        optimizer = hydra.utils.instantiate(self.config.optimizer.fn,params=params)
         return optimizer
     
 def create_lit_model(config):
