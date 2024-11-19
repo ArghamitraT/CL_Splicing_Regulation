@@ -1,3 +1,7 @@
+"""
+Given the exon intron coordinate it finds the sequence of all species
+"""
+
 import pandas as pd
 from pyfaidx import Fasta
 import pickle
@@ -6,14 +10,16 @@ import argparse
 import time
 
 start_totalcode = time.time()
-IntronExonPosFile_default = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/dummy_exon_intron_positions.csv' # Load the exon/intron positions CSV
+## (AT)
+IntronExonPosFile_default = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions_exon1neg.csv' # Load the exon/intron positions CSV
 parser = argparse.ArgumentParser(description="Process BAM files and output results.")
 parser.add_argument("--IntronExonPosFile", type=str, default=IntronExonPosFile_default,
                     help=".csv file that stores the intron positions; default is /gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/dummy_exon_intron_positions.csv")
 
 args = parser.parse_args()
 csv_file_path = args.IntronExonPosFile
-species_url_csv = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls.csv'     # Load the species-to-URL mapping from the CSV
+# species_url_csv = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls.csv'     # Load the species-to-URL mapping from the CSV
+species_url_csv = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls_hg38.csv'     # (AT)
 refseq_main_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/'
 output_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/initial_data/intron_no_dash/'
 
@@ -38,8 +44,12 @@ def reverse_complement(seq):
     complement = str.maketrans("ATCGatcg", "TAGCtagc")
     return seq.translate(complement)[::-1]
 
+total_introns = 0
+ag_count = 0
+
 # Function to get the intron sequence using pyfaidx
 def get_intron_sequence(species, genome, chromosome, start, end, strand):
+    global total_introns, ag_count  # Declare the counters as global so we can modify them here
     try:
         # Retrieve the sequence using pyfaidx (1-based indexing)
         intron_seq = genome[chromosome][int(start-1):int(end)].seq
@@ -47,10 +57,13 @@ def get_intron_sequence(species, genome, chromosome, start, end, strand):
         # Reverse complement if on the negative strand
         if strand == '-':
             intron_seq = reverse_complement(intron_seq)
-            
+        
+        if intron_seq[-2:] == "AG":
+            ag_count += 1
+        total_introns += 1
         return intron_seq
     except Exception as e:
-        print(f"ERROR: Cannot retrieve intron species:{species} chrm {chromosome}:{start}-{end}: {e}")
+        # print(f"ERROR: Cannot retrieve intron species:{species} chrm {chromosome}:{start}-{end}: {e}") #(AT)
         return None
 
 # Loop over each species and process exons
@@ -80,7 +93,7 @@ for species in refseq_files.keys():
     try:
         genome = Fasta(refseq_path)
     except Exception as e:
-        print(f"ERROR: Cannot load refseq species {species}: {e}")
+        print(f"ERROR: Cannot load refseq species {species}: {e}") 
         continue
 
     # # Filter the dataframe to get only the rows for the current species
@@ -103,17 +116,32 @@ for species in refseq_files.keys():
             exon_sequences_dict[exon_name][species] = intron_sequence
 
     # Apply the function to each row in the species-specific DataFrame
-    species_df.apply(extract_intron_sequence, axis=1)
+    # species_df.apply(extract_intron_sequence, axis=1) #(AT)
+    positive_strand_df = species_df[species_df['Strand'] == '+']
+    negative_strand_df = species_df[species_df['Strand'] == '-']
+    
+    print('postive strand')
+    positive_strand_df.apply(extract_intron_sequence, axis=1)
+    print(f"Positive strand: Total introns = {total_introns}, AG count = {ag_count}, Percentage = {(ag_count*100)/total_introns}")
+
+    total_introns = 0
+    ag_count = 0
+    print('negative strand strand')
+    negative_strand_df.apply(extract_intron_sequence, axis=1)
+    print(f"Negative strand: Total introns = {total_introns}, AG count = {ag_count}, Percentage = {(ag_count*100)/total_introns}")
+
+
+
     end = time.time()
     print(f"time for species {species} {(end - start):.1f}s")
 
 
 
 # Save the processed sequences as a pickle file or any other format you need
-output_name = output_path+(csv_file_path.split('/')[-1]).rsplit('.',1)[0]+'_IntronSeq.pkl'
-with open(output_name, 'wb') as f:
-    pickle.dump(exon_sequences_dict, f)
+# output_name = output_path+(csv_file_path.split('/')[-1]).rsplit('.',1)[0]+'_IntronSeq.pkl'
+# with open(output_name, 'wb') as f:
+#     pickle.dump(exon_sequences_dict, f)
 
-print("Intron sequences have been successfully processed and saved.")
-end_totalcode = time.time()
-print(f"Total_time: {(end_totalcode-start_totalcode)/60}m")
+# print("Intron sequences have been successfully processed and saved.")
+# end_totalcode = time.time()
+# print(f"Total_time: {(end_totalcode-start_totalcode)/60}m")

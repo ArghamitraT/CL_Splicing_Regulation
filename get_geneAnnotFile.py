@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 # Path to the CSV file
 csv_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls.csv'  # Replace with your actual file path
-output_main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/gene_annotation'
+output_main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/gene_annotation/raw_data'
 # Base URL template
 base_url_template = "http://hgdownload.soe.ucsc.edu/goldenPath/{species}/database/"
 

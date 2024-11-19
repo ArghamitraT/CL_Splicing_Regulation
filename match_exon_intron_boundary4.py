@@ -1,5 +1,7 @@
 """
 Given the MSA it finds how many alignments falls into exon intron boundary of that speceies. 
+this file also works with other gene annotation files
+for ENSEMBL annotations
 """
 
 import pandas as pd
@@ -9,7 +11,6 @@ import matplotlib.pyplot as plt
 import time
 timestamp = time.strftime("%Y%m%d_%H%M%S")
 
-pd_merge = 1
 
 # Function to calculate intron boundaries based on strand orientation
 def calculate_intron_vectorized(annotation_df):
@@ -36,13 +37,13 @@ def calculate_intron_vectorized(annotation_df):
     annotation_df['intron_end'] = intron_ends
     return annotation_df
 
-# Path to the MSA alignment file (replace with the actual path) ##(AT)
-# msa_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
-msa_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv'
+# Path to the MSA alignment file (replace with the actual path)
+msa_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
 # msa_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/Brac1.csv'
+# msa_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv'
 
 common_names_df = pd.read_csv('/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls2.csv', header=None, names=['Species_Code', 'URL', 'Common_Name'])
-gene_annotation_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/gene_annotation/gene_annotation_csv'
+gene_annotation_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/Ensembl_geneAnnotaion/homo_sapiens/'
 # gene_annotation_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/gene_annotation/dummy'
 
 # Load the MSA file
@@ -52,7 +53,7 @@ msa_df = pd.read_csv(msa_file_path)
 results = []
 # species_arr = ['hg38', 'panTro4', 'mm10', 'canFam3', 'monDom5', 'taeGut2', 'allMis1', 'fr3']
 # species_arr = ['panTro4','fr3']
-species_arr = ['hg38']
+species_arr = ['ncbiRefSeq']    #(AT)
 species_path_arr =[]
 for species in species_arr:
     species_path_arr.append(os.path.join(gene_annotation_folder, f'{species}_exon_data.csv'))
@@ -60,10 +61,11 @@ for species in species_arr:
 
 # Iterate over each CSV file in the gene annotation folder
  #(AT)
-# for annotation_file in glob.glob(os.path.join(gene_annotation_folder, '*_exon_data.csv')):
-for annotation_file in species_path_arr:
+for annotation_file in glob.glob(os.path.join(gene_annotation_folder, '*_exon_data.csv')):
+# for annotation_file in species_path_arr:
     # Get the species name from the file name
     species_name = os.path.basename(annotation_file).replace('_exon_data.csv', '')
+    species_name = 'hg38' ##(AT)
     print(f"\nProcessing species: {species_name}")
 
     # Load the species-specific gene annotation file
@@ -78,6 +80,7 @@ for annotation_file in species_path_arr:
     # annotation_df = calculate_intron_vectorized(annotation_df)
 
     # For + strand, match exon_start and intron_end boundary
+    ##(AT)
     # plus_matches = pd.merge(
     #     annotation_df[annotation_df['strand'] == '+'],
     #     species_msa_df,
@@ -103,6 +106,7 @@ for annotation_file in species_path_arr:
     # match_count = len(plus_matches)
 
     ## For + strand, match exon_start and intron_end boundary
+    #(AT)
     plus_matches = pd.merge(
         annotation_df[annotation_df['strand'] == '+'],
         species_msa_df,
@@ -129,76 +133,64 @@ for annotation_file in species_path_arr:
     species_msa_df = msa_df[msa_df['Species Name'] == species_name]
 
     # Get unique exon start and end positions from species_msa_df
+    # unique_exon_starts = species_msa_df[['Chromosome', 'Exon Start']].drop_duplicates()
+    # unique_exon_ends = species_msa_df[['Chromosome', 'Exon End']].drop_duplicates()
+    
+    # Step 1: Divide species_msa_df into positive and negative strands
     positive_strand_df = species_msa_df[species_msa_df['Strand'] == '+']
     negative_strand_df = species_msa_df[species_msa_df['Strand'] == '-']
     unique_exon_starts = positive_strand_df[['Chromosome', 'Exon Start']].drop_duplicates()      # Step 2: For positive strand, take unique exon starts
     unique_exon_ends = negative_strand_df[['Chromosome', 'Exon End']].drop_duplicates()         # Step 3: For negative strand, take unique exon ends
-    
-    if pd_merge:
-        # For + strand, match exon_start boundary
-        # plus_matches = pd.merge(
-        #     annotation_df[annotation_df['strand'] == '+'],
-        #     unique_exon_starts,
-        #     left_on=['chromosome', 'exon_start'],
-        #     right_on=['Chromosome', 'Exon Start']
-        # ).drop_duplicates(subset=['Chromosome', 'Exon Start'])
 
-        # # For - strand, match exon_end boundary
-        # minus_matches = pd.merge(
-        #     annotation_df[annotation_df['strand'] == '-'],
-        #     unique_exon_ends,
-        #     left_on=['chromosome', 'exon_end'],
-        #     right_on=['Chromosome', 'Exon End']
-        # ).drop_duplicates(subset=['Chromosome', 'Exon End'])
-        # For + strand, match exon_start boundary (swapped order)
-        plus_matches = pd.merge(
-            unique_exon_starts,
-            annotation_df[annotation_df['strand'] == '+'],
-            left_on=['Chromosome', 'Exon Start'],
-            right_on=['chromosome', 'exon_start']
-        ).drop_duplicates(subset=['Chromosome', 'Exon Start'])
 
-        # For - strand, match exon_end boundary (swapped order)
-        minus_matches = pd.merge(
-            unique_exon_ends,
-            annotation_df[annotation_df['strand'] == '-'],
-            left_on=['Chromosome', 'Exon End'],
-            right_on=['chromosome', 'exon_end']
-        ).drop_duplicates(subset=['Chromosome', 'Exon End'])
+    # For + strand, match exon_start boundary
+    plus_matches = pd.merge(
+        annotation_df[annotation_df['strand'] == '+'],
+        unique_exon_starts,
+        left_on=['chromosome', 'exon_start'],
+        right_on=['Chromosome', 'Exon Start']
+    ).drop_duplicates(subset=['Chromosome', 'Exon Start'])
 
-    
-    else:
-        # Initialize empty lists to store matches
-        plus_matches = []
-        minus_matches = []
+    # For - strand, match exon_end boundary
+    minus_matches = pd.merge(
+        annotation_df[annotation_df['strand'] == '-'],
+        unique_exon_ends,
+        left_on=['chromosome', 'exon_end'],
+        right_on=['Chromosome', 'Exon End']
+    ).drop_duplicates(subset=['Chromosome', 'Exon End'])
 
-        # Loop over each row in annotation_df
-        for _, row in annotation_df.iterrows():
-            # Check if the row is on the positive strand
-            if row['strand'] == '+':
-                # Find matching rows in unique_exon_starts based on Chromosome and Exon Start
-                match = unique_exon_starts[(unique_exon_starts['Chromosome'] == row['chromosome']) & 
-                                        (unique_exon_starts['Exon Start'] == row['exon_start'])]
-                # Append matching rows to plus_matches if any found
-                if not match.empty:
-                    plus_matches.append(row)
+    # # Initialize empty lists to store matches
+    # plus_matches = []
+    # minus_matches = []
 
-            # Check if the row is on the negative strand
-            elif row['strand'] == '-':
-                # Find matching rows in unique_exon_ends based on Chromosome and Exon End
-                match = unique_exon_ends[(unique_exon_ends['Chromosome'] == row['chromosome']) & 
-                                        (unique_exon_ends['Exon End'] == row['exon_end'])]
-                # Append matching rows to minus_matches if any found
-                if not match.empty:
-                    minus_matches.append(row)
+    # # Loop over each row in annotation_df
+    # for _, row in annotation_df.iterrows():
+    #     # Check if the row is on the positive strand
+    #     if row['strand'] == '+':
+    #         # Find matching rows in unique_exon_starts based on Chromosome and Exon Start
+    #         match = unique_exon_starts[(unique_exon_starts['Chromosome'] == row['chromosome']) & 
+    #                                 (unique_exon_starts['Exon Start'] == row['exon_start'])]
+    #         # Append matching rows to plus_matches if any found
+    #         if not match.empty:
+    #             plus_matches.append(row)
 
-        # Convert the lists to DataFrames
-        plus_matches = pd.DataFrame(plus_matches)
-        minus_matches = pd.DataFrame(minus_matches)
+    #     # Check if the row is on the negative strand
+    #     elif row['strand'] == '-':
+    #         # Find matching rows in unique_exon_ends based on Chromosome and Exon End
+    #         match = unique_exon_ends[(unique_exon_ends['Chromosome'] == row['chromosome']) & 
+    #                                 (unique_exon_ends['Exon End'] == row['exon_end'])]
+    #         # Append matching rows to minus_matches if any found
+    #         if not match.empty:
+    #             minus_matches.append(row)
 
-        # Drop duplicates based on Chromosome and Exon Start/End
-        plus_matches = plus_matches.drop_duplicates(subset=['chromosome', 'exon_start'])
-        minus_matches = minus_matches.drop_duplicates(subset=['chromosome', 'exon_end'])
+    # # Convert the lists to DataFrames
+    # plus_matches = pd.DataFrame(plus_matches)
+    # minus_matches = pd.DataFrame(minus_matches)
+
+    # # Drop duplicates based on Chromosome and Exon Start/End
+    # plus_matches = plus_matches.drop_duplicates(subset=['chromosome', 'exon_start'])
+    # minus_matches = minus_matches.drop_duplicates(subset=['chromosome', 'exon_end'])
+
 
     # Calculate match count and match percentage based on unique boundaries
     match_count = len(plus_matches) + len(minus_matches)
@@ -208,6 +200,7 @@ for annotation_file in species_path_arr:
     match_percentage = (match_count / total_unique_boundaries) * 100
     print(f"Match Percentage: {match_percentage}")
     
+
     # Append results for this species
     results.append({
         "Species": species_name,
@@ -225,7 +218,7 @@ results_df = results_df.merge(common_names_df[['Species_Code', 'Common_Name']], 
 # Save the results DataFrame
 results_csv_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/intron_exon_match_results_EXONSTART{timestamp}.csv'
 # results_df.to_csv(results_csv_path, index=False) #(AT)
-print(f"Intron-exon match results saved to {results_csv_path}")
+# print(f"Intron-exon match results saved to {results_csv_path}")
 
 # Exclude hg38 for plotting and calculate the average match percentage
 # filtered_results_df = results_df[results_df['Species'] != 'hg38']
@@ -271,7 +264,7 @@ ax.axhline(y=average_match_percentage, color='green', linestyle='--', label=f'Av
 # Customize the plot
 ax.set_xlabel('Species')
 ax.set_ylabel('Match Percentage (%)')
-ax.set_title('Exon Match Percentage by Species EXONSTART')
+ax.set_title('Exon Match Percentage (Human, ensembl)') #(AT)
 ax.legend()
 
 # Rotate x-axis labels for better readability
