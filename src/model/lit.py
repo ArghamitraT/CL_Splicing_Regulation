@@ -17,13 +17,12 @@ class LitModel(pl.LightningModule):
     """
     def __init__(
         self,
-        model,
         config,
         **kwargs
     ):
         super().__init__()
-        self.save_hyperparameters(ignore=['model'])
-        self.model = model
+        self.save_hyperparameters()
+        self.model = get_simclr_model(config)
         self.config = config
 
         # Initialize Loss from config
@@ -76,11 +75,11 @@ class LitModel(pl.LightningModule):
     
 def create_lit_model(config):
 
-    simclr_model = get_simclr_model(config)
+    #simclr_model = get_simclr_model(config)
 
     # Instantiate LitModel
     lit_model = LitModel(
-        model=simclr_model,
+        #model=simclr_model,
         config=config,
     )
     return lit_model
