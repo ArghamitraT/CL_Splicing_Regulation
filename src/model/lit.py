@@ -21,10 +21,10 @@ class LitModel(pl.LightningModule):
         **kwargs
     ):
         super().__init__()
-        self.save_hyperparameters()
-        self.model = get_simclr_model(config)
+        self.save_hyperparameters(ignore=['init_embedder'])
         self.config = config
 
+        self.model = get_simclr_model(config)
         # Initialize Loss from config
         self.loss_fn = instantiate(config.loss)
     
@@ -72,6 +72,11 @@ class LitModel(pl.LightningModule):
         params = self.model.parameters()
         optimizer = hydra.utils.instantiate(self.config.optimizer.fn,params=params)
         return optimizer
+    
+    def on_load_checkpoint(self, checkpoint):
+        # Example state_dict
+        state_dict = checkpoint["state_dict"]
+        self.model = get_simclr_model(self.config, state_dict)
     
 def create_lit_model(config):
 

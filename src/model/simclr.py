@@ -24,7 +24,12 @@ class SimCLRModule(nn.Module):
         return z
     
     
-def get_simclr_model(config):
+def get_simclr_model(config, state_dict=None):
     embedder = get_embedder(config)
     model = SimCLRModule(embedder=embedder, hidden_dim=config.model.hidden_dim, projection_dim=config.model.projection_dim)
+    if state_dict is not None:
+        # Remove the "model." prefix from the keys
+        adjusted_state_dict = {k.replace("model.", "", 1): v for k, v in state_dict.items()}
+        model.load_state_dict(adjusted_state_dict)
+
     return model
