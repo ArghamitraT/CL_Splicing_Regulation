@@ -2,54 +2,10 @@ import torch
 import hydra
 from transformers import AutoTokenizer
 import lightning.pytorch as pl
-import numpy as np
 from torch.utils.data import DataLoader, random_split
-from src.datasets.base import NucleotideSequencePairDataset
 from src.datasets.introns_alignment import ContrastiveIntronsDataset
-
-class DummyDataModule(pl.LightningDataModule):
-    def __init__(self, seq_len: int, num_pairs: int, batch_size: int, tokenizer_name: str):
-        super().__init__()
-        self.seq_len = seq_len
-        self.num_pairs = num_pairs
-        self.batch_size = batch_size
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
-
-    def generate_nucleotide_sequence(self, length):
-        nucleotides = ['A', 'T', 'G', 'C']
-        return ''.join(np.random.choice(nucleotides) for _ in range(length))
-
-    def prepare_data(self):
-        # Generate the sequences for training/validation/testing
-        self.sequences_1 = np.array([self.generate_nucleotide_sequence(self.seq_len) for _ in range(self.num_pairs)])
-        self.sequences_2 = np.array([self.generate_nucleotide_sequence(self.seq_len) for _ in range(self.num_pairs)])
-
-    def setup(self, stage=None):
-        # Splitting the sequences into train/val/test sets (e.g., 80% train, 10% val, 10% test)
-        train_size = int(0.8 * self.num_pairs)
-        val_size = int(0.1 * self.num_pairs)
-        
-        self.train_sequences_1 = self.sequences_1[:train_size]
-        self.train_sequences_2 = self.sequences_2[:train_size]
-
-        self.val_sequences_1 = self.sequences_1[train_size:train_size+val_size]
-        self.val_sequences_2 = self.sequences_2[train_size:train_size+val_size]
-
-        self.test_sequences_1 = self.sequences_1[train_size+val_size:]
-        self.test_sequences_2 = self.sequences_2[train_size+val_size:]
-
-    def train_dataloader(self):
-        train_dataset = NucleotideSequencePairDataset(self.train_sequences_1, self.train_sequences_2, self.tokenizer)
-        return DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
-
-    def val_dataloader(self):
-        val_dataset = NucleotideSequencePairDataset(self.val_sequences_1, self.val_sequences_2, self.tokenizer)
-        return DataLoader(val_dataset, batch_size=self.batch_size)
-
-    def test_dataloader(self):
-        test_dataset = NucleotideSequencePairDataset(self.test_sequences_1, self.test_sequences_2, self.tokenizer)
-        return DataLoader(test_dataset, batch_size=self.batch_size)
-    
+from src.datasets.constitutive_introns import ConstitutiveIntronsDataset
+from src.datasets.psi_lung_introns import PsiLungIntronsDataset
 
 class ContrastiveIntronsDataModule(pl.LightningDataModule):
     def __init__(self, config):
@@ -134,3 +90,156 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
             collate_fn=self.collate_fn, 
             pin_memory=True
         )
+        
+
+class ConstitutiveIntronsDataModule(pl.LightningDataModule):
+    def __init__(self, csv_file, tokenizer, padding_strategy='longest', batch_size=32, num_workers=4):
+        """
+        Args:
+            csv_file (str): Path to the .csv file containing the dataset.
+            tokenizer: HuggingFace tokenizer instance for tokenizing sequences.
+            padding_strategy (str): Padding strategy for tokenization ('longest', 'max_length', etc.).
+            seq_length (int): Optional fixed sequence length for truncation or padding.
+            batch_size (int): Batch size for DataLoader.
+            num_workers (int): Number of workers for DataLoader.
+        """
+        super().__init__()
+        self.csv_file = csv_file
+        self.tokenizer = tokenizer
+        self.padding_strategy = padding_strategy
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    def setup(self, stage=None):
+        """
+        Called on setup to prepare the datasets for train/val/test splits.
+        """
+        # Load the dataset
+        full_dataset = ConstitutiveIntronsDataset(self.csv_file)
+
+        # Split dataset into train, val, and test sets (70/15/15 split)
+        train_size = int(0.8 * len(full_dataset))
+        val_size = int(0.1 * len(full_dataset))
+        test_size = len(full_dataset) - train_size - val_size
+
+        self.train_dataset, self.val_dataset, self.test_dataset = random_split(
+            full_dataset, [train_size, val_size, test_size]
+        )
+
+    def collate_fn(self, batch):
+        """
+        Custom collate function to tokenize sequences and prepare batches.
+        """
+        seq, label = zip(*batch)  # Unpack the batch into sequences and labels
+
+        # Tokenize the sequences
+        tokenized_sequences = self.tokenizer(
+            list(seq),  # Tokenizer expects a list of sequences
+            return_tensors='pt',
+            padding=self.padding_strategy,
+        ).input_ids
+
+        # Convert labels to tensor
+        labels = torch.tensor(label, dtype=torch.long)
+
+        return tokenized_sequences, labels
+
+    def train_dataloader(self):
+        """
+        Returns DataLoader for the training set.
+        """
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, 
+                          shuffle=True, num_workers=self.num_workers, 
+                          collate_fn=self.collate_fn)
+
+    def val_dataloader(self):
+        """
+        Returns DataLoader for the validation set.
+        """
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, 
+                          shuffle=False, num_workers=self.num_workers, 
+                          collate_fn=self.collate_fn)
+
+    def test_dataloader(self):
+        """
+        Returns DataLoader for the test set.
+        """
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, 
+                          shuffle=False, num_workers=self.num_workers, 
+                          collate_fn=self.collate_fn)
+
+class PsiLungIntronsDataModule(pl.LightningDataModule):
+    def __init__(self, csv_file, tokenizer, padding_strategy='longest', batch_size=32, num_workers=4):
+        """
+        Args:
+            csv_file (str): Path to the .csv file containing the dataset.
+            tokenizer: HuggingFace tokenizer instance for tokenizing sequences.
+            padding_strategy (str): Padding strategy for tokenization ('longest', 'max_length', etc.).
+            seq_length (int): Optional fixed sequence length for truncation or padding.
+            batch_size (int): Batch size for DataLoader.
+            num_workers (int): Number of workers for DataLoader.
+        """
+        super().__init__()
+        self.csv_file = csv_file
+        self.tokenizer = tokenizer
+        self.padding_strategy = padding_strategy
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    def setup(self, stage=None):
+        """
+        Called on setup to prepare the datasets for train/val/test splits.
+        """
+        # Load the dataset
+        full_dataset = PsiLungIntronsDataset(self.csv_file)
+
+        # Split dataset into train, val, and test sets (70/15/15 split)
+        train_size = int(0.8 * len(full_dataset))
+        val_size = int(0.1 * len(full_dataset))
+        test_size = len(full_dataset) - train_size - val_size
+
+        self.train_dataset, self.val_dataset, self.test_dataset = random_split(
+            full_dataset, [train_size, val_size, test_size]
+        )
+
+    def collate_fn(self, batch):
+        """
+        Custom collate function to tokenize sequences and prepare batches.
+        """
+        seq, label = zip(*batch)  # Unpack the batch into sequences and labels
+
+        # Tokenize the sequences
+        tokenized_sequences = self.tokenizer(
+            list(seq),  # Tokenizer expects a list of sequences
+            return_tensors='pt',
+            padding=self.padding_strategy,
+        ).input_ids
+
+        # Convert labels to tensor
+        labels = torch.tensor(label, dtype=torch.float32)
+
+        return tokenized_sequences, labels
+
+    def train_dataloader(self):
+        """
+        Returns DataLoader for the training set.
+        """
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, 
+                          shuffle=True, num_workers=self.num_workers, 
+                          collate_fn=self.collate_fn)
+
+    def val_dataloader(self):
+        """
+        Returns DataLoader for the validation set.
+        """
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, 
+                          shuffle=False, num_workers=self.num_workers, 
+                          collate_fn=self.collate_fn)
+
+    def test_dataloader(self):
+        """
+        Returns DataLoader for the test set.
+        """
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, 
+                          shuffle=False, num_workers=self.num_workers, 
+                          collate_fn=self.collate_fn)
