@@ -54,11 +54,13 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
             view1_sequences, 
             return_tensors='pt',
             padding=self.padding_strategy,
+            add_special_tokens=False,
         ).input_ids
         view2 = self.tokenizer(
             view2_sequences, 
             return_tensors='pt',
             padding=self.padding_strategy,
+            add_special_tokens=False,
         ).input_ids
         
         return view1, view2      

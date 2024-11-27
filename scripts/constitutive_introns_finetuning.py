@@ -46,7 +46,8 @@ def main():
     # Parse arguments
     args = parse_arguments()
     
-    tokenizer_map = {"nucleotide-transformer-v2": "InstaDeepAI/nucleotide-transformer-v2-50m-multi-species" }
+    tokenizer_map = {"nucleotide-transformer-v2": "InstaDeepAI/nucleotide-transformer-v2-50m-multi-species",
+                     "dna-bert-2": "zhihan1996/DNABERT-2-117M"}
 
 
     # Calculate gradient accumulation steps
@@ -89,15 +90,6 @@ def main():
         name=f"{args.encoder_name_wb}-lr{args.learning_rate}-bs{args.global_batch_size or args.batch_size_per_device * args.devices}",
         project=args.logger_project
     )
-
-    # Initialize ModelCheckpoint callback
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=f"checkpoints/constitutive_introns/{args.encoder_name_wb}",
-        save_top_k=1,
-        monitor="val_loss",
-        mode="min"
-    )
-
     # Create Trainer
     trainer = Trainer(
         max_epochs=args.max_epochs,
@@ -108,8 +100,7 @@ def main():
         devices=args.devices,
         strategy="ddp" if args.devices > 1 else "auto",
         accumulate_grad_batches=accumulation_steps,
-        logger=logger,
-        callbacks=[checkpoint_callback]    )
+        logger=logger)
 
     # Train and test
     trainer.fit(classifier, data_module)

@@ -1,7 +1,8 @@
 from src.embedder.ntv2 import NTv2Embedder
 from src.embedder.resnet import ResNet1D
+from src.embedder.dnabert import DNABERT2Embedder
 
-EMBEDDERS = {'NTv2': NTv2Embedder, 'ResNet1D': ResNet1D}
+EMBEDDERS = {'NTv2': NTv2Embedder, 'ResNet1D': ResNet1D, 'DNABERT2': DNABERT2Embedder}
 
 
 def get_embedder(config):

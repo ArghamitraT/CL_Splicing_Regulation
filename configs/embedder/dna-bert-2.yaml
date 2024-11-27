@@ -1,0 +1,5 @@
+name_or_path: zhihan1996/DNABERT-2-117M
+bp_per_token: 6
+rcps: False
+_name_: DNABERT2
+

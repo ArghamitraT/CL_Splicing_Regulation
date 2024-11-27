@@ -23,7 +23,7 @@ def parse_arguments():
     parser.add_argument("--num_workers", type=int, default=4, help="Number of workers for data loading.")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for fine-tuning.")
     parser.add_argument("--max_epochs", type=int, default=1, help="Number of training epochs.")
-    parser.add_argument("--logger_project", type=str, default="CONSTITUTIVE_INTRONS_FINETUNING", help="WandB project name.")
+    parser.add_argument("--logger_project", type=str, default="PSI_LUNG_FINETUNING", help="WandB project name.")
     parser.add_argument("--global_batch_size", type=int, default=None, help="Global batch size for training.")
     parser.add_argument("--devices", type=int, default=1, help="Number of devices to use for training.")
     return parser.parse_args()
@@ -75,7 +75,7 @@ def main():
     regressor = PsiLungIntronsRegressor(
         trained_simclr_ckpt=args.simclr_ckpt,
         encoder_name=args.encoder_name,
-        classification_head_embedding_dimension=args.classification_head_embedding_dimension,
+        regression_head_embedding_dimension=args.regression_head_embedding_dimension,
         lr=args.learning_rate,
         use_checkpoint=args.use_checkpoint,
     )
@@ -84,14 +84,6 @@ def main():
     logger = WandbLogger(
         name=f"{args.encoder_name_wb}-lr{args.learning_rate}-bs{args.global_batch_size or args.batch_size_per_device * args.devices}",
         project=args.logger_project
-    )
-
-    # Initialize ModelCheckpoint callback
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=f"checkpoints/psi_lung/{args.encoder_name_wb}",
-        save_top_k=1,
-        monitor="val_loss",
-        mode="min"
     )
 
     # Create Trainer
@@ -104,9 +96,7 @@ def main():
         devices=args.devices,
         strategy="ddp" if args.devices > 1 else "auto",
         accumulate_grad_batches=accumulation_steps,
-        logger=logger,
-        callbacks=[checkpoint_callback],
-    )
+        logger=logger)
 
     # Train and test
     trainer.fit(regressor, data_module)

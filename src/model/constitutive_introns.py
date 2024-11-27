@@ -8,8 +8,9 @@ from torchmetrics import Accuracy, Recall, Precision, AUROC
 from src.model.lit import LitModel
 from src.embedder.ntv2 import NTv2Embedder
 from src.embedder.resnet import ResNet1D
+from src.embedder.dnabert import DNABERT2Embedder
 
-embedder_mapping = {"nucleotide-transformer-v2": NTv2Embedder, "resnet": ResNet1D}
+embedder_mapping = {"nucleotide-transformer-v2": NTv2Embedder, "resnet": ResNet1D, "dna-bert-2": DNABERT2Embedder}
 
 class ConstitutiveIntronsClassifier(pl.LightningModule):
     def __init__(self,
@@ -129,7 +130,7 @@ class ConstitutiveIntronsClassifier(pl.LightningModule):
         self.train_precision.update(preds, labels)
         self.train_auroc.update(logits, labels)  # Use raw logits for AUROC
         
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -171,10 +172,10 @@ class ConstitutiveIntronsClassifier(pl.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
-        self.log("train_accuracy", self.train_accuracy.compute(), on_epoch=True, prog_bar=True)
-        self.log("train_recall", self.train_recall.compute(), on_epoch=True, prog_bar=True)
-        self.log("train_precision", self.train_precision.compute(), on_epoch=True, prog_bar=True)
-        self.log("train_auroc", self.train_auroc.compute(), on_epoch=True, prog_bar=True)
+        self.log("train/accuracy", self.train_accuracy.compute(), on_epoch=True, prog_bar=True)
+        self.log("train/recall", self.train_recall.compute(), on_epoch=True, prog_bar=True)
+        self.log("train/precision", self.train_precision.compute(), on_epoch=True, prog_bar=True)
+        self.log("train/auroc", self.train_auroc.compute(), on_epoch=True, prog_bar=True)
 
         self.train_accuracy.reset()
         self.train_recall.reset()
@@ -182,10 +183,10 @@ class ConstitutiveIntronsClassifier(pl.LightningModule):
         self.train_auroc.reset()
 
     def on_validation_epoch_end(self):
-        self.log("val_accuracy", self.val_accuracy.compute(), on_epoch=True, prog_bar=True)
-        self.log("val_recall", self.val_recall.compute(), on_epoch=True, prog_bar=True)
-        self.log("val_precision", self.val_precision.compute(), on_epoch=True, prog_bar=True)
-        self.log("val_auroc", self.val_auroc.compute(), on_epoch=True, prog_bar=True)
+        self.log("val/accuracy", self.val_accuracy.compute(), on_epoch=True, prog_bar=True)
+        self.log("val/recall", self.val_recall.compute(), on_epoch=True, prog_bar=True)
+        self.log("val/precision", self.val_precision.compute(), on_epoch=True, prog_bar=True)
+        self.log("val/auroc", self.val_auroc.compute(), on_epoch=True, prog_bar=True)
 
         self.val_accuracy.reset()
         self.val_recall.reset()
@@ -193,10 +194,10 @@ class ConstitutiveIntronsClassifier(pl.LightningModule):
         self.val_auroc.reset()
 
     def on_test_epoch_end(self):
-        self.log("test_accuracy", self.test_accuracy.compute(), on_epoch=True, prog_bar=True)
-        self.log("test_recall", self.test_recall.compute(), on_epoch=True, prog_bar=True)
-        self.log("test_precision", self.test_precision.compute(), on_epoch=True, prog_bar=True)
-        self.log("test_auroc", self.test_auroc.compute(), on_epoch=True, prog_bar=True)
+        self.log("test/accuracy", self.test_accuracy.compute(), on_epoch=True, prog_bar=True)
+        self.log("test/recall", self.test_recall.compute(), on_epoch=True, prog_bar=True)
+        self.log("test/precision", self.test_precision.compute(), on_epoch=True, prog_bar=True)
+        self.log("test/auroc", self.test_auroc.compute(), on_epoch=True, prog_bar=True)
 
         self.test_accuracy.reset()
         self.test_recall.reset()

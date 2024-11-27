@@ -103,7 +103,7 @@ class PsiLungIntronsRegressor(pl.LightningModule):
         # Update and compute R2 for training
         self.train_r2.update(preds, labels)
 
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -117,7 +117,7 @@ class PsiLungIntronsRegressor(pl.LightningModule):
         # Update R2 for validation
         self.val_r2.update(preds, labels)
 
-        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -131,7 +131,7 @@ class PsiLungIntronsRegressor(pl.LightningModule):
         # Update R2 for testing
         self.test_r2.update(preds, labels)
 
-        self.log("test_loss", loss)
+        self.log("test/loss", loss)
         return loss
 
     def on_train_epoch_end(self):
@@ -139,7 +139,7 @@ class PsiLungIntronsRegressor(pl.LightningModule):
         Compute and log R2 at the end of training epoch.
         """
         train_r2 = self.train_r2.compute()
-        self.log("train_r2", train_r2, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("train/r2", train_r2, on_epoch=True, prog_bar=True, sync_dist=True)
         self.train_r2.reset()
 
     def on_validation_epoch_end(self):
@@ -147,7 +147,7 @@ class PsiLungIntronsRegressor(pl.LightningModule):
         Compute and log R2 at the end of validation epoch.
         """
         val_r2 = self.val_r2.compute()
-        self.log("val_r2", val_r2, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("val/2", val_r2, on_epoch=True, prog_bar=True, sync_dist=True)
         self.val_r2.reset()
 
     def on_test_epoch_end(self):
@@ -155,7 +155,7 @@ class PsiLungIntronsRegressor(pl.LightningModule):
         Compute and log R2 at the end of test epoch.
         """
         test_r2 = self.test_r2.compute()
-        self.log("test_r2", test_r2, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("test/r2", test_r2, on_epoch=True, prog_bar=True, sync_dist=True)
         self.test_r2.reset()
 
     def configure_optimizers(self):

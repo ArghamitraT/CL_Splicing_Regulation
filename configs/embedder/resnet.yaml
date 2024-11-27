@@ -1,4 +1,4 @@
-name_or_path: InstaDeepAI/nucleotide-transformer-v2-50m-multi-species
+name_or_path: resnet
 bp_per_token: 1
 embedding_dim: 768
 vocab_size: 12
