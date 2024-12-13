@@ -36,7 +36,7 @@ import pickle
 # # with open(pickle_file_path, 'rb') as f:
 # #     msa_results_list_TOKEN = pickle.load(f)
 
-pickle_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/alignmentknownGene.multiz100way.exonNuc_exon_intron_positions_split_file_1_IntronSeq.pkl'
+pickle_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dict.pkl'
 with open(pickle_file_path, 'rb') as f:
     msa_results_list_unTOKEN = pickle.load(f)
 
