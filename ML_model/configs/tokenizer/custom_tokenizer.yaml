@@ -1,0 +1,4 @@
+_target_: src.tokenizers.custom.CustomTokenizer
+model_max_length: 201
+padding: "longest"
+

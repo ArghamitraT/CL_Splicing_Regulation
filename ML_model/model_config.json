@@ -1,0 +1,5 @@
+{
+    "name_or_path": "InstaDeepAI/nucleotide-transformer-v2-50m-multi-species",
+    "bp_per_token": 6,
+    "rcps": false
+}

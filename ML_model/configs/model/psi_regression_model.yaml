@@ -1,0 +1,5 @@
+name_or_path: psi_regression
+hidden_dim: 512
+projection_dim: 128
+output_dim: 1  # Single output for PSI value prediction
+freeze_encoder: true  # Set to false for fine-tuning
