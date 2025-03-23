@@ -4,12 +4,45 @@ import math
 import argparse
 
 
-datafilepath = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dict.pkl'
+datafilepath = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dictWinf_nan_vals.pkl'
 
 with open(datafilepath, 'rb') as merged_intron_seq_file:
         merged_data = pickle.load(merged_intron_seq_file)
         print()
-    
+
+print(f"initial dataset size: {len(merged_data)} entries")
+
+nan_or_inf_count = sum(
+    1 for v in merged_data.values()
+    if math.isnan(v["psi_val"]) or math.isinf(v["psi_val"])
+)
+
+print(f"⚠️ Found {nan_or_inf_count} entries with NaN or inf PSI values.")
+
+
+# Filter to keep only valid entries
+merged_data = {
+    k: v for k, v in merged_data.items()
+    if not (math.isnan(v["psi_val"]) or math.isinf(v["psi_val"]))
+}
+
+print(f"✅ Cleaned dataset size: {len(merged_data)} entries")
+
+nan_or_inf_count = sum(
+    1 for v in merged_data.values()
+    if math.isnan(v["psi_val"]) or math.isinf(v["psi_val"])
+)
+
+print(f"⚠️ Found {nan_or_inf_count} entries with NaN or inf PSI values.")
+
+
+output_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dict.pkl'
+
+with open(output_path, "wb") as f:
+    pickle.dump(merged_data, f)
+
+print(f"📦 Cleaned data saved to: {output_path}")
+
 
 
 # def main(data_dir, file_names):

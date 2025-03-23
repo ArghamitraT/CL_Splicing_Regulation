@@ -7,25 +7,24 @@ defaults:
   - callbacks: default_callbacks
   - tokenizer: custom_tokenizer
   - loss: mse_loss
-  - model: psi_regression_model
+  - model: simclr
+  - aux_models: psi_regression_model 
   - optimizer: adamw
 
 hydra:
   run:
-    dir: ./hydra/psi_regression/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ./hydra/psi_regression_${now:%Y-%m-%d_%H-%M-%S}
 
   job:
     chdir: false
 
 wandb:
   api_key: "6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66"
-  dir: ./wandb/psi_regression
-  settings:
-    init_timeout: 600  # Increase timeout to 10 minutes
-
+  dir: ./wandb/
+  
 logger:
   _target_: lightning.pytorch.loggers.WandbLogger
-  name: PSI-${dataset.seq_len}
+  name: PSI_${embedder._name_}-${dataset.seq_len}
   id: ${task._name_}-${.name}
   project: PSI_REGRESSION
   group: ${task._name_}

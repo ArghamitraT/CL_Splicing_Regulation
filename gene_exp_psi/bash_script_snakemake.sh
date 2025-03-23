@@ -12,7 +12,8 @@
 set -e
 cd $HOME
 source ~/.bashrc
-conda activate snakemake_env
+# conda activate snakemake_env
+conda activate CntrstvLrn_1
 # module load R/4.3.3
 # module load snakemake/7.30.1
 # snakemake -s /gpfs/commons/home/atalukder/Contrastive_Learning/models/gene_exp_psi/Snakefile2 --cores 16
@@ -23,7 +24,7 @@ conda activate snakemake_env
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/models/gene_exp_psi/create_signatures_optimized.py
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/match_exon_intron_boundary2.py
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/models/gene_exp_psi/try.py
-python /gpfs/commons/home/atalukder/Contrastive_Learning/code/gene_exp_psi/get_psi_val.py
+python /gpfs/commons/home/atalukder/Contrastive_Learning/code/gene_exp_psi/get_psi_intron_seq.py
 
 # # URL="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/multiz100way/alignments/knownGene.multiz100way.exonNuc.fa.gz"  # Replace with your actual URL
 # URL="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/multiz100way/alignments/ncbiRefSeq.multiz100way.exonNuc.fa.gz"

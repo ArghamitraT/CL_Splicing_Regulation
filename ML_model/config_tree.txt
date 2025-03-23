@@ -1,88 +1,92 @@
 CONFIG
 ├── wandb
-│   └── api_key: 6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66                                                                                               
-│       dir: ./wandb/                                                                                                                                   
-│                                                                                                                                                       
+│   └── api_key: 6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66                                                                                                                                   
+│       dir: ./wandb/                                                                                                                                                                       
+│                                                                                                                                                                                           
 ├── logger
-│   └── _target_: lightning.pytorch.loggers.WandbLogger                                                                                                 
-│       name: Argha                                                                                                                                     
-│       id: introns_cl-Argha                                                                                                                            
-│       project: INTRONS_CL                                                                                                                             
-│       group: introns_cl                                                                                                                               
-│                                                                                                                                                       
+│   └── _target_: lightning.pytorch.loggers.WandbLogger                                                                                                                                     
+│       name: PSI_NTv2-201                                                                                                                                                                  
+│       id: psi_regression-PSI_NTv2-201                                                                                                                                                     
+│       project: PSI_REGRESSION                                                                                                                                                             
+│       group: psi_regression                                                                                                                                                               
+│                                                                                                                                                                                           
 ├── embedder
-│   └── name_or_path: InstaDeepAI/nucleotide-transformer-v2-50m-multi-species                                                                           
-│       bp_per_token: 6                                                                                                                                 
-│       rcps: false                                                                                                                                     
-│       _name_: NTv2                                                                                                                                    
-│                                                                                                                                                       
+│   └── name_or_path: InstaDeepAI/nucleotide-transformer-v2-50m-multi-species                                                                                                               
+│       bp_per_token: 6                                                                                                                                                                     
+│       rcps: false                                                                                                                                                                         
+│       _name_: NTv2                                                                                                                                                                        
+│                                                                                                                                                                                           
 ├── dataset
-│   └── seq_len: 199                                                                                                                                    
-│       data_file: /gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences.pkl       
-│       exon_names_path: /gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/all_exon_names.txt          
-│       batch_size_per_device: 171                                                                                                                      
-│       num_workers: 4                                                                                                                                  
-│       train_ratio: 0.8                                                                                                                                
-│       val_ratio: 0.1                                                                                                                                  
-│       test_ratio: null                                                                                                                                
-│       cache_dir: ../data                                                                                                                              
-│                                                                                                                                                       
+│   └── seq_len: 201                                                                                                                                                                        
+│       data_file: /gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dict.pkl                                                         
+│       batch_size_per_device: 22                                                                                                                                                           
+│       num_workers: 2                                                                                                                                                                      
+│       train_ratio: 0.8                                                                                                                                                                    
+│       val_ratio: 0.1                                                                                                                                                                      
+│       test_ratio: 0.1                                                                                                                                                                     
+│       cache_dir: ../data                                                                                                                                                                  
+│                                                                                                                                                                                           
 ├── task
-│   └── _name_: introns_cl                                                                                                                              
-│       metrics:                                                                                                                                        
-│       - accuracy                                                                                                                                      
-│       val_check_interval: 512                                                                                                                         
-│       global_batch_size: 512                                                                                                                          
-│                                                                                                                                                       
+│   └── _name_: psi_regression                                                                                                                                                              
+│       metrics:                                                                                                                                                                            
+│       - r2_score                                                                                                                                                                          
+│       val_check_interval: 64                                                                                                                                                              
+│       global_batch_size: 64                                                                                                                                                               
+│                                                                                                                                                                                           
 ├── trainer
-│   └── _target_: lightning.pytorch.Trainer                                                                                                             
-│       max_epochs: 2                                                                                                                                   
-│       callbacks: null                                                                                                                                 
-│       devices: 3                                                                                                                                      
-│       log_every_n_steps: 1                                                                                                                            
-│       limit_train_batches: 1.0                                                                                                                        
-│       limit_val_batches: 1.0                                                                                                                          
-│       val_check_interval: 171                                                                                                                         
-│       gradient_clip_val: 1.0                                                                                                                          
-│       precision: 16-mixed                                                                                                                             
-│       num_sanity_val_steps: 0                                                                                                                         
-│       num_nodes: 1                                                                                                                                    
-│       accumulate_grad_batches: 1                                                                                                                      
-│       strategy:                                                                                                                                       
-│         _target_: lightning.pytorch.strategies.DDPStrategy                                                                                            
-│                                                                                                                                                       
+│   └── _target_: lightning.pytorch.Trainer                                                                                                                                                 
+│       max_epochs: 1                                                                                                                                                                       
+│       callbacks: null                                                                                                                                                                     
+│       devices: 3                                                                                                                                                                          
+│       log_every_n_steps: 1                                                                                                                                                                
+│       limit_train_batches: 1.0                                                                                                                                                            
+│       limit_val_batches: 1.0                                                                                                                                                              
+│       val_check_interval: 22                                                                                                                                                              
+│       gradient_clip_val: 1.0                                                                                                                                                              
+│       precision: 16-mixed                                                                                                                                                                 
+│       num_sanity_val_steps: 0                                                                                                                                                             
+│       num_nodes: 1                                                                                                                                                                        
+│       accumulate_grad_batches: 1                                                                                                                                                          
+│       strategy:                                                                                                                                                                           
+│         _target_: lightning.pytorch.strategies.DDPStrategy                                                                                                                                
+│                                                                                                                                                                                           
 ├── callbacks
-│   └── model_checkpoint:                                                                                                                               
-│         _target_: lightning.pytorch.callbacks.ModelCheckpoint                                                                                         
-│         dirpath: checkpoints/                                                                                                                         
-│         filename: introns_cl/NTv2/199/best-checkpoint                                                                                                 
-│         save_top_k: 1                                                                                                                                 
-│         save_last: true                                                                                                                               
-│         verbose: true                                                                                                                                 
-│         monitor: val_loss                                                                                                                             
-│         mode: min                                                                                                                                     
-│       learning_rate_monitor:                                                                                                                          
-│         _target_: lightning.pytorch.callbacks.LearningRateMonitor                                                                                     
-│         logging_interval: step                                                                                                                        
-│                                                                                                                                                       
+│   └── model_checkpoint:                                                                                                                                                                   
+│         _target_: lightning.pytorch.callbacks.ModelCheckpoint                                                                                                                             
+│         dirpath: checkpoints/                                                                                                                                                             
+│         filename: psi_regression/NTv2/201/best-checkpoint                                                                                                                                 
+│         save_top_k: 1                                                                                                                                                                     
+│         save_last: true                                                                                                                                                                   
+│         verbose: true                                                                                                                                                                     
+│         monitor: val_loss                                                                                                                                                                 
+│         mode: min                                                                                                                                                                         
+│       learning_rate_monitor:                                                                                                                                                              
+│         _target_: lightning.pytorch.callbacks.LearningRateMonitor                                                                                                                         
+│         logging_interval: step                                                                                                                                                            
+│                                                                                                                                                                                           
 ├── tokenizer
-│   └── _target_: transformers.AutoTokenizer.from_pretrained                                                                                            
-│       pretrained_model_name_or_path: InstaDeepAI/nucleotide-transformer-v2-50m-multi-species                                                          
-│       model_max_length: 201                                                                                                                           
-│       padding: longest                                                                                                                                
-│                                                                                                                                                       
+│   └── _target_: src.tokenizers.custom.CustomTokenizer                                                                                                                                     
+│       model_max_length: 201                                                                                                                                                               
+│       padding: longest                                                                                                                                                                    
+│                                                                                                                                                                                           
 ├── loss
-│   └── _target_: lightly.loss.DCLLoss                                                                                                                  
-│       temperature: 0.5                                                                                                                                
-│                                                                                                                                                       
+│   └── _target_: torch.nn.MSELoss                                                                                                                                                          
+│                                                                                                                                                                                           
 ├── model
-│   └── name_or_path: simclr                                                                                                                            
-│       hidden_dim: 512                                                                                                                                 
-│       projection_dim: 128                                                                                                                             
-│                                                                                                                                                       
+│   └── name_or_path: simclr                                                                                                                                                                
+│       hidden_dim: 512                                                                                                                                                                     
+│       projection_dim: 128                                                                                                                                                                 
+│                                                                                                                                                                                           
+├── aux_models
+│   └── name_or_path: psi_regression                                                                                                                                                        
+│       output_dim: 1                                                                                                                                                                       
+│       freeze_encoder: true                                                                                                                                                                
+│                                                                                                                                                                                           
 └── optimizer
-    └── _target_: torch.optim.SGD                                                                                                                       
-        lr: 0.01                                                                                                                                        
-        momentum: 0.9                                                                                                                                   
-        weight_decay: 0.0                                                                                                                               
-                                                                                                                                                        
+    └── _target_: torch.optim.AdamW                                                                                                                                                         
+        lr: 0.0001                                                                                                                                                                          
+        weight_decay: 0.0                                                                                                                                                                   
+        betas:                                                                                                                                                                              
+        - 0.9                                                                                                                                                                               
+        - 0.999                                                                                                                                                                             
+                                                                                                                                                                                            

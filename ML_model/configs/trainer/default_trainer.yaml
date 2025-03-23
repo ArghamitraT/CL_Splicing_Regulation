@@ -2,7 +2,7 @@ _target_: lightning.pytorch.Trainer
 max_epochs: 1
 callbacks: null
 devices: ${device_count:} 
-#devices: 1 #(AT)
+# devices: 1 #(AT)
 log_every_n_steps: 1
 limit_train_batches: 1.0
 limit_val_batches: 1.0

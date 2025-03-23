@@ -14,7 +14,7 @@ import pickle
 
 csv_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/types_Lung_psi.csv'  # Replace with your CSV file path
 refseq_main_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/'  # Replace with your reference sequence folder
-output_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/Psi_values/'  # Replace with your desired output path
+output_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/'  # Replace with your desired output path
 
 df = pd.read_csv(csv_file_path)
 exon_sequences_dict = {exon: {'psi_val': None} for exon in df['Exon Name'].unique()}
@@ -123,7 +123,7 @@ for species in species_arr:
 # Extract the base file name without the path and extension
 file_name = os.path.basename(csv_file_path)
 tissue_type = file_name.split('_')[1]
-output_name = os.path.join(output_path, f'psi{tissue_type}_intron_sequences_dict.pkl')
+output_name = os.path.join(output_path, f'psi_{tissue_type}_intron_sequences_dict.pkl')
 with open(output_name, 'wb') as f:
     pickle.dump(exon_sequences_dict, f)
 

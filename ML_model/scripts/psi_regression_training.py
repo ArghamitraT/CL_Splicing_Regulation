@@ -25,6 +25,7 @@ def main(config: OmegaConf):
     # Print and process configuration
     print_config(config, resolve=True)
 
+
     # Initialize the IntronsDataModule
     data_module = PSIRegressionDataModule(config)
 
@@ -33,37 +34,62 @@ def main(config: OmegaConf):
 
     # Get the SimCLR model using its own config
     simclr_model = get_simclr_model(config)
-    simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
+    # simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
 
     # Load weights from contrastive learning checkpoint
     simclr_ckpt = "checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt"
     state_dict = torch.load(simclr_ckpt)["state_dict"]
 
-    # Decide based on Linear Probing vs. Fine-Tuning
-    if config.model.freeze_encoder:  # Linear Probing Mode
-        print("🚀 Running Linear Probing: Freezing encoder, keeping projection head.")
-        simclr_model.load_state_dict(state_dict, strict=False)
-        
-        # Freeze encoder weights
-        for param in simclr_model.encoder.parameters():
-            param.requires_grad = False  
+    simclr_model.load_state_dict(state_dict, strict=False)
 
-        model = PSIRegressionModel(simclr_model, config, freeze_encoder=True)
-
-    else:  # Fine-Tuning Mode
-        print("🔥 Running Fine-Tuning: Training the full encoder, using new head.")
-        
-        # Load only encoder weights, discard projection head
-        encoder_state_dict = {k.replace("model.encoder.", ""): v for k, v in state_dict.items() if "model.encoder" in k}
+    # For fine-tuning, optionally strip projection head
+    if not config.aux_models.freeze_encoder:
+        encoder_state_dict = {
+            k.replace("model.encoder.", ""): v
+            for k, v in state_dict.items()
+            if "model.encoder" in k
+        }
         simclr_model.encoder.load_state_dict(encoder_state_dict, strict=False)
 
-        model = PSIRegressionModel(simclr_model.encoder, config, freeze_encoder=False)
+    # Instantiate PSIRegressionModel with encoder and psi_model config
+    model = PSIRegressionModel(simclr_model.encoder, config)
 
-    # Create Trainer
+    # Train
     trainer = create_trainer(config)
-
-    # Train the model
     trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
+
+    
+
+if __name__ == "__main__":
+    main()
+
+
+
+    # # Decide based on Linear Probing vs. Fine-Tuning
+    # if config.model.freeze_encoder:  # Linear Probing Mode
+    #     print("🚀 Running Linear Probing: Freezing encoder, keeping projection head.")
+    #     simclr_model.load_state_dict(state_dict, strict=False)
+        
+    #     # Freeze encoder weights
+    #     for param in simclr_model.encoder.parameters():
+    #         param.requires_grad = False  
+
+    #     model = PSIRegressionModel(simclr_model, config, freeze_encoder=True)
+
+    # else:  # Fine-Tuning Mode
+    #     print("🔥 Running Fine-Tuning: Training the full encoder, using new head.")
+        
+    #     # Load only encoder weights, discard projection head
+    #     encoder_state_dict = {k.replace("model.encoder.", ""): v for k, v in state_dict.items() if "model.encoder" in k}
+    #     simclr_model.encoder.load_state_dict(encoder_state_dict, strict=False)
+
+    #     model = PSIRegressionModel(simclr_model.encoder, config, freeze_encoder=False)
+
+    # # Create Trainer
+    # trainer = create_trainer(config)
+
+    # # Train the model
+    # trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
 
 
     #################
@@ -86,5 +112,3 @@ def main(config: OmegaConf):
     # trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
 
 
-if __name__ == "__main__":
-    main()
