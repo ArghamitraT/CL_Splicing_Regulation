@@ -1,12 +1,19 @@
+# NOTES="No Contrastive Learning\nLinear Probing\nSGD optimizer\nFrozen encoder\nMean pooling\nSmall ResNet"
+NOTES="Psi\nRanom initialization baseline"
+
 python -m scripts.psi_regression_training \
-        task.val_check_interval=512\
-        task.global_batch_size=512\
-        dataset.num_workers=4 \
-        trainer.max_epochs=2 \
-        tokenizer="hf_tokenizer" \
-        embedder="ntv2" \
-        optimizer="adamw" \
-        optimizer.lr=1e-4 \
-        logger.name="Argha"
-         # trainer.devices=1\
+        task.global_batch_size=4096\
+        trainer.max_epochs=5 \
+        trainer.val_check_interval=0.5\
+        tokenizer="custom_tokenizer" \
+        embedder="resnet" \
+        optimizer="sgd" \
+        optimizer.lr=1e-3 \
+        logger.name="Psi_$(date +%Y%m%d_%H%M%S)" \
+        aux_models.freeze_encoder=false\
+        aux_models.warm_start=false\
+        trainer.devices=1\
+        logger.notes="$NOTES"
+       
+         
         

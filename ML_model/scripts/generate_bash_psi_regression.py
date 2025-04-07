@@ -22,6 +22,36 @@ def create_job_dir(dir="", fold_name = ""):
 #job_path = create_job_dir(fold_name="job")
 
 ### it calls the .py file
+# def create_prg_file(prg_file_path):
+   
+    
+#     header = f"""#!/bin/bash
+#     set -e
+#     cd $HOME
+#     source ~/.bashrc
+#     conda activate cl_splicing_regulation
+#     WORKDIR={data_dir}
+#     cd $WORKDIR
+#     python -m scripts.cl_training \\
+#             task=introns_cl \\
+#             task.val_check_interval=512\\
+#             task.global_batch_size=512\\
+#             dataset.num_workers=4 \\
+#             trainer.max_epochs=100\\
+#             tokenizer="custom_tokenizer" \\
+#             embedder="resnet" \\
+#             optimizer="sgd" \\
+#             ++wandb.dir="'{wandb_dir}'"\\
+#             ++logger.name="'{slurm_file_name}{trimester}'"\\
+#             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
+#             ++hydra.run.dir={hydra_dir}\\
+#     """
+    
+#     with open(prg_file_path, "w") as f:
+#         f.write(header)
+    
+#     return prg_file_path
+
 def create_prg_file(prg_file_path):
    
     
@@ -32,17 +62,20 @@ def create_prg_file(prg_file_path):
     conda activate cl_splicing_regulation
     WORKDIR={data_dir}
     cd $WORKDIR
-    python -m scripts.cl_training \\
-            task=introns_cl \\
+    python -m scripts.psi_regression_training \\
+            task=psi_regression_task \\
             task.val_check_interval=0.5\\
-            task.global_batch_size=6144\\
-            trainer.max_epochs=50\\
+            task.global_batch_size=4096\\
+            trainer.max_epochs=100\\
             tokenizer="custom_tokenizer" \\
             embedder="resnet" \\
-            embedder.maxpooling=True \\
             optimizer="sgd" \\
+            optimizer.lr=1e-3 \\
+            aux_models.freeze_encoder=false\\
+            aux_models.warm_start=false\\
+            trainer.devices=1\\
             ++wandb.dir="'{wandb_dir}'"\\
-            ++logger.name="'{slurm_file_name}{trimester}'"\\
+            ++logger.name="'slurm_{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
             ++hydra.run.dir={hydra_dir}\\
             ++logger.notes="{wandb_logger_NOTES}"
@@ -107,15 +140,16 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLresnet'
-gpu_num = 3
-hour=5
-memory=100 # GB
+slurm_file_name = 'PSIresnet'
+gpu_num = 1
+hour=3
+memory=80 # GB
 nthred = 8 # number of CPU
 readme_comment = (
-    "Maxpool architecture, 50 epochs, 3 gpu, 6000 batch size, loss ntxent"
+    "We are running finetuning for 100 epochs. no warmstart, to establish the baseline."
 )
-wandb_logger_NOTES="Maxpool loss ntxent"
+wandb_logger_NOTES="no warmstar"
+
 
 """ Parameters: **CHANGE (AT)** """ 
 

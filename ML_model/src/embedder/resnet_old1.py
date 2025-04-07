@@ -1,4 +1,3 @@
-### modification from resnet_old1 is previously we inject maxpooling
 
 # Bottleneck block adapted for 1D convolutions
 import torch
@@ -57,7 +56,7 @@ class ResNet1D(BaseEmbedder):
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.in_channels = 64
-        self.use_maxpooling = kwargs.get("maxpooling", False)
+        
         self.backbone = self.initialize_resnet()
         
     
@@ -65,22 +64,9 @@ class ResNet1D(BaseEmbedder):
         # Embedding layer
         embedding = nn.Embedding(num_embeddings=self.vocab_size, embedding_dim=self.embedding_dim)
         # Initial layers
-        # conv1 = nn.Conv1d(in_channels=self.embedding_dim, out_channels =self.in_channels, kernel_size=7, stride=1, padding=3, bias=False)
-        # bn1 = nn.BatchNorm1d(self.in_channels)
-        # relu = nn.ReLU(inplace=True)
-        conv1 = nn.Conv1d(
-            in_channels=self.embedding_dim,
-            out_channels=self.in_channels,     # usually 64
-            kernel_size=7,
-            stride=2,
-            padding=3,                          # to keep "same" size when possible
-            bias=False
-        )
+        conv1 = nn.Conv1d(in_channels=self.embedding_dim, out_channels =self.in_channels, kernel_size=7, stride=1, padding=3, bias=False)
         bn1 = nn.BatchNorm1d(self.in_channels)
         relu = nn.ReLU(inplace=True)
-        # Add this maxpool
-        # maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
-
             
         layer1 = self._make_layer(Bottleneck1D, 64, self.layers[0])
         layer2 = self._make_layer(Bottleneck1D, 128, self.layers[1], stride=1)
@@ -89,37 +75,16 @@ class ResNet1D(BaseEmbedder):
 
 
         # Combine all layers into the backbone
-        # backbone = nn.Sequential(
-        #     embedding,
-        #     conv1,
-        #     bn1,
-        #     relu,
-        #     layer1,
-        #     layer2,
-        #     layer3,
-        #     layer4,
-        # )
-        # Combine all layers into the backbone
         backbone = nn.Sequential(
             embedding,
             conv1,
             bn1,
             relu,
-            *([nn.MaxPool1d(kernel_size=3, stride=2, padding=1)] if self.use_maxpooling else []),  # after conv1
-
             layer1,
-            *([nn.MaxPool1d(kernel_size=3, stride=2, padding=1)] if self.use_maxpooling else []),  # after layer1
-
             layer2,
-            *([nn.MaxPool1d(kernel_size=3, stride=2, padding=1)] if self.use_maxpooling else []),  # after layer2
-
             layer3,
-            *([nn.MaxPool1d(kernel_size=2, stride=2, padding=0)] if self.use_maxpooling else []),  # after layer3
-
             layer4,
-            *([nn.MaxPool1d(kernel_size=2, stride=1, padding=0)] if self.use_maxpooling else []),  # after layer4 (optional)
         )
-
         return backbone
         
 

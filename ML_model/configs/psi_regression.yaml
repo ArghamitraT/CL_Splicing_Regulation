@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - embedder: ntv2
+  - embedder: resnet
   - dataset: psi_dataset  # Custom dataset for PSI regression
   - task: psi_regression_task
   - trainer: default_trainer
@@ -28,3 +28,8 @@ logger:
   id: ${task._name_}-${.name}
   project: PSI_REGRESSION
   group: ${task._name_}
+  notes: ""
+  save_dir: ${wandb.dir}  
+  log_model: true
+  settings:
+    init_timeout: 600

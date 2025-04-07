@@ -17,17 +17,31 @@ class PSIRegressionModel(pl.LightningModule):
             for param in self.encoder.parameters():
                 param.requires_grad = False
 
-        # if hasattr(encoder, "output_dim"):
-        #     encoder_output_dim = encoder.output_dim
-        # else:
-        #     print("⚠️ Warning: `encoder.output_dim` not defined, inferring from dummy input.")
-        #     dummy_input = torch.randint(0, 4, (1, self.config.dataset.seq_len))
-        #     with torch.no_grad():
-        #         dummy_output = encoder(dummy_input)
-        #         encoder_output_dim = dummy_output.shape[-1]
-        #     print(f"Inferred encoder output_dim = {encoder_output_dim}")
+        if hasattr(encoder, "output_dim"):
+            encoder_output_dim = encoder.output_dim
+        else:
+            print("⚠️ Warning: `encoder.output_dim` not defined, inferring from dummy input.")
+            dummy_input = torch.randint(0, 4, (1, self.config.dataset.seq_len))
+            with torch.no_grad():
+                dummy_output = encoder(dummy_input)
+                encoder_output_dim = dummy_output.shape[-1]
+            print(f"Inferred encoder output_dim = {encoder_output_dim}")
 
-        self.regressor = nn.Linear(config.model.hidden_dim, config.aux_models.output_dim)
+        
+        # self.regressor = nn.Sequential(nn.Linear(201*encoder_output_dim, config.aux_models.hidden_dim),
+        #                                nn.ReLU(),
+        #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
+
+        # self.regressor = nn.Linear(201, config.aux_models.output_dim)
+        # self.regressor = nn.Sequential(nn.Linear(201, config.aux_models.hidden_dim),
+        #                                nn.ReLU(),
+        #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
+
+        self.regressor = nn.Sequential(nn.Linear(encoder_output_dim, config.aux_models.hidden_dim),
+                                       nn.ReLU(),
+                                       nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
+
+
 
         # Instantiate loss and metrics via Hydra
         self.loss_fn = instantiate(config.loss)
@@ -40,30 +54,22 @@ class PSIRegressionModel(pl.LightningModule):
     
     def forward(self, x):
         features = self.encoder(x)
-        return self.regressor(features.mean(dim=1))
+        # features = features.flatten(start_dim=1)
+        # return self.regressor(features)
+        # return self.regressor(features.mean(dim=2))
+        # return self.regressor(x.float())
+        return self.regressor(features)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
         y_pred = self(x).squeeze()
+        # y_pred = self(x)
 
-        # inf masking
-        if torch.isnan(y_pred).any() or torch.isinf(y_pred).any():
-            print(f"❌ y_pred contains NaN or Inf at batch {batch_idx}")
-            print("y_pred:", y_pred)
-
-        if torch.isnan(y).any() or torch.isinf(y).any():
-            print(f"❌ y contains NaN or Inf at batch {batch_idx}")
-            print("y:", y)
-
-        # Combine masks for any invalid predictions or targets
-        valid_mask = ~(torch.isnan(y_pred) | torch.isinf(y_pred) | torch.isnan(y) | torch.isinf(y))
-        # Filter out invalid values
-        y_pred = y_pred[valid_mask]
-        y = y[valid_mask]
-        if y.numel() == 0:
-            print(f"❌ Entire batch {batch_idx} is invalid — skipping.")
-
-        
+        # # Combine masks for any invalid predictions or targets
+        # valid_mask = ~(torch.isnan(y_pred) | torch.isinf(y_pred) | torch.isnan(y) | torch.isinf(y))
+        # # Filter out invalid values
+        # y_pred = y_pred[valid_mask]
+        # y = y[valid_mask]
         loss = self.loss_fn(y_pred, y)
 
         self.log("train_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
@@ -75,25 +81,14 @@ class PSIRegressionModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
+        # y_pred = self(x)
         y_pred = self(x).squeeze()
 
-        # inf masking
-        if torch.isnan(y_pred).any() or torch.isinf(y_pred).any():
-            print(f"❌ y_pred contains NaN or Inf at batch {batch_idx}")
-            print("y_pred:", y_pred)
-
-        if torch.isnan(y).any() or torch.isinf(y).any():
-            print(f"❌ y contains NaN or Inf at batch {batch_idx}")
-            print("y:", y)
-
         # Combine masks for any invalid predictions or targets
-        valid_mask = ~(torch.isnan(y_pred) | torch.isinf(y_pred) | torch.isnan(y) | torch.isinf(y))
-        # Filter out invalid values
-        y_pred = y_pred[valid_mask]
-        y = y[valid_mask]
-        if y.numel() == 0:
-            print(f"❌ Entire batch {batch_idx} is invalid — skipping.")
-
+        # valid_mask = ~(torch.isnan(y_pred) | torch.isinf(y_pred) | torch.isnan(y) | torch.isinf(y))
+        # # Filter out invalid values
+        # y_pred = y_pred[valid_mask]
+        # y = y[valid_mask]
         loss = self.loss_fn(y_pred, y)
 
         self.log("val_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)

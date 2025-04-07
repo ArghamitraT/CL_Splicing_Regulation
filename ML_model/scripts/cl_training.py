@@ -12,6 +12,11 @@ from src.model.lit import create_lit_model
 from src.trainer.utils import create_trainer
 from src.datasets.lit import ContrastiveIntronsDataModule
 
+# os.environ['WANDB_INIT_TIMEOUT'] = '600'
+def get_optimal_num_workers():
+    num_cpus = os.cpu_count()
+    num_gpus = torch.cuda.device_count()
+    return min(num_cpus // max(1, num_gpus), 16)
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
 def main(config: OmegaConf):
@@ -21,6 +26,7 @@ def main(config: OmegaConf):
     OmegaConf.register_new_resolver('div_up', lambda x, y: (x + y - 1) // y)
     OmegaConf.register_new_resolver('min', lambda x, y: min([x, y]))
     OmegaConf.register_new_resolver('device_count', torch.cuda.device_count)
+    OmegaConf.register_new_resolver('optimal_workers', lambda: get_optimal_num_workers())
 
     # Print and process configuration
     print_config(config, resolve=True)

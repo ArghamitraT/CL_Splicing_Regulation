@@ -3,5 +3,6 @@ bp_per_token: 1
 embedding_dim: 768
 vocab_size: 11
 rcps: False
+maxpooling: true
 _name_: ResNet1D
 

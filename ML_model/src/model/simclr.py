@@ -17,9 +17,15 @@ class SimCLRModule(nn.Module):
             output_dim=self.projection_dim,
         )
 
+    # def forward(self, x):
+    #     features = self.encoder(x)
+    #     embedding = features.mean(dim=1)
+    #     z = self.projection_head(embedding)
+    #     return z
+    
     def forward(self, x):
-        features = self.encoder(x)
-        embedding = features.mean(dim=1)
+        embedding = self.encoder(x)
+        # embedding = features.mean(dim=1)
         z = self.projection_head(embedding)
         return z
     

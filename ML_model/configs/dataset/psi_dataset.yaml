@@ -1,7 +1,7 @@
 seq_len: 201  # PSI regression uses sequences of 201 bp (adjust if needed)
 data_file: "/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dict.pkl"  # New PSI dataset
 batch_size_per_device: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
-num_workers: 2  # Increase for faster data loading
+num_workers: ${optimal_workers:}  # Increase for faster data loading
 train_ratio: 0.8
 val_ratio: 0.1
 test_ratio: 0.1

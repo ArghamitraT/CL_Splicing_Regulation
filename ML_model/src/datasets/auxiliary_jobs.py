@@ -58,6 +58,9 @@ class PSIRegressionDataModule(pl.LightningDataModule):
         self.num_workers = config.dataset.num_workers
         self.train_ratio = config.dataset.train_ratio
         self.val_ratio = config.dataset.val_ratio
+        # (AT)
+        # self.train_ratio = 0.1
+        # self.val_ratio = 0.1
         self.test_ratio = config.dataset.test_ratio
         self.tokenizer = hydra.utils.instantiate(config.tokenizer)
         # self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)

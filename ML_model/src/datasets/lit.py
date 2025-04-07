@@ -40,15 +40,15 @@ class DummyDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         train_dataset = NucleotideSequencePairDataset(self.train_sequences_1, self.train_sequences_2, self.tokenizer)
-        return DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
     def val_dataloader(self):
         val_dataset = NucleotideSequencePairDataset(self.val_sequences_1, self.val_sequences_2, self.tokenizer)
-        return DataLoader(val_dataset, batch_size=self.batch_size)
+        return DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True)
 
     def test_dataloader(self):
         test_dataset = NucleotideSequencePairDataset(self.test_sequences_1, self.test_sequences_2, self.tokenizer)
-        return DataLoader(test_dataset, batch_size=self.batch_size)
+        return DataLoader(test_dataset, batch_size=self.batch_size, shuffle=True)
     
 
 class ContrastiveIntronsDataModule(pl.LightningDataModule):
