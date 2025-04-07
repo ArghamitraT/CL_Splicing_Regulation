@@ -1,1 +1,1 @@
-# Decoding splicing regulation with contrastive learning
+# Decoding splicing regulation with contrastive learning.
