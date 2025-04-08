@@ -62,7 +62,7 @@ def main(config: OmegaConf):
 
     if config.aux_models.warm_start:
         # simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
-        simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__16_53_44/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+        simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__22_51_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
 
         ckpt = torch.load(simclr_ckpt)
         state_dict = ckpt["state_dict"]

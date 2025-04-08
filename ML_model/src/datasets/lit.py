@@ -87,6 +87,13 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         )  
     
     def collate_fn(self, batch):
+
+        # Remove samples that returned None (e.g., missing species)
+        batch = [item for item in batch if item is not None]
+
+        if len(batch) == 0:
+            raise ValueError("All items in batch were None — likely due to missing species.")
+
         # Separate all augmentations from batch into two lists
         view1_sequences = [item[0] for item in batch]
         view2_sequences = [item[1] for item in batch]

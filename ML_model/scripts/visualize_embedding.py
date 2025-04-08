@@ -1,5 +1,8 @@
 import sys
 import os
+import torch
+import torch.nn.functional as F
+import random
 
 # Add the parent directory (main) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -28,7 +31,7 @@ def get_optimal_num_workers():
 
 def get_2view_embedding(config, device, view0, view1):
     lit_model = create_lit_model(config)
-    simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__16_53_44/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+    simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__22_51_31/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
     ckpt = torch.load(simclr_ckpt, map_location=device)
     state_dict = ckpt["state_dict"]
     cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
@@ -73,7 +76,7 @@ def get_2view_embedding(config, device, view0, view1):
 def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     # Load the pretrained model
     lit_model = create_lit_model(config)
-    simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__16_53_44/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+    simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__22_51_31/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
     ckpt = torch.load(simclr_ckpt, map_location=device)
     state_dict = ckpt["state_dict"]
     cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
@@ -82,7 +85,10 @@ def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     lit_model.eval()
 
     # Step 1: Choose one anchor sample from the batch
-    anchor_idx = 0
+    import random
+    anchor_idx = random.randint(0, len(view0) - 1)
+    # anchor_idx = 0
+
 
     # Step 2: Get raw dataset and tokenizer
     original_dataset = train_loader.dataset.dataset
@@ -96,15 +102,6 @@ def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     aug_tensor = torch.stack([
         torch.tensor(tokenizer(seq)["input_ids"]) for seq in augmentations
     ]).to(device)
-
-    # # Step 5: Get embeddings for all positive augmentations
-    # with torch.no_grad():
-    #     z_anchor_aug = lit_model(aug_tensor)  # (N_species, D)
-
-    # # se through the model to get embeddings
-    # lit_model.eval()
-    # with torch.no_grad():
-    #     z_anchor_aug = lit_model(aug_tensor)  # (N_species, D)
 
     # Step 6: Get anchor embeddings for all other batch samples
     other_indices = [i for i in range(len(view0)) if i != anchor_idx]
@@ -134,9 +131,50 @@ def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     plt.legend(labels=["Augmentations of One Exon", "Other Anchors"])
     plt.axis("off")
     plt.tight_layout()
+    plt.title(f'id{anchor_idx}__{exon_name}')
     plt.savefig(f'/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/figures/tsne{trimester}.png')
 
+def distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer):
+    # Load the pretrained model
+    lit_model = create_lit_model(config)
+    simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__22_51_31/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+    ckpt = torch.load(simclr_ckpt, map_location=device)
+    state_dict = ckpt["state_dict"]
+    cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
+    lit_model.load_state_dict(cleaned_state_dict, strict=False)
+    lit_model.to(device)
+    lit_model.eval()
 
+    # Step 1: Choose a random anchor from the batch
+    anchor_idx = random.randint(0, len(view0) - 1)
+
+    # Step 2: Get the full dataset
+    original_dataset = train_loader.dataset.dataset
+    exon_name = original_dataset.exon_names[anchor_idx]
+    all_views_dict = original_dataset.data[exon_name]
+
+    # Step 3: Tokenize all augmentations of the anchor exon
+    augmentations = list(all_views_dict.values())
+    aug_tensor = torch.stack([
+        torch.tensor(tokenizer(seq)["input_ids"]) for seq in augmentations
+    ]).to(device)
+
+    with torch.no_grad():
+        # Get embeddings of the anchor's positive augmentations
+        z_anchor_aug = lit_model(aug_tensor)  # (N_species, D)
+
+        # Use the mean or first as representative anchor vector
+        anchor_vec = z_anchor_aug.mean(dim=0)
+
+        # Get embeddings for all other batch items (negatives)
+        other_indices = [i for i in range(len(view0)) if i != anchor_idx]
+        view0_others = view0[other_indices].to(device)
+        z_others = lit_model(view0_others)
+
+    # Step 4: Compute distances
+    dist_to_pos = F.pairwise_distance(anchor_vec.unsqueeze(0), z_anchor_aug)  # (N_species,)
+    dist_to_neg = F.pairwise_distance(anchor_vec.unsqueeze(0), z_others) 
+    print()
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
 def main(config: OmegaConf):
@@ -165,7 +203,8 @@ def main(config: OmegaConf):
     view0, view1 = batch  # assuming contrastive pair
 
     # get_2view_embedding(config, device, view0, view1)
-    all_pos_of_anchor(config, device, view0, train_loader, tokenizer)
+    # all_pos_of_anchor(config, device, view0, train_loader, tokenizer)
+    distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer)
     
 
 if __name__ == "__main__":
