@@ -56,11 +56,11 @@ for header, sequence in zip(lines[::2], lines[1::2]):               # zip pairs 
                              end_coord, strand, aa_sequence))
 
 df = pd.DataFrame(data, columns = [
-     'Species Name', 'Exon Number', 'AA Length', 'Start Phase', 'End Phase', 'Chromosome', 'Start Coord', 
-     'End Coord', 'Strand', 'Sequence'
+     'Species', 'Number', 'AA Len', 'Start Phase', 'End Phase', 'Chromosome', 'Start Coord', 
+     'End Coord', 'Strand', 'Seq'
 ])
 
-file_name = "foxp2-aa-sequences"
+file_name = "foxp2-aa-seqs"
 full_name = f'/gpfs/commons/home/nkeung/data/processed_data/{file_name}'
 df.to_csv(full_name+".csv", index=False)
 
