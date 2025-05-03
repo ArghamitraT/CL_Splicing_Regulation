@@ -50,6 +50,7 @@ class LitModel(pl.LightningModule):
 
         print(f"\nEpoch {self.current_epoch} took {epoch_time:.2f} seconds.")
         print(f"GPU Memory Used: {gpu_memory:.2f} GB, Reserved: {cpu_memory:.2f} GB, Peak: {total_cpu_memory:.2f} GB")
+        torch.cuda.empty_cache()
 
     
     def setup(self, stage=None):

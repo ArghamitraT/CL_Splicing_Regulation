@@ -31,32 +31,32 @@ class ContrastiveIntronsDataset(Dataset):
         return len(self.data)
 
     
-    # def __getitem__(self, idx):
-    #     # Randomly select an exon
-    #     exon_name = self.exon_names[idx]
-    #     intronic_sequences = self.data[exon_name]
-                
-    #     # Randomly sample two augmentations (intronic sequences)
-    #     species_sample = random.sample(intronic_sequences.keys(), 2)
-    #     # Retrieve the sequences for the sampled species
-    #     augmentation1 = intronic_sequences[species_sample[0]]
-    #     augmentation2 = intronic_sequences[species_sample[1]]
-        
-    #     return augmentation1, augmentation2
-
     def __getitem__(self, idx):
-
-        debug_warning()  # will only print the first time
         # Randomly select an exon
         exon_name = self.exon_names[idx]
         intronic_sequences = self.data[exon_name]
                 
         # Randomly sample two augmentations (intronic sequences)
-        species_1, species_2 = 'hg38', 'panTro4'
-        if species_1 not in intronic_sequences or species_2 not in intronic_sequences:
-            return None  # Let collate_fn handle skipping this
-
-        augmentation1 = intronic_sequences[species_1]
-        augmentation2 = intronic_sequences[species_2]
-
+        species_sample = random.sample(intronic_sequences.keys(), 2)
+        # Retrieve the sequences for the sampled species
+        augmentation1 = intronic_sequences[species_sample[0]]
+        augmentation2 = intronic_sequences[species_sample[1]]
+        
         return augmentation1, augmentation2
+
+    # def __getitem__(self, idx):
+
+    #     debug_warning()  # will only print the first time
+    #     # Randomly select an exon
+    #     exon_name = self.exon_names[idx]
+    #     intronic_sequences = self.data[exon_name]
+                
+    #     # Randomly sample two augmentations (intronic sequences)
+    #     species_1, species_2 = 'hg38', 'panTro4'
+    #     if species_1 not in intronic_sequences or species_2 not in intronic_sequences:
+    #         return None  # Let collate_fn handle skipping this
+
+    #     augmentation1 = intronic_sequences[species_1]
+    #     augmentation2 = intronic_sequences[species_2]
+
+    #     return augmentation1, augmentation2
