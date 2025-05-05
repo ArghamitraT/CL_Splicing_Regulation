@@ -22,36 +22,6 @@ def create_job_dir(dir="", fold_name = ""):
 #job_path = create_job_dir(fold_name="job")
 
 ### it calls the .py file
-# def create_prg_file(prg_file_path):
-   
-    
-#     header = f"""#!/bin/bash
-#     set -e
-#     cd $HOME
-#     source ~/.bashrc
-#     conda activate cl_splicing_regulation
-#     WORKDIR={data_dir}
-#     cd $WORKDIR
-#     python -m scripts.cl_training \\
-#             task=introns_cl \\
-#             task.val_check_interval=512\\
-#             task.global_batch_size=512\\
-#             dataset.num_workers=4 \\
-#             trainer.max_epochs=100\\
-#             tokenizer="custom_tokenizer" \\
-#             embedder="resnet" \\
-#             optimizer="sgd" \\
-#             ++wandb.dir="'{wandb_dir}'"\\
-#             ++logger.name="'{slurm_file_name}{trimester}'"\\
-#             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
-#             ++hydra.run.dir={hydra_dir}\\
-#     """
-    
-#     with open(prg_file_path, "w") as f:
-#         f.write(header)
-    
-#     return prg_file_path
-
 def create_prg_file(prg_file_path):
    
     
@@ -59,23 +29,20 @@ def create_prg_file(prg_file_path):
     set -e
     cd $HOME
     source ~/.bashrc
-    conda activate cl_splicing_regulation
+    conda activate cl_splicing_regulation2
     WORKDIR={data_dir}
     cd $WORKDIR
-    python -m scripts.psi_regression_training \\
-            task=psi_regression_task \\
-            task.val_check_interval=0.5\\
-            task.global_batch_size=4096\\
-            trainer.max_epochs=100\\
-            tokenizer="custom_tokenizer" \\
-            embedder="resnet" \\
-            optimizer="sgd" \\
-            optimizer.lr=1e-3 \\
-            aux_models.freeze_encoder=false\\
-            aux_models.warm_start=false\\
-            trainer.devices=1\\
+    python -m scripts.cl_training \\
+            task={task} \\
+            task.val_check_interval={val_check_interval}\\
+            task.global_batch_size={global_batch_size}\\
+            trainer.max_epochs={max_epochs}\\
+            tokenizer={tokenizer} \\
+            embedder={embedder} \\
+            embedder.maxpooling={maxpooling} \\
+            optimizer={optimizer} \\
             ++wandb.dir="'{wandb_dir}'"\\
-            ++logger.name="'slurm_{slurm_file_name}{trimester}'"\\
+            ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
             ++hydra.run.dir={hydra_dir}\\
             ++logger.notes="{wandb_logger_NOTES}"
@@ -102,14 +69,15 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     "##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION\n" + \
     "##NECESSARY JOB SPECIFICATIONS\n" + \
     f"#SBATCH --job-name={show_name}      #Set the job name to \"JobExample1\"\n" + \
-    "#SBATCH --partition=gpu     \n" + \
+    "#SBATCH --partition=columbia     \n" + \
+    "#SBATCH --account=columbia     \n" + \
     f"#SBATCH --gres=gpu:{gpu_num}     \n" + \
     f"#SBATCH --time={hour}:45:00              #Set the wall clock limit \n" + \
     f"#SBATCH --mem={memory}G              \n" + \
     f"#SBATCH --cpus-per-task={nthred}                   \n" + \
     "#SBATCH --mail-type=END,FAIL    \n" + \
     f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
+    "#SBATCH --mail-user=at3836@columbia.edu                    \n" + \
     f"{prg_file_path}"
 
     with open (slurm_file_path, "w") as f:
@@ -125,10 +93,11 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
     return file_name
 
 
-
-main_data_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results"
-job_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/cluster_job_submission_files"
-code_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model"
+server_name = 'EMPRAI'
+server_path = '/mnt/home/at3836/'
+main_data_dir = server_path+"Contrastive_Learning/files/results"
+job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
+code_dir = server_path+"Contrastive_Learning/code/ML_model"
 
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)
 data_dir   = create_job_dir(dir= data_dir_0, fold_name= "files")
@@ -140,16 +109,23 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'PSIresnet'
+slurm_file_name = 'CLresnet'
 gpu_num = 1
-hour=3
-memory=80 # GB
+hour = 3
+memory = 100 # GB
 nthred = 8 # number of CPU
+task = "introns_cl" 
+val_check_interval = 0.5
+global_batch_size = 2048
+max_epochs = 50
+tokenizer = "custom_tokenizer" 
+embedder = "resnet"
+maxpooling = True
+optimizer = "sgd"
 readme_comment = (
-    "We are running finetuning for 100 epochs. no warmstart, to establish the baseline."
+    "pre-training, 50 epochs"
 )
-wandb_logger_NOTES="no warmstar"
-
+wandb_logger_NOTES="pretraining 50 epochs emprireAI" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
@@ -189,8 +165,8 @@ def gen_combination():
     os.system(f"cp -r {code_dir}/configs {data_dir}")
     os.system(f"cp -r {code_dir}/src {data_dir}")
     
-    # #os.system(f"cp {utility_file_path} {data_dir}")
-    ## (AT)
+    #os.system(f"cp {utility_file_path} {data_dir}")
+    # (AT)
     os.system(f"chmod u+x {prg_file_path}")
     os.system(f"chmod u+x {slurm_file_path}")
     os.system(f"sbatch {slurm_file_path}")

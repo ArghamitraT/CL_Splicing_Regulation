@@ -62,7 +62,7 @@ def main(config: OmegaConf):
 
     if config.aux_models.warm_start:
         # simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
-        simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__22_51_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+        simclr_ckpt = "/mnt/home/at3836/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
 
         ckpt = torch.load(simclr_ckpt)
         state_dict = ckpt["state_dict"]
@@ -78,7 +78,7 @@ def main(config: OmegaConf):
     # Traingi
     trainer = create_trainer(config)
     trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
-
+    trainer.test(model, datamodule=data_module)
     
 
 if __name__ == "__main__":
@@ -86,50 +86,4 @@ if __name__ == "__main__":
 
 
 
-    # # Decide based on Linear Probing vs. Fine-Tuning
-    # if config.model.freeze_encoder:  # Linear Probing Mode
-    #     print("🚀 Running Linear Probing: Freezing encoder, keeping projection head.")
-    #     simclr_model.load_state_dict(state_dict, strict=False)
-        
-    #     # Freeze encoder weights
-    #     for param in simclr_model.encoder.parameters():
-    #         param.requires_grad = False  
-
-    #     model = PSIRegressionModel(simclr_model, config, freeze_encoder=True)
-
-    # else:  # Fine-Tuning Mode
-    #     print("🔥 Running Fine-Tuning: Training the full encoder, using new head.")
-        
-    #     # Load only encoder weights, discard projection head
-    #     encoder_state_dict = {k.replace("model.encoder.", ""): v for k, v in state_dict.items() if "model.encoder" in k}
-    #     simclr_model.encoder.load_state_dict(encoder_state_dict, strict=False)
-
-    #     model = PSIRegressionModel(simclr_model.encoder, config, freeze_encoder=False)
-
-    # # Create Trainer
-    # trainer = create_trainer(config)
-
-    # # Train the model
-    # trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
-
-
-    #################
-
-
-    # # Load pretrained encoder
-    # encoder = get_simclr_model(config)
-    # encoder.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
-
-    # # Choose training mode (Linear Probing = freeze encoder, Fine-Tuning = train encoder)
-    # freeze_encoder = config.task.mode == "linear_probing"
-
-    # # Create PSI Regression model
-    # model = PSIRegressionModel(encoder, config, freeze_encoder=freeze_encoder)
-
-    # # Create Trainer
-    # trainer = create_trainer(config)
-
-    # # Train the model
-    # trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
-
-
+    

@@ -53,22 +53,35 @@ class PSIRegressionDataModule(pl.LightningDataModule):
             config (OmegaConf): Config object with dataset parameters.
         """
         super().__init__()
-        self.train_file = config.dataset.train_file
-        self.val_file = config.dataset.val_file
-        self.test_file = config.dataset.test_file
+        self.data_file = config.dataset.data_file
         self.batch_size = config.dataset.batch_size_per_device
         self.num_workers = config.dataset.num_workers
+        self.train_ratio = config.dataset.train_ratio
+        self.val_ratio = config.dataset.val_ratio
+        # (AT)
+        # self.train_ratio = 0.1
+        # self.val_ratio = 0.1
+        self.test_ratio = config.dataset.test_ratio
         self.tokenizer = hydra.utils.instantiate(config.tokenizer)
-        
+        # self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+
     def setup(self, stage=None):
         """
         Load dataset and split into train/val/test sets.
         """
-        self.train_set = PSIRegressionDataset(self.train_file, self.tokenizer)
-        self.val_set = PSIRegressionDataset(self.val_file, self.tokenizer)
-        self.test_set = PSIRegressionDataset(self.test_file, self.tokenizer)
-    
-    
+        dataset = PSIRegressionDataset(self.data_file, self.tokenizer)
+
+        # Split dataset
+        dataset_size = len(dataset)
+        train_size = int(self.train_ratio * dataset_size)
+        val_size = int(self.val_ratio * dataset_size)
+        test_size = dataset_size - train_size - val_size
+
+        self.train_set, self.val_set, self.test_set = random_split(
+            dataset,
+            [train_size, val_size, test_size]
+        )
+
     def train_dataloader(self):
         return DataLoader(
             self.train_set,

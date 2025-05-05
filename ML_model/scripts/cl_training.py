@@ -17,6 +17,10 @@ def get_optimal_num_workers():
     num_cpus = os.cpu_count()
     num_gpus = torch.cuda.device_count()
     return min(num_cpus // max(1, num_gpus), 16)
+    # num_cpus = os.cpu_count()
+    # suggested_max = 1  # Override based on warning
+    # return min(num_cpus // max(1, torch.cuda.device_count()), suggested_max)
+
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
 def main(config: OmegaConf):
