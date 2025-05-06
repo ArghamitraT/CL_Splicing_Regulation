@@ -5,6 +5,8 @@ from hydra.utils import instantiate
 from torchmetrics import R2Score
 import time
 from scipy.stats import spearmanr
+from scipy.special import logit
+import numpy as np
 
 class PSIRegressionModel(pl.LightningModule):
     def __init__(self, encoder, config):
@@ -124,6 +126,16 @@ class PSIRegressionModel(pl.LightningModule):
         rho, _ = spearmanr(y_true_all, y_pred_all)
         self.log("test_spearman", rho, prog_bar=True, sync_dist=True)
         print(f"\n🔬 Spearman ρ (test set): {rho:.4f}")
+
+        # Apply logit transformation with clamping to avoid log(0)
+        eps = 1e-6
+        y_true_logit = logit(np.clip(y_true_all/100, eps, 1 - eps))
+        y_pred_logit = logit(np.clip(y_pred_all/100, eps, 1 - eps))
+
+        rho, _ = spearmanr(y_true_logit, y_pred_logit)
+        self.log("test_spearman_logit", rho, prog_bar=True, sync_dist=True)
+        print(f"\n🔬 Spearman ρ (logit PSI, test set): {rho:.4f}")
+
 
 
     def on_train_epoch_start(self):

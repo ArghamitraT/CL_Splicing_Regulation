@@ -1,7 +1,10 @@
 seq_len: 201  # PSI regression uses sequences of 201 bp (adjust if needed)
-train_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_intron_sequences_dict.pkl"
-val_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_intron_sequences_dict.pkl"
-test_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_intron_sequences_dict.pkl"
+# train_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_intron_sequences_dict.pkl"
+# val_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_intron_sequences_dict.pkl"
+# test_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_intron_sequences_dict.pkl"
+train_file: "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_intron_sequences_dict.pkl"
+val_file: "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_intron_sequences_dict.pkl"
+test_file: "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_intron_sequences_dict.pkl"
 batch_size_per_device: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
 num_workers: ${optimal_workers:}  # Increase for faster data loading
 # train_ratio: 0.8

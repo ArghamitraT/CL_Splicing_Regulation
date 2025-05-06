@@ -19,6 +19,20 @@ from lightning.pytorch.utilities import rank_zero_only
 def is_list(x):
     return isinstance(x, Sequence) and not isinstance(x, str)
 
+# === Automatic path resolver for 'Contrastive_Learning' ===
+# from pathlib import Path
+
+# def find_contrastive_root(start_path: Path = Path(__file__)) -> Path:
+#     for parent in start_path.resolve().parents:
+#         if parent.name == "Contrastive_Learning":
+#             return parent
+#     raise RuntimeError("Could not find 'Contrastive_Learning' directory.")
+
+# # Register resolver ONCE
+# if not OmegaConf.has_resolver("contrastive_root"):
+#     CONTRASTIVE_ROOT = find_contrastive_root()
+#     OmegaConf.register_new_resolver("contrastive_root", lambda: str(CONTRASTIVE_ROOT))
+
 
 def is_dict(x):
     return isinstance(x, Mapping)

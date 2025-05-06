@@ -1,3 +1,19 @@
+from pathlib import Path
+from omegaconf import OmegaConf
+import os
+
+def find_contrastive_root(start: Path = Path(__file__)) -> Path:
+    for parent in start.resolve().parents:
+        if parent.name == "Contrastive_Learning":
+            return parent
+    raise RuntimeError("Could not find 'Contrastive_Learning' directory.")
+
+# Set env var *before* hydra loads config
+os.environ["CONTRASTIVE_ROOT"] = str(find_contrastive_root())
+CONTRASTIVE_ROOT = find_contrastive_root()
+
+
+
 import sys
 import os
 import time
@@ -28,8 +44,17 @@ from src.utils.config import print_config
 from src.model.lit import create_lit_model
 from src.datasets.lit import ContrastiveIntronsDataModule
 
+# def get_best_checkpoint():
+#     return "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+# def get_best_checkpoint():
+#     return os.path.join(
+#         main_dir,
+#         "../../files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+#     )
+
 def get_best_checkpoint():
-    return "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_04_05__22_51_31/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+    return str(CONTRASTIVE_ROOT / "files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt")
+
 
 def load_pretrained_model(config, device):
     model = create_lit_model(config)
@@ -63,7 +88,9 @@ def get_2view_embedding(config, device, view0, view1):
     plt.title("t-SNE: Anchor–Positive Pairs")
     plt.axis("off")
     plt.tight_layout()
-    plt.savefig(f'../figures/tsne{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
+    plt.savefig(f'{main_dir}/figures/tsne{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
+
+    # plt.savefig(f'../figures/tsne{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
 
 def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     model = load_pretrained_model(config, device)
@@ -96,7 +123,9 @@ def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     plt.axis("off")
     plt.tight_layout()
     plt.title(f'id{anchor_idx}__{exon_name}')
-    plt.savefig(f'{main_dir}figures/all_pos_of_anchor{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
+    # plt.savefig(f'{main_dir}figures/all_pos_of_anchor{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
+    plt.savefig(f'{main_dir}/figures/all_pos_of_anchor{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
+
 
 def distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer):
     model = load_pretrained_model(config, device)
@@ -125,10 +154,31 @@ def distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer):
     print(f"Distances to positives (mean): {dist_to_pos.mean():.4f}")
     print(f"Distances to negatives (mean): {dist_to_neg.mean():.4f}")
 
-main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/'
+
+# from pathlib import Path
+
+
+# def find_contrastive_root(start_path: Path) -> Path:
+#     """Walk up to find the 'Contrastive_Learning' project root."""
+#     for parent in start_path.resolve().parents:
+#         if parent.name == "Contrastive_Learning":
+#             return parent
+#     raise RuntimeError("Could not find 'Contrastive_Learning' directory in path hierarchy.")
+
+# # Locate current file and set project root
+# current_file = Path(__file__).resolve()
+# CONTRASTIVE_ROOT = find_contrastive_root(current_file)
+# Register Hydra resolver
+# OmegaConf.register_new_resolver("contrastive_root", lambda: str(CONTRASTIVE_ROOT))
+
+# Define main directory for code files (e.g., for saving plots)
+main_dir = str(CONTRASTIVE_ROOT / "code" / "ML_model")
+
+# main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/'
 @hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
 def main(config: OmegaConf):
     # Register Hydra resolvers
+    # OmegaConf.register_new_resolver("contrastive_root", lambda: str(CONTRASTIVE_ROOT))
     OmegaConf.register_new_resolver('eval', eval)
     OmegaConf.register_new_resolver('div_up', lambda x, y: (x + y - 1) // y)
     OmegaConf.register_new_resolver('min', lambda x, y: min([x, y]))
