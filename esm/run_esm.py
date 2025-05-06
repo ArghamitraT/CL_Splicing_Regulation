@@ -31,3 +31,4 @@ for i, tokens_len in enumerate(batch_lens):
     sequence_representations[name] = vector
 
 torch.save(sequence_representations, "/gpfs/commons/home/nkeung/data/processed_data/foxp2-representations.pt")
+# OR convert pytorch to numpy, then save with pickle

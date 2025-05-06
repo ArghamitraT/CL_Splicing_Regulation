@@ -20,10 +20,5 @@ def build_full_seq(input_file):
             exon = exon.replace("\n", "")
             sequence += exon
         species_seq.append((species, sequence))
-    
-    for species in species_seq:
-        print(species)
 
     return species_seq
-
-seqs = build_full_seq("/gpfs/commons/home/nkeung/data/processed_data/foxp2-aa-seqs.csv")
