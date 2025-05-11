@@ -42,7 +42,7 @@ class PSIRegressionDataset(Dataset):
             max_length=self.max_length,
         ).input_ids.squeeze(0)  # Remove batch dimension
 
-        return encoded_seq, torch.tensor(psi_value, dtype=torch.float32)
+        return encoded_seq, torch.tensor(psi_value, dtype=torch.float32), entry_id
 
 class PSIRegressionDataModule(pl.LightningDataModule):
     def __init__(self, config):

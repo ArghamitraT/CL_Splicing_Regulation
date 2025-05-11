@@ -1,7 +1,7 @@
 import pickle
 
 # Path to your pickle file
-pkl_path = "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_intron_sequences_dict.pkl"
+pkl_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psiWmean_intron_sequences_dict.pkl"
 
 # Load the file
 with open(pkl_path, "rb") as f:

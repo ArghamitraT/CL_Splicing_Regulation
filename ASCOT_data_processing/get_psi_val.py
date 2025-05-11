@@ -3,12 +3,15 @@ import numpy as np
 import os
 import re
 
-# Load the filtered exon PSI file
-file_name = "test_cassette_exons"
-main_dir = "/home/argha/Contrastive_Learning/data/ASCOT/"
 
-input_path = main_dir+file_name+".csv"
-output_dir = "/home/argha/Contrastive_Learning/data/ASCOT/psi_per_tissue/"+file_name+"/"
+# Get full absolute path of this script
+script_path = os.path.abspath(__file__)
+base_dir = script_path.split("Contrastive_Learning")[0] + "Contrastive_Learning"
+
+# Load the filtered exon PSI file
+file_name = "variable_cassette_exons"
+input_path = os.path.join(base_dir, "data", "ASCOT", file_name + ".csv")
+output_dir = os.path.join(base_dir, "data", "ASCOT", "psi_per_tissue", file_name)
 os.makedirs(output_dir, exist_ok=True)
 
 # Load the filtered exon PSI file
@@ -37,6 +40,10 @@ def calculate_intron(start, end, strand):
 # Extract tissue columns (assumed to start at column 12 onward)
 tissue_columns = df.columns[12:]
 
+tissue_data = df[tissue_columns].replace(-1, np.nan)
+df["psi_mean_across_tissues"] = tissue_data.mean(axis=1, skipna=True)
+
+
 for tissue in tissue_columns:
     records = []
 
@@ -57,7 +64,7 @@ for tissue in tissue_columns:
         psi = row[tissue]
         if psi == -1 or pd.isna(psi):
             continue  # skip missing PSI values
-
+        psi_mean = row["psi_mean_across_tissues"]
         records.append({
             "Exon Name": exon_name,
             "Species Name": "hg38",
@@ -68,12 +75,13 @@ for tissue in tissue_columns:
             "Strand": strand,
             "Intron Start": intron_start,
             "Intron End": intron_end,
-            "PSI": psi
+            "PSI": psi,
+            "PSI_Mean_All_Tissues": psi_mean
         })
 
     # Clean and generate output file name
     safe_tissue_name = clean_filename(tissue)
-    output_path = os.path.join(output_dir, f"{safe_tissue_name}_psi.csv")
+    output_path = os.path.join(output_dir, f"{safe_tissue_name}_psiWmean.csv")
 
     pd.DataFrame(records).to_csv(output_path, index=False)
     print(f"Saved {len(records)} records to {output_path}")

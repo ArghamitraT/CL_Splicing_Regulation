@@ -9,13 +9,17 @@ import os
 import time
 import pickle
 
+script_path = os.path.abspath(__file__)
+base_dir = script_path.split("Contrastive_Learning")[0] + "Contrastive_Learning"
+
 # Load the intron positions CSV and the species-to-URL mapping
 # csv_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/types_Lung_with_psi_dummy.csv'  # Replace with your CSV file path
 data_division = 'variable_cassette_exons'
-file_name = 'Retina___Eye_psi.csv'
-csv_main_dir = '/home/argha/Contrastive_Learning/data/ASCOT/psi_per_tissue/'
-refseq_main_folder = '/home/argha/Contrastive_Learning/data/multiz100way/refseq/'  # Replace with your reference sequence folder
-output_path = '/home/argha/Contrastive_Learning/data/final_data/ACOT_finetuning/'   # Replace with your desired output path
+file_name = 'Retina___Eye_psiWmean.csv'
+
+csv_main_dir = os.path.join(base_dir,'data/ASCOT/psi_per_tissue/')
+refseq_main_folder = os.path.join(base_dir,'data/multiz100way/refseq/')  # Replace with your reference sequence folder
+output_path = os.path.join(base_dir,'data/final_data/ASCOT_finetuning/')   # Replace with your desired output path
 
 
 
@@ -23,7 +27,13 @@ csv_file_path = csv_main_dir + data_division +'/'+ file_name  # Replace with you
 
 
 df = pd.read_csv(csv_file_path)
-exon_sequences_dict = {exon: {'psi_val': None} for exon in df['Exon Name'].unique()}
+exon_sequences_dict = {
+    exon: {
+        'psi_val': None,
+        'psi_mean': None
+    }
+    for exon in df['Exon Name'].unique()
+}
 
 # Initialize counters for total introns and AG-ending introns
 total_introns_pos, total_introns_neg = 0, 0
@@ -76,6 +86,7 @@ def extract_intron_sequence(row):
         exon_sequences_dict[exon_name][species] = intron_sequence
         if exon_sequences_dict[exon_name]['psi_val'] is None:
             exon_sequences_dict[exon_name]['psi_val'] = row['PSI']
+            exon_sequences_dict[exon_name]['psi_mean'] = row['PSI_Mean_All_Tissues']
 
 
 species_arr = ['hg38']
