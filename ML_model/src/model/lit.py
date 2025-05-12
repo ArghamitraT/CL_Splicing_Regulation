@@ -74,13 +74,23 @@ class LitModel(pl.LightningModule):
         return self.model.forward(*inputs)
 
     def training_step(self, batch, batch_idx):
+        import time
+        start = time.time()
+
         view0,view1 = batch
         # Forward pass
+        start_fwd = time.time()
         z0 = self.forward(view0)
         z1 = self.forward(view1)
-        
+        # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
+
         loss = self.loss_fn(z0, z1)
-        self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+        # self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+        self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True, batch_size=len(view0))
+        # ⏱️ Print timing
+        step_time = time.time() - start
+        # print(f"⏱️ Batch {batch_idx}: {step_time:.2f}s")
+
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -90,7 +100,8 @@ class LitModel(pl.LightningModule):
         z1 = self.forward(view1)
         
         loss = self.loss_fn(z0, z1)
-        self.log('val_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+        # self.log('val_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+        self.log('val_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True, batch_size=len(view0))
         return loss
 
     def configure_optimizers(self):

@@ -1,8 +1,12 @@
 from src.embedder.ntv2 import NTv2Embedder
 from src.embedder.resnet import ResNet1D
+from src.embedder.interpretable_encoder import InterpretableEncoder1D  
 
-EMBEDDERS = {'NTv2': NTv2Embedder, 'ResNet1D': ResNet1D}
-
+EMBEDDERS = {
+    'NTv2': NTv2Embedder,
+    'ResNet1D': ResNet1D,
+    'InterpretableEncoder1D': InterpretableEncoder1D  
+}
 
 def get_embedder(config):
     """

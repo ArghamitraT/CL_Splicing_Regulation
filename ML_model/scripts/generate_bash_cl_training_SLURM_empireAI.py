@@ -116,16 +116,16 @@ memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 0.5
-global_batch_size = 2048
+global_batch_size = 8192
+embedder="interpretable"
+tokenizer="onehot_tokenizer"
 max_epochs = 50
-tokenizer = "custom_tokenizer" 
-embedder = "resnet"
 maxpooling = True
 optimizer = "sgd"
 readme_comment = (
-    "pre-training, 50 epochs"
+    "pre-training, 50 epochs, interpretable encoder"
 )
-wandb_logger_NOTES="pretraining 50 epochs emprireAI" ## do NOT use any special character or new line
+wandb_logger_NOTES="pretraining 50 epochs interpretable emprireAI" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

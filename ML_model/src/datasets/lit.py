@@ -6,6 +6,39 @@ import numpy as np
 from torch.utils.data import DataLoader, random_split
 from src.datasets.base import NucleotideSequencePairDataset
 from src.datasets.introns_alignment import ContrastiveIntronsDataset
+import time
+
+start = time.time()
+def make_collate_fn(tokenizer, padding_strategy):
+    def collate_fn(batch):
+        from torch.utils.data import get_worker_info
+        import os
+        info = get_worker_info()
+        # print(f"👷 Worker ID: {info.id if info else 'MAIN'}, PID: {os.getpid()}")
+
+        batch = [item for item in batch if item is not None]
+        if len(batch) == 0:
+            raise ValueError("All items in batch were None")
+
+        view1_sequences = [item[0] for item in batch]
+        view2_sequences = [item[1] for item in batch]
+
+        if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):  # 
+            view1 = tokenizer(view1_sequences)
+            view2 = tokenizer(view2_sequences)
+            output = view1, view2
+        elif callable(tokenizer):  # HuggingFace-style
+            view1 = tokenizer(view1_sequences, return_tensors='pt', padding=padding_strategy).input_ids
+            view2 = tokenizer(view2_sequences, return_tensors='pt', padding=padding_strategy).input_ids
+            output = view1, view2
+        else:
+            output = view1_sequences, view2_sequences
+        # print(f"👷 Worker {info.id if info else 'MAIN'}: Collate time = {time.time() - start:.2f}s")
+        return output
+
+
+    return collate_fn
+
 
 class DummyDataModule(pl.LightningDataModule):
     def __init__(self, seq_len: int, num_pairs: int, batch_size: int, tokenizer_name: str):
@@ -63,6 +96,8 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         self.test_ratio = config.dataset.test_ratio
         self.tokenizer = hydra.utils.instantiate(config.tokenizer)
         self.padding_strategy = config.tokenizer.padding
+        self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy)
+
 
     def prepare_data(self):
         # Data preparation steps if needed, such as data checks or downloads.
@@ -86,31 +121,40 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
             [train_size, val_size, test_size]
         )  
     
-    def collate_fn(self, batch):
+    # def collate_fn(self, batch):
 
-        # Remove samples that returned None (e.g., missing species)
-        batch = [item for item in batch if item is not None]
+    #     from torch.utils.data import get_worker_info
+    #     info = get_worker_info()
+    #     print(f"👷 Worker ID: {info.id if info else 'MAIN'}, PID: {os.getpid()}")
 
-        if len(batch) == 0:
-            raise ValueError("All items in batch were None — likely due to missing species.")
 
-        # Separate all augmentations from batch into two lists
-        view1_sequences = [item[0] for item in batch]
-        view2_sequences = [item[1] for item in batch]
+    #     # Remove samples that returned None (e.g., missing species)
+    #     batch = [item for item in batch if item is not None]
+
+    #     if len(batch) == 0:
+    #         raise ValueError("All items in batch were None — likely due to missing species.")
+
+    #     # Separate all augmentations from batch into two lists
+    #     view1_sequences = [item[0] for item in batch]
+    #     view2_sequences = [item[1] for item in batch]
         
-        # Tokenize both views in batch mode
-        view1 = self.tokenizer(
-            view1_sequences, 
-            return_tensors='pt',
-            padding=self.padding_strategy,
-        ).input_ids
-        view2 = self.tokenizer(
-            view2_sequences, 
-            return_tensors='pt',
-            padding=self.padding_strategy,
-        ).input_ids
-        
-        return view1, view2      
+    #     if callable(self.tokenizer):  # HuggingFace tokenizer or similar
+    #         view1 = self.tokenizer(
+    #             view1_sequences,
+    #             return_tensors='pt',
+    #             padding=self.padding_strategy,
+    #         ).input_ids
+    #         view2 = self.tokenizer(
+    #             view2_sequences,
+    #             return_tensors='pt',
+    #             padding=self.padding_strategy,
+    #         ).input_ids
+    #         return view1, view2
+
+    #     else:
+    #         # No tokenizer: pass raw strings to encoder (interpretable encoder will preprocess)
+    #         return view1_sequences, view2_sequences
+            
         
     def train_dataloader(self):
         return DataLoader(
@@ -119,7 +163,9 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
             shuffle=True, 
             num_workers=self.num_workers, 
             collate_fn=self.collate_fn, 
-            pin_memory=True
+            pin_memory=True,
+            prefetch_factor=4,
+            persistent_workers=True
         )
 
     def val_dataloader(self):
@@ -128,7 +174,9 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
             batch_size=self.batch_size, 
             num_workers=self.num_workers, 
             collate_fn=self.collate_fn, 
-            pin_memory=True
+            pin_memory=True,
+            prefetch_factor=4,
+            persistent_workers=True
         )
 
     def test_dataloader(self):

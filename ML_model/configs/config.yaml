@@ -1,11 +1,11 @@
 defaults:
   - _self_
-  - embedder: resnet
+  - embedder: interpretable
   - dataset: introns
   - task: introns_cl
   - trainer: default_trainer
   - callbacks: default_callbacks
-  - tokenizer: custom_tokenizer
+  - tokenizer: onehot_tokenizer
   - loss: ntxent
   - model: simclr
   - optimizer: adamw
@@ -26,7 +26,7 @@ wandb:
 
 logger:
   _target_: lightning.pytorch.loggers.WandbLogger
-  name: ${embedder._name_}-${dataset.seq_len}
+  name: ${embedder._name_}-${dataset.seq_len}-brkpnt
   id: ${task._name_}-${.name}
   project: INTRONS_CL
   group: ${task._name_}

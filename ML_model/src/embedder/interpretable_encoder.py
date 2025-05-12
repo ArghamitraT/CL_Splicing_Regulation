@@ -10,7 +10,6 @@ class ReverseComplement1D(nn.Module):
         self.complement = complement
 
     def forward(self, x):
-        # x: (B, C=4, L)
         rev = torch.flip(x, dims=[-1])            # reverse along sequence
         revcom = rev[:, self.complement, :]       # reverse complement
         return revcom
@@ -20,7 +19,6 @@ class PWMConv1D(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
         super().__init__()
         self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, padding=0, bias=False)
-        # Weight constraint (can be replaced with custom logic if needed)
         nn.init.xavier_uniform_(self.conv.weight)
 
     def forward(self, x):
@@ -47,7 +45,6 @@ class TrainablePooling(nn.Module):
         self.seq_len = seq_len
 
     def forward(self, x):
-        # x: (B, C, L)
         A = self.alpha.repeat(self.seq_len, 1).T.unsqueeze(0)  # (1, C, L)
         W = F.softmax(A * x, dim=-1)
         return torch.sum(W * x, dim=-1)  # (B, C)
@@ -62,6 +59,8 @@ class InterpretableEncoder1D(BaseEmbedder):
                  pooling_window=10,
                  **kwargs):
         super().__init__(name_or_path="InterpretableEncoder1D", bp_per_token=kwargs.get('bp_per_token', None))
+
+        self.seq_len = seq_len  # NEW: for preprocessing
 
         self.rc = ReverseComplement1D()
         self.pwm_conv = PWMConv1D(in_channels, motif_dim, kernel_size=motif_width)
@@ -81,13 +80,48 @@ class InterpretableEncoder1D(BaseEmbedder):
         self.batch_norm = nn.BatchNorm1d(motif_dim)
         self.output_dim = motif_dim
 
-    def forward(self, x, **kwargs):
-        # Input x: (B, L) or (B, 4, L)
-        if x.dim() == 3 and x.size(1) == 4:
-            x_fwd = x
-        else:
-            raise ValueError("Input must be one-hot encoded with shape (B, 4, L)")
+    def _preprocess(self, x):
+        """
+        Accepts:
+            - List[str] or str (DNA sequences)
+            - torch.Tensor of shape (B, 4, L)
+        Returns:
+            - torch.Tensor of shape (B, 4, L)
+        """
+        if isinstance(x, str):
+            x = [x]
 
+        if isinstance(x, list):
+            vocab = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+            one_hots = []
+
+            for seq in x:
+                mat = torch.zeros(4, self.seq_len, dtype=torch.float32)
+                for i, base in enumerate(seq.upper()[:self.seq_len]):
+                    if base in vocab:
+                        mat[vocab[base], i] = 1.0
+                one_hots.append(mat)
+
+            x = torch.stack(one_hots)  # (B, 4, L)
+
+        if not isinstance(x, torch.Tensor) or x.dim() != 3 or x.size(1) != 4:
+            raise ValueError("Input must be one-hot encoded or a string/list of DNA sequences.")
+
+        return x
+    
+    def get_input_dtype_device(self):
+        return self.pwm_conv.conv.weight.dtype, self.pwm_conv.conv.weight.device
+
+
+    def forward(self, x, **kwargs):
+        # dtype, device = self.get_input_dtype_device()
+        # import time
+        # start = time.time()
+        # x = self._preprocess(x).to(dtype=dtype, device=device)
+        # print(f"⏱️ preprocessing took {time.time() - start:.2f}s")
+        x = x.to(dtype=self.pwm_conv.conv.weight.dtype, device=self.pwm_conv.conv.weight.device)
+
+        x_fwd = x
         x_rc = self.rc(x_fwd)
         x_fwd_conv = self.pwm_conv(x_fwd)
         x_rc_conv = self.pwm_conv(x_rc)
@@ -95,11 +129,10 @@ class InterpretableEncoder1D(BaseEmbedder):
         x_rc_conv = torch.flip(x_rc_conv, dims=[-1])  # reverse to align
         x = torch.maximum(x_fwd_conv, x_rc_conv)  # best match per strand
 
-        x = self.maxpool(x)  # reduce length
-
+        x = self.maxpool(x)
         x = self.trainable_scaling(x)
         x = self.activation(x)
-        x = self.trainable_pooling(x)  # (B, C)
+        x = self.trainable_pooling(x)
 
         x = self.interaction(x)
         x = self.batch_norm(x)
@@ -107,7 +140,7 @@ class InterpretableEncoder1D(BaseEmbedder):
 
     def get_last_embedding_dimension(self):
         with torch.no_grad():
-            dummy = torch.randn(2, 4, 500).to(next(self.parameters()).device)
+            dummy = torch.randn(2, 4, self.seq_len).to(next(self.parameters()).device)
             out = self(dummy)
         print(f"Interpretable encoder output dim: {out.shape[-1]}")
         return out.shape[-1]

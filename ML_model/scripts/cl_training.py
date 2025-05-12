@@ -1,8 +1,24 @@
 import sys
 import os
+from pathlib import Path
+from omegaconf import OmegaConf
+import os
 
 # Add the parent directory (main) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+def find_contrastive_root(start: Path = Path(__file__)) -> Path:
+    for parent in start.resolve().parents:
+        if parent.name == "Contrastive_Learning":
+            return parent
+    raise RuntimeError("Could not find 'Contrastive_Learning' directory.")
+
+# Set env var *before* hydra loads config
+os.environ["CONTRASTIVE_ROOT"] = str(find_contrastive_root())
+CONTRASTIVE_ROOT = find_contrastive_root()
+
+
 
 import hydra
 from omegaconf import OmegaConf
@@ -16,7 +32,7 @@ from src.datasets.lit import ContrastiveIntronsDataModule
 def get_optimal_num_workers():
     num_cpus = os.cpu_count()
     num_gpus = torch.cuda.device_count()
-    return min(num_cpus // max(1, num_gpus), 16)
+    return min(num_cpus // max(1, num_gpus), 8)
     # num_cpus = os.cpu_count()
     # suggested_max = 1  # Override based on warning
     # return min(num_cpus // max(1, torch.cuda.device_count()), suggested_max)
