@@ -4,8 +4,8 @@ python -m scripts.cl_training \
         task=introns_cl \
         embedder="interpretable"\
         tokenizer="onehot_tokenizer"\
-        task.global_batch_size=8192\
-        trainer.max_epochs=1 \
+        task.global_batch_size=4096\
+        trainer.max_epochs=10 \
         trainer.val_check_interval=1.0\
         optimizer="sgd" \
         trainer.devices=1\

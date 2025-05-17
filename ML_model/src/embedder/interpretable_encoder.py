@@ -86,21 +86,11 @@ class InterpretableEncoder1D(BaseEmbedder):
 
 
     def forward(self, x, **kwargs):
-        # dtype, device = self.get_input_dtype_device()
-        # import time
-        # start = time.time()
-        # x = self._preprocess(x).to(dtype=dtype, device=device)
-        # print(f"⏱️ preprocessing took {time.time() - start:.2f}s")
+        
         x = x.to(dtype=self.pwm_conv.conv.weight.dtype, device=self.pwm_conv.conv.weight.device)
 
         x_fwd = x
-        x_rc = self.rc(x_fwd) # check if tokenization and reverse is same
-        x_fwd_conv = self.pwm_conv(x_fwd) # need constraints
-        x_rc_conv = self.pwm_conv(x_rc)
-
-        x_rc_conv = torch.flip(x_rc_conv, dims=[-1])  # reverse to align
-        x = torch.maximum(x_fwd_conv, x_rc_conv)  # best match per strand
-
+        x = self.pwm_conv(x_fwd) # need constraints
         x = self.maxpool(x)
         x = self.trainable_scaling(x)
         x = self.activation(x)
