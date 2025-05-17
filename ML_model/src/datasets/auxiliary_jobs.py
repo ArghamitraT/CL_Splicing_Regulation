@@ -33,14 +33,18 @@ class PSIRegressionDataset(Dataset):
         psi_value = entry["psi_val"]
         sequence = entry["hg38"]
 
-        # Tokenize sequence
-        encoded_seq = self.tokenizer(
-            sequence,
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=self.max_length,
-        ).input_ids.squeeze(0)  # Remove batch dimension
+        if callable(self.tokenizer) and not hasattr(self.tokenizer, "vocab_size"):
+            # Custom one-hot tokenizer
+            encoded_seq = self.tokenizer([sequence])[0]  # shape: (C, L)
+        else:
+            # HuggingFace-style tokenizer
+            encoded_seq = self.tokenizer(
+                sequence,
+                return_tensors="pt",
+                padding="max_length",
+                truncation=True,
+                max_length=self.max_length,
+            ).input_ids.squeeze(0)  # shape: (L,)
 
         return encoded_seq, torch.tensor(psi_value, dtype=torch.float32), entry_id
 

@@ -1,11 +1,11 @@
 defaults:
   - _self_
-  - embedder: resnet
+  - embedder: interpretable
   - dataset: psi_dataset  # Custom dataset for PSI regression
   - task: psi_regression_task
   - trainer: default_trainer
   - callbacks: default_callbacks
-  - tokenizer: custom_tokenizer
+  - tokenizer: onehot_tokenizer
   - loss: mse_loss
   - model: simclr
   - aux_models: psi_regression_model 

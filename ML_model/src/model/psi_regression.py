@@ -179,22 +179,22 @@ class PSIRegressionModel(pl.LightningModule):
         print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
             
         # === Plotting and saving ===
-        plt.figure(figsize=(5, 5))
-        plt.scatter(delta_y_pred, delta_y_true, alpha=0.6, s=10, color='black')
-        plt.plot(
-            np.unique(delta_y_pred),
-            np.poly1d(np.polyfit(delta_y_pred, delta_y_true, 1))(np.unique(delta_y_pred)),
-            linestyle='--',
-            color='gray'
-        )
-        plt.xlabel("Predicted Δ logit(Ψ)")
-        plt.ylabel("Measured Δ logit(Ψ)")
-        plt.title("Differential Splicing (logit scale)")
-        plt.text(0.05, 0.95, f"ρ = {rho:.2f}", transform=plt.gca().transAxes, ha='left', va='top', fontsize=12)
-        plt.grid(True, linestyle=':', linewidth=0.5)
-        plt.tight_layout()
-        plt.savefig("/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/figures/delta_logit_scatter.png", dpi=300)
-        print("📈 Plot saved as delta_logit_scatter.png")
+        # plt.figure(figsize=(5, 5))
+        # plt.scatter(delta_y_pred, delta_y_true, alpha=0.6, s=10, color='black')
+        # plt.plot(
+        #     np.unique(delta_y_pred),
+        #     np.poly1d(np.polyfit(delta_y_pred, delta_y_true, 1))(np.unique(delta_y_pred)),
+        #     linestyle='--',
+        #     color='gray'
+        # )
+        # plt.xlabel("Predicted Δ logit(Ψ)")
+        # plt.ylabel("Measured Δ logit(Ψ)")
+        # plt.title("Differential Splicing (logit scale)")
+        # plt.text(0.05, 0.95, f"ρ = {rho:.2f}", transform=plt.gca().transAxes, ha='left', va='top', fontsize=12)
+        # plt.grid(True, linestyle=':', linewidth=0.5)
+        # plt.tight_layout()
+        # plt.savefig("/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/figures/delta_logit_scatter.png", dpi=300)
+        # print("📈 Plot saved as delta_logit_scatter.png")
 
 
     def on_train_epoch_start(self):

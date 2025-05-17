@@ -2,9 +2,23 @@ import sys
 import os
 import subprocess
 import torch
+from pathlib import Path
+from omegaconf import OmegaConf
 
 # Add the parent directory (main) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+def find_contrastive_root(start: Path = Path(__file__)) -> Path:
+    for parent in start.resolve().parents:
+        if parent.name == "Contrastive_Learning":
+            return parent
+    raise RuntimeError("Could not find 'Contrastive_Learning' directory.")
+
+# Set env var *before* hydra loads config
+# os.environ["CONTRASTIVE_ROOT"] = str(find_contrastive_root())
+root_path = str(find_contrastive_root())
+os.environ["CONTRASTIVE_ROOT"] = root_path
+
 
 import hydra
 from omegaconf import OmegaConf
@@ -21,6 +35,10 @@ def get_optimal_num_workers():
     num_cpus = os.cpu_count()
     num_gpus = torch.cuda.device_count()
     return min(num_cpus // max(1, num_gpus), 16)
+
+######### parameters #############
+result_dir = "exprmnt_2025_05_11__22_22_24"
+######### parameters ##############
 
 
 
@@ -63,7 +81,8 @@ def main(config: OmegaConf):
     if config.aux_models.warm_start:
         # simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
         # simclr_ckpt = "/mnt/home/at3836/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
-        simclr_ckpt = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
+        
+        simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
 
         ckpt = torch.load(simclr_ckpt)
         state_dict = ckpt["state_dict"]
