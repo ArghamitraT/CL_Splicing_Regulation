@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - embedder: interpretable
+  - embedder: tisfm
   - dataset: introns
   - task: introns_cl
   - trainer: default_trainer
