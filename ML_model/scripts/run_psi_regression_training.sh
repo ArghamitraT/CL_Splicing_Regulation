@@ -1,9 +1,10 @@
 # NOTES="No Contrastive Learning\nLinear Probing\nSGD optimizer\nFrozen encoder\nMean pooling\nSmall ResNet"
-NOTES="Anshul data"
+NOTES="Anshul data dropout once"
 
 python -m scripts.psi_regression_training \
         task.global_batch_size=2048\
-        trainer.max_epochs=60 \
+        task.pretraining_weights="exprmnt_2025_05_17__19_11_12"\
+        trainer.max_epochs=30 \
         trainer.val_check_interval=0.5\
         embedder="interpretable"\
         tokenizer="onehot_tokenizer"\

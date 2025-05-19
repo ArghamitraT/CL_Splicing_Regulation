@@ -36,9 +36,6 @@ def get_optimal_num_workers():
     num_gpus = torch.cuda.device_count()
     return min(num_cpus // max(1, num_gpus), 16)
 
-######### parameters #############
-result_dir = "exprmnt_2025_05_11__22_22_24"
-######### parameters ##############
 
 
 
@@ -64,6 +61,8 @@ def main(config: OmegaConf):
     OmegaConf.register_new_resolver('min', lambda x, y: min([x, y]))
     OmegaConf.register_new_resolver('device_count', torch.cuda.device_count)
     OmegaConf.register_new_resolver('optimal_workers', lambda: get_optimal_num_workers())
+
+    result_dir = config.task.pretraining_weights
 
     
     # Print and process configuration

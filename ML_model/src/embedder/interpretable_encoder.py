@@ -61,6 +61,7 @@ class InterpretableEncoder1D(BaseEmbedder):
         super().__init__(name_or_path="InterpretableEncoder1D", bp_per_token=kwargs.get('bp_per_token', None))
 
         self.seq_len = seq_len  # NEW: for preprocessing
+        self.dropout = nn.Dropout(p=0.2)
 
         self.rc = ReverseComplement1D()
         self.pwm_conv = PWMConv1D(in_channels, motif_dim, kernel_size=motif_width)
@@ -94,11 +95,28 @@ class InterpretableEncoder1D(BaseEmbedder):
         x = self.maxpool(x)
         x = self.trainable_scaling(x)
         x = self.activation(x)
-        x = self.trainable_pooling(x)
-
-        x = self.interaction(x)
+        x = self.dropout(x)               # Dropout on pre-pooled activations
+        matches = self.trainable_pooling(x)
+        weights = self.interaction(matches)
+        weights = torch.sigmoid(weights)
+        x = weights * matches
+        # x = self.dropout(x)               # Dropout on reweighted summary
         x = self.batch_norm(x)
         return x
+
+        # x = x.to(dtype=self.pwm_conv.conv.weight.dtype, device=self.pwm_conv.conv.weight.device)
+
+        # x_fwd = x
+        # x = self.pwm_conv(x_fwd) # need constraints
+        # x = self.maxpool(x)
+        # x = self.trainable_scaling(x)
+        # x = self.activation(x)
+        # x = self.trainable_pooling(x)
+
+        # x = self.interaction(x)
+        # x = self.batch_norm(x)
+        # return x
+
 
     def get_last_embedding_dimension(self):
         with torch.no_grad():
@@ -136,3 +154,9 @@ class InterpretableEncoder1D(BaseEmbedder):
             raise ValueError("Input must be one-hot encoded or a string/list of DNA sequences.")
 
         return x
+
+
+
+
+
+

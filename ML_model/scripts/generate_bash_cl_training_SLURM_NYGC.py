@@ -29,20 +29,20 @@ def create_prg_file(prg_file_path):
     set -e
     cd $HOME
     source ~/.bashrc
-    conda activate cl_splicing_regulation
+    conda activate cl_splicing_regulation2
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.cl_training \\
-            task=introns_cl \\
-            task.val_check_interval=0.5\\
-            task.global_batch_size=6144\\
-            trainer.max_epochs=50\\
-            tokenizer="custom_tokenizer" \\
-            embedder="resnet" \\
-            embedder.maxpooling=True \\
-            optimizer="sgd" \\
+            task={task} \\
+            task.val_check_interval={val_check_interval}\\
+            task.global_batch_size={global_batch_size}\\
+            trainer.max_epochs={max_epochs}\\
+            tokenizer={tokenizer} \\
+            embedder={embedder} \\
+            embedder.maxpooling={maxpooling} \\
+            optimizer={optimizer} \\
             ++wandb.dir="'{wandb_dir}'"\\
-            ++logger.name="'{slurm_file_name}{trimester}'"\\
+            ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
             ++hydra.run.dir={hydra_dir}\\
             ++logger.notes="{wandb_logger_NOTES}"
@@ -92,10 +92,12 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
     return file_name
 
 
+server_name = 'NYGC'
+server_path = '/gpfs/commons/home/atalukder/'
+main_data_dir = server_path+"Contrastive_Learning/files/results"
+job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
+code_dir = server_path+"Contrastive_Learning/code/ML_model"
 
-main_data_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results"
-job_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/cluster_job_submission_files"
-code_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model"
 
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)
 data_dir   = create_job_dir(dir= data_dir_0, fold_name= "files")
@@ -107,15 +109,24 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLresnet'
-gpu_num = 3
+slurm_file_name = 'CL_intrprtblWfastknzr'
+gpu_num = 1
 hour=5
 memory=100 # GB
 nthred = 8 # number of CPU
+task = "introns_cl" 
+val_check_interval = 0.5
+global_batch_size = 8192
+embedder="interpretable"
+tokenizer="onehot_tokenizer"
+max_epochs = 25
+maxpooling = True
+optimizer = "sgd"
 readme_comment = (
-    "Maxpool architecture, 50 epochs, 3 gpu, 6000 batch size, loss ntxent"
+    "interpretable encoder, with faster tokenizer to sanity check. We should get similar result as before, tokenizer should not have any effect"
 )
-wandb_logger_NOTES="Maxpool loss ntxent"
+wandb_logger_NOTES="interpretable encoder faster tokenizer" ## do NOT use any special character or new line
+
 
 """ Parameters: **CHANGE (AT)** """ 
 

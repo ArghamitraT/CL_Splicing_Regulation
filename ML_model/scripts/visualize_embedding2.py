@@ -44,21 +44,21 @@ from src.utils.config import print_config
 from src.model.lit import create_lit_model
 from src.datasets.lit import ContrastiveIntronsDataModule
 
-# def get_best_checkpoint():
-#     return "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
-# def get_best_checkpoint():
-#     return os.path.join(
-#         main_dir,
-#         "../../files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
-#     )
 
-def get_best_checkpoint():
-    return str(CONTRASTIVE_ROOT / "files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt")
+######### parameters #############
+result_dir = "exprmnt_2025_05_17__19_11_12"
+######### parameters ##############
+# exprmnt_2025_05_04__11_29_05
+
+def get_best_checkpoint(config):
+    # simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
+    return f"{str(CONTRASTIVE_ROOT)}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
+    # return str(CONTRASTIVE_ROOT / "files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt")
 
 
 def load_pretrained_model(config, device):
     model = create_lit_model(config)
-    ckpt = torch.load(get_best_checkpoint(), map_location=device)
+    ckpt = torch.load(get_best_checkpoint(config), map_location=device)
     state_dict = ckpt["state_dict"]
     cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
     model.load_state_dict(cleaned_state_dict, strict=False)
@@ -101,9 +101,17 @@ def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
     all_views_dict = dataset.data[exon_name]
 
     augmentations = list(all_views_dict.values())
-    aug_tensor = torch.stack([
-        torch.tensor(tokenizer(seq)["input_ids"]) for seq in augmentations
-    ]).to(device)
+    if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):
+        aug_tensor = torch.stack([
+            tokenizer([seq])[0] for seq in augmentations
+        ]).to(device)
+
+    elif callable(tokenizer):  # HuggingFace-style
+            aug_tensor = torch.stack([
+            torch.tensor(tokenizer(seq)["input_ids"]) for seq in augmentations
+        ]).to(device)
+    else:
+        print()
 
     other_indices = [i for i in range(len(view0)) if i != anchor_idx]
     view0_others = view0[other_indices].to(device)

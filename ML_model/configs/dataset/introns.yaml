@@ -1,9 +1,9 @@
 seq_len: 199    
-# data_file: "/mnt/home/at3836/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences.pkl"
-# exon_names_path: "/mnt/home/at3836/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/all_exon_names.txt"
-# contrastive_root: ${oc.env:CONTRASTIVE_ROOT}  # fallback to environment variable
-data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences.pkl
-exon_names_path: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/all_exon_names.txt
+train_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences_train.pkl
+val_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences_val.pkl
+test_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences_test.pkl
+# data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences.pkl
+# exon_names_path: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/all_exon_names.txt
 batch_size_per_device: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}  * ${trainer.num_nodes}}} 
 # num_workers: 1          # Number of workers for data loading
 num_workers: ${optimal_workers:}

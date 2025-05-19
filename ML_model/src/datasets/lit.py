@@ -22,7 +22,8 @@ def make_collate_fn(tokenizer, padding_strategy):
 
         view1_sequences = [item[0] for item in batch]
         view2_sequences = [item[1] for item in batch]
-
+        
+        token_start = time.time()
         if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):  # 
             view1 = tokenizer(view1_sequences)
             view2 = tokenizer(view2_sequences)
@@ -34,6 +35,10 @@ def make_collate_fn(tokenizer, padding_strategy):
         else:
             output = view1_sequences, view2_sequences
         # print(f"👷 Worker {info.id if info else 'MAIN'}: Collate time = {time.time() - start:.2f}s")
+        # token_time = time.time() - token_start
+        # total_time = time.time() - start
+        # print(f"🧬 Tokenization took {token_time:.4f}s | 👷 Collate total time: {total_time:.4f}s")
+
         return output
 
 
@@ -87,16 +92,28 @@ class DummyDataModule(pl.LightningDataModule):
 class ContrastiveIntronsDataModule(pl.LightningDataModule):
     def __init__(self, config):
         super().__init__()
-        self.data_file = config.dataset.data_file
-        self.exon_names_path = config.dataset.exon_names_path
+
+        self.train_file = config.dataset.train_data_file
+        self.val_file = config.dataset.val_data_file
+        self.test_file = config.dataset.test_data_file
+        # self.exon_names_path = config.dataset.exon_names_path
         self.batch_size = config.dataset.batch_size_per_device
         self.num_workers = config.dataset.num_workers
-        self.train_ratio = config.dataset.train_ratio
-        self.val_ratio = config.dataset.val_ratio
-        self.test_ratio = config.dataset.test_ratio
         self.tokenizer = hydra.utils.instantiate(config.tokenizer)
         self.padding_strategy = config.tokenizer.padding
         self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy)
+
+
+        # self.data_file = config.dataset.data_file
+        # self.exon_names_path = config.dataset.exon_names_path
+        # self.batch_size = config.dataset.batch_size_per_device
+        # self.num_workers = config.dataset.num_workers
+        # self.train_ratio = config.dataset.train_ratio
+        # self.val_ratio = config.dataset.val_ratio
+        # self.test_ratio = config.dataset.test_ratio
+        # self.tokenizer = hydra.utils.instantiate(config.tokenizer)
+        # self.padding_strategy = config.tokenizer.padding
+        # self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy)
 
 
     def prepare_data(self):
@@ -104,22 +121,48 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         pass
 
     def setup(self, stage=None):
-        # Create the full dataset
-        full_dataset = ContrastiveIntronsDataset(
-            data_file=self.data_file,
-            exon_names_path=self.exon_names_path)
+        # # Create the full dataset
+        # full_dataset = ContrastiveIntronsDataset(
+        #     data_file=self.data_file,
+        #     exon_names_path=self.exon_names_path)
         
-        # Determine sizes for train, validation, and test sets
-        dataset_size = len(full_dataset)
-        train_size = int(self.train_ratio * dataset_size)
-        val_size = int(self.val_ratio * dataset_size)
-        test_size = dataset_size - train_size - val_size
+        # # Determine sizes for train, validation, and test sets
+        # dataset_size = len(full_dataset)
+        # train_size = int(self.train_ratio * dataset_size)
+        # val_size = int(self.val_ratio * dataset_size)
+        # test_size = dataset_size - train_size - val_size
 
-        # Split dataset into train, validation, and test
-        self.train_set, self.val_set, self.test_set = random_split(
-            full_dataset,
-            [train_size, val_size, test_size]
-        )  
+        # # Split dataset into train, validation, and test
+        # self.train_set, self.val_set, self.test_set = random_split(
+        #     full_dataset,
+        #     [train_size, val_size, test_size]
+        # )  
+        # Create dataset from pre-split pickle files
+        # self.train_set = ContrastiveIntronsDataset(
+        #     data_file=self.train_file,
+        #     exon_names_path=self.exon_names_path
+        # )
+
+        # self.val_set = ContrastiveIntronsDataset(
+        #     data_file=self.val_file,
+        #     exon_names_path=self.exon_names_path
+        # )
+
+        # self.test_set = ContrastiveIntronsDataset(
+        #     data_file=self.test_file,
+        #     exon_names_path=self.exon_names_path
+        # )
+        self.train_set = ContrastiveIntronsDataset(
+            data_file=self.train_file
+        )
+
+        self.val_set = ContrastiveIntronsDataset(
+            data_file=self.val_file
+            )
+
+        self.test_set = ContrastiveIntronsDataset(
+            data_file=self.test_file
+             )
     
     # def collate_fn(self, batch):
 

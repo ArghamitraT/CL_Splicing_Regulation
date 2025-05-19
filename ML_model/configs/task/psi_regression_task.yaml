@@ -3,3 +3,4 @@ metrics:
   - r2_score  # R² score for regression evaluation
 val_check_interval: 0.5  # Adjusted validation frequency
 global_batch_size: 2048  # Increased batch size for better memory utilization
+pretraining_weights: 'exprmnt_2025_05_17__19_11_12'
