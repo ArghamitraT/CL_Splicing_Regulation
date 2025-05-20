@@ -19,8 +19,8 @@ input_file = "/gpfs/commons/home/nkeung/data/" + alignment_file
 pattern = re.compile(r"^>(\S+) (\d+) (\d+) (\d+) (\S+):(\d+)-(\d+)([+-]?)")
 
 enst_id = "ENST00000350908.9"
-# search_species = ["hg38", "mm10", "panTro4", "ponAbe2", "gorGor3", "rheMac3"]                       # primate species
-search_species = ["pteAle1", "pteVam1", "myoDav1", "myoLuc2", "eptFus1", "eriEur2", "oryLat2"]      # non-primate species
+# search_species = ["hg38", "mm10", "panTro4", "ponAbe2", "gorGor3", "rheMac3"]          # primate species
+search_species = ["pteAle1", "pteVam1", "myoDav1", "myoLuc2", "eptFus1", "oryLat2"]      # non-primate species
 
 # To store in CSV
 data = []

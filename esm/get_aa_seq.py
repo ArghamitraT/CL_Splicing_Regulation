@@ -22,3 +22,20 @@ def build_full_seq(input_file):
         species_seq.append((species, sequence))
 
     return species_seq
+
+def single_exons(input_file, exon_num):
+    exon_seqs = []
+
+    df = pd.read_csv(input_file)
+
+    df = df.sort_values(by=["Species", "Number"])
+    grouped_df = df.groupby("Species")
+    for species, group in grouped_df:
+        match = group[group["Number"] == exon_num]
+        if not match.empty:
+            exon = match["Seq"]
+            exon = exon.replace("-", "")
+            exon = exon.replace("\n", "")
+            exon_seqs.append(((species, exon_num), exon))
+
+    return exon_seqs
