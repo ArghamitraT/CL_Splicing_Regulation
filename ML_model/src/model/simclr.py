@@ -31,6 +31,9 @@ class SimCLRModule(nn.Module):
     
     
 def get_simclr_model(config):
-    embedder = get_embedder(config)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    embedder = get_embedder(config).to(device)
+
+    # embedder = get_embedder(config)
     model = SimCLRModule(embedder=embedder, hidden_dim=config.model.hidden_dim, projection_dim=config.model.projection_dim)
     return model

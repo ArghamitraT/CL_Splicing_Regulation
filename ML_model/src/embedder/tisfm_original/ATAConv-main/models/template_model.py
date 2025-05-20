@@ -47,19 +47,32 @@ class TemplateModel(Module):
         self.meme_file = MEME()
         self.motif_path = motif_path
         self.stride = stride
-        kernels = self.meme_file.parse(motif_path)
-        if not both_direction:
-          kernels = kernels[::2]
-        kernels = pad(kernels, (0,0,0,0,0,pad_motif), value=0)
-        self.pad_motif = pad_motif
+        self.in_channels, self.out_channels, self.kernel_size = 4, 256, 12
 
-        #Extracting kernel dimensions for first convolutional layer definition
-        self.out_channels, self.in_channels, self.kernel_size = kernels.shape
+        # (MChikina) code, as we do not have any pre-initialized motif we would need to change it
 
-        #First layer convolution. Weights set to motifs and are fixed.
-        self.conv_motif = Conv1d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, stride=stride, bias=False)#, padding="same"
-        self.conv_motif.weight = torch.nn.Parameter(kernels)
-        self.conv_motif.weight.requires_grad = False
+        # kernels = self.meme_file.parse(motif_path)
+        # if not both_direction:
+        #   kernels = kernels[::2]
+        # kernels = pad(kernels, (0,0,0,0,0,pad_motif), value=0)
+        # self.pad_motif = pad_motif
+
+        # #Extracting kernel dimensions for first convolutional layer definition
+        # self.out_channels, self.in_channels, self.kernel_size = kernels.shape
+
+        # #First layer convolution. Weights set to motifs and are fixed.
+        # self.conv_motif = Conv1d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, stride=stride, bias=False)#, padding="same"
+        # self.conv_motif.weight = torch.nn.Parameter(kernels)
+        # self.conv_motif.weight.requires_grad = False
+
+        # (AT) modified code
+        self.conv_motif = Conv1d(
+            in_channels=self.in_channels,
+            out_channels=self.out_channels,
+            kernel_size=self.kernel_size,
+            stride=stride,
+            bias=False
+        )
         self.conv_length = int((window_size - self.kernel_size) / stride) + 1
 
         self.conv_bias = Parameter(torch.empty(1, self.out_channels, 1, requires_grad = True))
@@ -74,7 +87,6 @@ class TemplateModel(Module):
             with torch.no_grad():
                 torch.nn.init.ones_(self.conv_scale)
                 torch.nn.init.zeros_(self.conv_bias)
-
         self.linreg = Linear(in_features=int(reg_dim_expansion*self.out_channels/2), out_features=num_of_response)
 
 
