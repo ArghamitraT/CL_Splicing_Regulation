@@ -1,7 +1,10 @@
 from src.embedder.ntv2 import NTv2Embedder
 from src.embedder.resnet import ResNet1D
-from src.embedder.interpretable_encoder import InterpretableEncoder1D  
-from src.embedder.tisfm_encoder import TISFMEncoder
+# from src.embedder.interpretable_encoder import InterpretableEncoder1D  
+# from src.embedder.tisfm_encoder import TISFMEncoder
+from src.embedder.InterpretableEncoder import InterpretableEncoder1D  
+from src.embedder.tisfm import TISFMEncoder
+
 
 EMBEDDERS = {
     'NTv2': NTv2Embedder,

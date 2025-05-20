@@ -1,8 +1,8 @@
-NOTES="interpretable encoder removed rc and out multi weight"
+NOTES="interpretable encoder trying in empireAI lastime did not work"
 
 python -m scripts.cl_training \
         task=introns_cl \
-        embedder="interpretable"\
+        embedder="tisfm"\
         tokenizer="onehot_tokenizer"\
         task.global_batch_size=8192\
         trainer.max_epochs=2 \

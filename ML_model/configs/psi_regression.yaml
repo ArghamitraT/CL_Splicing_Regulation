@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - embedder: interpretable
+  - embedder: tisfm
   - dataset: psi_dataset  # Custom dataset for PSI regression
   - task: psi_regression_task
   - trainer: default_trainer

@@ -21,17 +21,36 @@ class PSIRegressionModel(pl.LightningModule):
             for param in self.encoder.parameters():
                 param.requires_grad = False
 
-        if hasattr(encoder, "output_dim"):
-            encoder_output_dim = encoder.output_dim
+        # if hasattr(encoder, "output_dim"):
+        #     encoder_output_dim = encoder.output_dim
+        # else:
+        #     print("⚠️ Warning: `encoder.output_dim` not defined, inferring from dummy input.")
+        #     dummy_input = torch.randint(0, 4, (1, self.config.dataset.seq_len))
+        #     with torch.no_grad():
+        #         dummy_output = encoder(dummy_input)
+        #         encoder_output_dim = dummy_output.shape[-1]
+        #     print(f"Inferred encoder output_dim = {encoder_output_dim}")
+
+    
+        if hasattr(encoder, "get_last_embedding_dimension") and callable(encoder.get_last_embedding_dimension):
+            print("📏 Using encoder.get_last_embedding_dimension()")
+            encoder_output_dim = encoder.get_last_embedding_dimension()
+
         else:
-            print("⚠️ Warning: `encoder.output_dim` not defined, inferring from dummy input.")
-            dummy_input = torch.randint(0, 4, (1, self.config.dataset.seq_len))
+            print("⚠️ Warning: `encoder.output_dim` not defined, falling back to dummy input.")
+            if hasattr(config, "dataset") and hasattr(config.dataset, "seq_len"):
+                seq_len = config.dataset.seq_len
+            else:
+                raise ValueError("`seq_len` not found in config.dataset — can't create dummy input.")
+
+            dummy_input = torch.full((1, 4, seq_len), 1.0)  # one-hot-style dummy input
+            dummy_input = dummy_input.to(next(encoder.parameters()).device)
+
             with torch.no_grad():
                 dummy_output = encoder(dummy_input)
                 encoder_output_dim = dummy_output.shape[-1]
-            print(f"Inferred encoder output_dim = {encoder_output_dim}")
 
-        
+            print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
         # self.regressor = nn.Sequential(nn.Linear(201*encoder_output_dim, config.aux_models.hidden_dim),
         #                                nn.ReLU(),
         #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))

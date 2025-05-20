@@ -61,6 +61,6 @@ class TISFM(TemplateModel):
         x = x * interactions
 
         #regression
-        y = self.linreg(x)
+        # y = self.linreg(x)
 
-        return y
+        return x

@@ -104,6 +104,40 @@ class InterpretableEncoder1D(BaseEmbedder):
         x = self.batch_norm(x)
         return x
 
+
+        """
+
+
+    def forward(self, x, **kwargs):
+        # dtype, device = self.get_input_dtype_device()
+        # import time
+        # start = time.time()
+        # x = self._preprocess(x).to(dtype=dtype, device=device)
+        # print(f"⏱️ preprocessing took {time.time() - start:.2f}s")
+        x = x.to(dtype=self.pwm_conv.conv.weight.dtype, device=self.pwm_conv.conv.weight.device)
+
+        x_fwd = x
+        x_rc = self.rc(x_fwd)
+        x_fwd_conv = self.pwm_conv(x_fwd)
+        x_rc = self.rc(x_fwd) # check if tokenization and reverse is same
+        x_fwd_conv = self.pwm_conv(x_fwd) # need constraints
+        x_rc_conv = self.pwm_conv(x_rc)
+
+        x_rc_conv = torch.flip(x_rc_conv, dims=[-1])  # reverse to align
+        x = torch.maximum(x_fwd_conv, x_rc_conv)  # best match per strand
+
+        x = self.maxpool(x)
+        x = self.trainable_scaling(x)
+        x = self.activation(x)
+        x = self.trainable_pooling(x)
+
+        x = self.interaction(x)
+        x = self.batch_norm(x)
+        return x
+
+"""
+
+
         # x = x.to(dtype=self.pwm_conv.conv.weight.dtype, device=self.pwm_conv.conv.weight.device)
 
         # x_fwd = x
@@ -116,6 +150,8 @@ class InterpretableEncoder1D(BaseEmbedder):
         # x = self.interaction(x)
         # x = self.batch_norm(x)
         # return x
+
+        
 
 
     def get_last_embedding_dimension(self):
@@ -154,7 +190,6 @@ class InterpretableEncoder1D(BaseEmbedder):
             raise ValueError("Input must be one-hot encoded or a string/list of DNA sequences.")
 
         return x
-
 
 
 

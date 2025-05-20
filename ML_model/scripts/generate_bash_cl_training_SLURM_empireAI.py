@@ -29,7 +29,7 @@ def create_prg_file(prg_file_path):
     set -e
     cd $HOME
     source ~/.bashrc
-    conda activate cl_splicing_regulation2
+    conda activate cl_splicing_regulation3
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.cl_training \\
@@ -109,7 +109,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLresnet'
+slurm_file_name = 'CLtisfm'
 gpu_num = 1
 hour = 3
 memory = 100 # GB
@@ -117,15 +117,15 @@ nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 0.5
 global_batch_size = 8192
-embedder="interpretable"
+embedder="tisfm"
 tokenizer="onehot_tokenizer"
 max_epochs = 50
 maxpooling = True
 optimizer = "sgd"
 readme_comment = (
-    "pre-training, 50 epochs, interpretable encoder"
+    "pre-training, 50 epochs, tisfm encoder"
 )
-wandb_logger_NOTES="pretraining 50 epochs interpretable emprireAI" ## do NOT use any special character or new line
+wandb_logger_NOTES="pretraining 50 epochs tisfm emprireAI" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
