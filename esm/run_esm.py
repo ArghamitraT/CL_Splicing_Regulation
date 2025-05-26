@@ -22,13 +22,13 @@ def main(pool_type):
     data = build_full_seq(input_file)
 
     batch_labels, batch_strs, batch_tokens = batch_converter(data)
-    batch_lens = (batch_tokens != alphabet.padding_idx).sum(1)
+    batch_lens = (batch_tokens != alphabet.padding_idx).sum(1)  # Get lengths of sequences without padding
 
     # Extract per-residue representations (on CPU)
     with torch.no_grad():
         results = model(batch_tokens, repr_layers=[33], return_contacts=True)
     token_representations = results["representations"][33]      # results dictionary stores dictionary "representations" with keys for each layer
-    print(f"Shape of token_representations: {token_representations.shape}")
+    # print(f"Shape of token_representations: {token_representations.shape}")     # (batch_size, seq_len, 1280)
 
     if (pool_type == "full"):
         # Generate full SEQUENCE representations via averaging
@@ -38,7 +38,7 @@ def main(pool_type):
             name = batch_labels[i]
             vector = token_representations[i, 1 : tokens_len - 1].mean(0)
             sequence_representations[name] = vector
-            print(f"Shape of {name}: {vector.shape}")
+            # print(f"Shape of {name}: {vector.shape}")       # (1280)
 
         torch.save(sequence_representations, output_dir + "foxp2_full.pt")
     
@@ -47,7 +47,6 @@ def main(pool_type):
             # Get exon length from input file
             df = pd.read_csv(input_file)
             df = df.sort_values(by=["Species", "Number"])
-            df = df.groupby("Species")
             # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
             exon_representations = {}
             for i, tokens_len in enumerate(batch_lens):
@@ -63,6 +62,8 @@ def main(pool_type):
 
                     end_index = start_index + exon_len
                     vector = token_representations[i, start_index : end_index].mean(0)
+                    if j not in exon_representations:
+                        exon_representations[j] = {}
                     exon_representations[j][name] = vector
                     start_index = end_index
 
