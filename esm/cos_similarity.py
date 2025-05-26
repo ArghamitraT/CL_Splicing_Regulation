@@ -7,7 +7,7 @@ import torch
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-input_dir = "/gpfs/commons/home/nkeung/data/processed_data/"
+input_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
 num_exons = 16      # Number of exons in the foxp2 gene
 
 def calculate_cosine_similarity(sequence_representations):
