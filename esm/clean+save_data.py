@@ -7,9 +7,12 @@ import pandas as pd
 import re
 import pickle
 
-# alignment_file = "knownGene.exonAA.fa"
-alignment_file = "test_truncated.fa"
+alignment_file = "knownGene.exonAA.fa"
+# alignment_file = "test_truncated.fa"
 input_file = "/gpfs/commons/home/nkeung/data/" + alignment_file
+
+file_name = "foxp2-all-seqs"
+full_name = f'/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{file_name}'
 
 # ^ (required character) '>'
 # \S any non-whitespace character + (and all subsequent characters)
@@ -24,17 +27,29 @@ search_species = ["pteAle1", "pteVam1", "myoDav1", "myoLuc2", "eptFus1", "oryLat
 
 # To store in CSV
 data = []
+saved_species = set()  # To keep track of species already saved
 
 with open(input_file, "r") as file:
-    lines = file.readlines()
-
-for header, sequence in zip(lines[::2], lines[1::2]):               # zip pairs of lines together
-        match = pattern.match(header)
+    for line in file:
+        line = line.strip()
+        if line.startswith(">"):  # header line
+            header = line
+            try:
+                sequence = next(file)  # get the sequence line
+            except StopIteration:
+                print("No sequence found for header:", header)
+                continue
+            match = pattern.match(header)
+        else:
+            continue    # Not a header line, ignore
+        
         if enst_id in header:                                       # match Ensembl transcript ID
-            found_species = None
-            for sp in search_species:                               # iterate through the species we're looking for
-                 if sp in header:
-                      found_species = sp
+            # For searching for species
+            # found_species = None
+            found_species = True                                    # Looking for ALL 100 species
+            # for sp in search_species:                             # iterate through the species we're looking for
+            #      if sp in header:
+            #           found_species = sp
             if found_species and match:
                 # Store protein sequence information
                 identifier = match.group(1)
@@ -54,15 +69,17 @@ for header, sequence in zip(lines[::2], lines[1::2]):               # zip pairs 
 
                 # Add to data
                 data.append((species_name, exon_num, length_aa, start_phase, end_phase, chromosome, start_coord, 
-                             end_coord, strand, aa_sequence))
+                            end_coord, strand, aa_sequence))
+                
+                saved_species.add(species_name)
+
+print(f"Found {len(data)} sequences for {enst_id} in {len(saved_species)} species.")
 
 df = pd.DataFrame(data, columns = [
      'Species', 'Number', 'AA Len', 'Start Phase', 'End Phase', 'Chromosome', 'Start Coord', 
      'End Coord', 'Strand', 'Seq'
 ])
 
-file_name = "foxp2-aa-seqs"
-full_name = f'/gpfs/commons/home/nkeung/data/processed_data/{file_name}'
-df.to_csv(full_name+".csv", mode='a', index=False)      # append to file
+df.to_csv(full_name+".csv", index=False)
 
 print("Successfully saved amino acid sequences")
