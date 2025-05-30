@@ -1,18 +1,19 @@
 name: esm-v3
 channels:
-  - conda-forge
-  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
 dependencies:
-  - python=3.10
-  - numpy<2
-  - pandas
-  - scikit-learn
-  - matplotlib
-  - biopython
-  - conda-forge::pytorch-gpu
+  - ipykernel
   - jupyterlab
+  - conda-forge::pytorch-gpu
+  - scipy
   - seaborn
   - tqdm
-  - ipykernel
-  - scipy
+  - numpy[version='<2']
+  - pandas
+  - scikit-learn
+  - biopython
+  - matplotlib
+  - python=3.10
+  - ete3
 prefix: /gpfs/commons/home/nkeung/miniconda3/envs/esm-v3
