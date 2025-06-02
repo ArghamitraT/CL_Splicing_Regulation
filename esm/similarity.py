@@ -6,7 +6,7 @@ import argparse
 import os
 import torch
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, manhattan_distances, euclidean_distances
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 from ete3 import Tree, TreeStyle, NodeStyle, TextFace
@@ -28,7 +28,6 @@ ucsc_codes = [leaf.name for leaf in ucsc_tree.iter_leaves()]
 
 
 def calculate_cosine_similarity(representations):
-    # --- COSINE SIMILARITY ---
     # Store list of species names for later
     species_list = list(representations.keys())
     # Create numpy array of all embeddings
@@ -47,6 +46,38 @@ def calculate_cosine_similarity(representations):
 
     # Sort embeddings in tree order, following ucsc_codes
     in_order = {species: similarity[species] for species in ucsc_codes}
+    return in_order
+
+
+def embedding_l1_dist(representations):
+    species_list = list(representations.keys())
+    embeddings = np.array([representations[species] for species in representations])
+    hg38_vector = embeddings[species_list.index("hg38")].reshape(1,-1)
+
+    dist_matrix = manhattan_distances(hg38_vector, embeddings)
+    diff = dict(zip(species_list, dist_matrix.flatten()))
+    for species in ucsc_codes:
+        if species not in diff:
+            diff[species] = np.nan
+    
+    # Sort embeddings in order of ucsc_codes
+    in_order = {sp: diff[sp] for sp in ucsc_codes}
+    return in_order
+
+
+def embedding_l2_dist(representations):
+    species_list = list(representations.keys())
+    embeddings = np.array([representations[species] for species in representations])
+    hg38_vector = embeddings[species_list.index("hg38")].reshape(1,-1)
+
+    dist_matrix = euclidean_distances(hg38_vector, embeddings)
+    diff = dict(zip(species_list, dist_matrix.flatten()))
+    for species in ucsc_codes:
+        if species not in diff:
+            diff[species] = np.nan
+    
+    # Sort embeddings in order of ucsc_codes
+    in_order = {sp: diff[sp] for sp in ucsc_codes}
     return in_order
 
 
@@ -109,6 +140,7 @@ def plot_heat_map(matrix, species):
 
 def main(pool_type):
     if pool_type == "full":
+        # --- COSINE SIMILARITY ---
         sequence_representations = torch.load(input_dir+"embeddings/foxp2_full.pt")
         similarity = calculate_cosine_similarity(sequence_representations)
         similarity = get_common_name(similarity)
@@ -128,7 +160,7 @@ def main(pool_type):
 
         # Sort by descending similarity
         sorted_vals = sorted(log_sim.items(), key=lambda s: s[1], reverse=True)
-        sorted_species, _ = zip(*sorted_vals)
+        sorted_species, desc_log_cos = zip(*sorted_vals)
         log_sim = dict(sorted_vals)
 
         # Set colors after sorting
@@ -144,6 +176,49 @@ def main(pool_type):
 
         # plot_bar(log_sim)
         # draw_tree(log_sim)
+
+        # --- HIGH DIMENSIONAL DIFFERENCES ---
+        # MANHATTAN DISTANCE (L1)
+        l1_diff = get_common_name(embedding_l1_dist(sequence_representations))
+        sorted_l1 = {sp: l1_diff[sp] for sp in sorted_species}
+        
+        # Manhattan Distance Across Species
+        plt.figure(figsize=(18, 6))
+        plt.bar(sorted_species, sorted_l1.values(), color=[species_colors[s] for s in sorted_species])
+        plt.xticks(rotation=90)
+        plt.xlabel("Species")
+        plt.ylabel("L1 Distance from hg38")
+        plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
+        plt.savefig(output_dir+"foxp2_full_manhattan.png", dpi=300, bbox_inches='tight')
+
+        # Cos Similarity vs Manhattan Distance
+        plt.figure(figsize=(18, 6))
+        plt.scatter(desc_log_cos, sorted_l1.values())
+        plt.xlabel("-Log (1 - Cosine Similarity)")
+        plt.ylabel("L1 Distance from hg38")
+        plt.title("Cosine Similarity vs Manhattan Distance")
+        plt.savefig(output_dir+"foxp2_full_cos_vs_manhattan.png", dpi=300, bbox_inches='tight')
+
+        # EUCLIDEAN DISTANCE (L2)
+        l2_diff = get_common_name(embedding_l1_dist(sequence_representations))
+        sorted_l2 = {sp: l2_diff[sp] for sp in sorted_species}
+        
+        # Euclidean Distance Across Species
+        plt.figure(figsize=(18, 6))
+        plt.bar(sorted_species, sorted_l2.values(), color=[species_colors[s] for s in sorted_species])
+        plt.xticks(rotation=90)
+        plt.xlabel("Species")
+        plt.ylabel("L2 Distance from hg38")
+        plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
+        plt.savefig(output_dir+"foxp2_full_euclidean.png", dpi=300, bbox_inches='tight')
+
+        # Cos Similarity vs Euclidean Distance
+        plt.figure(figsize=(18, 6))
+        plt.scatter(desc_log_cos, sorted_l2.values())
+        plt.xlabel("-Log (1 - Cosine Similarity)")
+        plt.ylabel("L2 Distance from hg38")
+        plt.title("Cosine Similarity vs Euclidean Distance")
+        plt.savefig(output_dir+"foxp2_full_cos_vs_euclidean.png", dpi=300, bbox_inches='tight')
 
     elif pool_type == "exon":
         sequence_representations = torch.load(input_dir+"embeddings/foxp2_exons.pt")
