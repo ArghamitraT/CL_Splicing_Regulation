@@ -38,9 +38,10 @@ def calculate_cosine_similarity(representations):
     for species in ucsc_codes:
         if species not in similarity:
             similarity[species] = 0.0
-    # for species, score in similarities.items():
-    #     print(f"{species}: {score:.4f}")
-    return similarity
+
+    # Sort embeddings in tree order, following ucsc_codes
+    in_order = {species: similarity[species] for species in ucsc_codes}
+    return in_order
 
 def get_common_name(embeddings: dict):
     global ucsc_codes, common_names
@@ -83,6 +84,24 @@ def plot_log_scale(cos_sim: dict):
     plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
     plt.savefig(output_dir+"foxp2_full_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
+def plot_log_heatmap(similarity: dict):
+    # Store values in matrix of shape (num_exons, num_species)
+    sim_matrix_rows = []
+    for exon in range(1, num_exons + 1):
+        new_row = list(similarity[exon].values())
+        sim_matrix_rows.append(new_row)
+    sim_matrix = np.array(sim_matrix_rows)
+
+    log_matrix = -np.log(1 - np.clip(sim_matrix, epsilon, 1 - epsilon))
+    
+    plt.figure(figsize=(18, 6))
+    plt.imshow(log_matrix, cmap='viridis', aspect='auto')
+    plt.colorbar(label='Log Cosine Similarity to hg38')
+    plt.xticks(ticks=np.arange(len(similarity[1].keys())), 
+                labels=list(similarity[1].keys()), rotation=90)
+    plt.yticks(ticks=np.arange(num_exons), labels=[f"Exon {i}" for i in range(1, num_exons + 1)])
+    plt.title("Cosine Similarity of FoxP2 Exon Representations")
+    plt.savefig(input_dir+"figures/foxp2_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
 def main(pool_type):
     if pool_type == "full":
@@ -101,24 +120,7 @@ def main(pool_type):
             similarity[i] = get_common_name(exon_sim)
             # print("---------------------\n")
         
-        # Store values in matrix of shape (num_exons, num_species)
-        sim_matrix_rows = []
-        for exon in range(1, num_exons + 1):
-            new_row = list(similarity[exon].values())
-            sim_matrix_rows.append(new_row)
-        sim_matrix = np.array(sim_matrix_rows)
-
-        log_matrix = -np.log(1 - np.clip(sim_matrix, epsilon, 1 - epsilon))
-        
-        plt.figure(figsize=(18, 6))
-        plt.imshow(log_matrix, cmap='viridis', aspect='auto')
-        plt.colorbar(label='Log Cosine Similarity to hg38')
-        plt.xticks(ticks=np.arange(len(similarity[1].keys())), 
-                   labels=list(similarity[1].keys()), rotation=90)
-        plt.yticks(ticks=np.arange(num_exons), labels=[f"Exon {i}" for i in range(1, num_exons + 1)])
-        plt.title("Cosine Similarity of FoxP2 Exon Representations")
-        plt.savefig(input_dir+"figures/foxp2_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
- 
+        plot_log_heatmap(similarity)
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")
