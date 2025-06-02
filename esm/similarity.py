@@ -3,16 +3,21 @@ Calculate cosine similarity from embeddings saved in "/gpfs/commons/home/nkeung/
 """
 
 import argparse
+import os
 import torch
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt
-from ete3 import Tree
+from matplotlib.colors import to_hex
+from ete3 import Tree, TreeStyle, NodeStyle, TextFace
+
+# Set offscreen rendering for ete3
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 input_dir = "/gpfs/commons/home/nkeung/data/"
 output_dir = "/gpfs/commons/home/nkeung/data/figures/"
 num_exons = 16      # Number of exons in the foxp2 gene
-epsilon = 1e-6  # Small value to avoid log(0) issues
+epsilon = 1e-6      # Small value to avoid log(0) issues
 
 species_colors = {}
 
@@ -20,6 +25,7 @@ common_tree = Tree(input_dir + "hg38.100way.commonNames.nh")
 common_names = [leaf.name for leaf in common_tree.iter_leaves()]
 ucsc_tree = Tree(input_dir + "hg38.100way.nh")
 ucsc_codes = [leaf.name for leaf in ucsc_tree.iter_leaves()]
+
 
 def calculate_cosine_similarity(representations):
     # --- COSINE SIMILARITY ---
@@ -43,65 +49,63 @@ def calculate_cosine_similarity(representations):
     in_order = {species: similarity[species] for species in ucsc_codes}
     return in_order
 
+
 def get_common_name(embeddings: dict):
     global ucsc_codes, common_names
     new_names = dict(zip(ucsc_codes, common_names))
     new_dict = {new_names[species]: embeddings[species] for species in embeddings if species in new_names}
     return new_dict
 
-def plot_log_scale(cos_sim: dict):
-    species = list(cos_sim.keys())
-    values = np.array(list(cos_sim.values()))
-    log_vals = -np.log(1 - np.clip(values, 0, 1 - epsilon))
-    log_sim = {}
-    for s, v in zip(species, log_vals):
-        log_sim[s] = v
 
-    print("Smallest cosine similarity:", min(cos_sim.values()))
-    print("Smallest log cosine similarity:", min(log_sim.values()), "\n")
-    print("Largest cosine similarity:", max(value for key, value in cos_sim.items() if key != "Human"))
-    print("Largest log cosine similarity:", max(value for key, value in log_sim.items() if key != "Human"))
-
-    # Calculate and sort log cosine similarity
-    sorted_vals = sorted(log_sim.items(), key=lambda s: s[1], reverse=True)
-    sorted_species, sorted_scores = zip(*sorted_vals)
-
-    global species_colors
-    species_colors = {"Human": "tab:blue"}
-    for i in range(1, 100):
-        if i <= 33:
-            species_colors[sorted_species[i]] = "tab:orange"
-        elif i <= 66:
-            species_colors[sorted_species[i]] = "tab:green"
-        else:
-            species_colors[sorted_species[i]] = "tab:red"
+def plot_bar(similarities: dict):
+    species = similarities.keys()
+    scores = similarities.values()
 
     plt.figure(figsize=(18, 6))
-    plt.bar(sorted_species, sorted_scores, color=[species_colors[s] for s in sorted_species])
+    plt.bar(species, scores, color=[species_colors[s] for s in species])
     plt.xticks(rotation=90)
     plt.xlabel("Species")
     plt.ylabel("Log Cosine Similarity to hg38")
     plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
     plt.savefig(output_dir+"foxp2_full_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
-def plot_log_heatmap(similarity: dict):
-    # Store values in matrix of shape (num_exons, num_species)
-    sim_matrix_rows = []
-    for exon in range(1, num_exons + 1):
-        new_row = list(similarity[exon].values())
-        sim_matrix_rows.append(new_row)
-    sim_matrix = np.array(sim_matrix_rows)
 
-    log_matrix = -np.log(1 - np.clip(sim_matrix, epsilon, 1 - epsilon))
+def draw_tree(similarities: dict):
+    # Set all four node styles
+    styles = {}
+    for color in ["tab:blue", "tab:orange", "tab:green", "tab:red"]:
+        hex_color = to_hex(color)
+        style = NodeStyle()
+        style["fgcolor"] = hex_color
+        style["size"] = 0
+        style["vt_line_color"] = hex_color
+        style["hz_line_color"] = hex_color
+        style["hz_line_width"] = 2
+        styles[color] = style
+
+
+    for leaf in common_tree.iter_leaves():
+        # Display similarity score for each leaf
+        leaf_face = TextFace(similarities[leaf.name], fgcolor=to_hex(species_colors[leaf.name]))
+        leaf.add_face(leaf_face, column=0, position="aligned")
+        leaf.set_style(styles[species_colors[leaf.name]])
     
+    ts = TreeStyle()
+    ts.show_leaf_name = True
+    ts.mode = "c"
+    common_tree.render(output_dir+"foxp2_tree.png", tree_style=ts, dpi=300)
+
+
+def plot_heat_map(matrix, species):
     plt.figure(figsize=(18, 6))
-    plt.imshow(log_matrix, cmap='viridis', aspect='auto')
+    plt.imshow(matrix, cmap='viridis', aspect='auto')
     plt.colorbar(label='Log Cosine Similarity to hg38')
-    plt.xticks(ticks=np.arange(len(similarity[1].keys())), 
-                labels=list(similarity[1].keys()), rotation=90)
+    plt.xticks(ticks=np.arange(len(species)), 
+                labels=list(species), rotation=90)
     plt.yticks(ticks=np.arange(num_exons), labels=[f"Exon {i}" for i in range(1, num_exons + 1)])
     plt.title("Cosine Similarity of FoxP2 Exon Representations")
     plt.savefig(input_dir+"figures/foxp2_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
+
 
 def main(pool_type):
     if pool_type == "full":
@@ -109,7 +113,37 @@ def main(pool_type):
         similarity = calculate_cosine_similarity(sequence_representations)
         similarity = get_common_name(similarity)
 
-        plot_log_scale(similarity)
+        # Calculate similarities in log scale
+        species = list(similarity.keys())
+        values = np.array(list(similarity.values()))
+        log_vals = -np.log(1 - np.clip(values, 0, 1 - epsilon))
+        log_sim = {}
+        for s, v in zip(species, log_vals):
+            log_sim[s] = v
+
+        print("Smallest cosine similarity:", min(similarity.values()))
+        print("Smallest log cosine similarity:", min(log_sim.values()), "\n")
+        print("Largest cosine similarity:", max(value for key, value in similarity.items() if key != "Human"))
+        print("Largest log cosine similarity:", max(value for key, value in log_sim.items() if key != "Human"))
+
+        # Sort by descending similarity
+        sorted_vals = sorted(log_sim.items(), key=lambda s: s[1], reverse=True)
+        sorted_species, _ = zip(*sorted_vals)
+        log_sim = dict(sorted_vals)
+
+        # Set colors after sorting
+        global species_colors
+        species_colors = {"Human": "tab:blue"}
+        for i in range(1, 100):
+            if i <= 33:
+                species_colors[sorted_species[i]] = "tab:orange"
+            elif i <= 66:
+                species_colors[sorted_species[i]] = "tab:green"
+            else:
+                species_colors[sorted_species[i]] = "tab:red"
+
+        # plot_bar(log_sim)
+        # draw_tree(log_sim)
 
     elif pool_type == "exon":
         sequence_representations = torch.load(input_dir+"embeddings/foxp2_exons.pt")
@@ -120,7 +154,14 @@ def main(pool_type):
             similarity[i] = get_common_name(exon_sim)
             # print("---------------------\n")
         
-        plot_log_heatmap(similarity)
+        # Store values in matrix of shape (num_exons, num_species)
+        sim_matrix_rows = []
+        for exon in range(1, num_exons + 1):
+            new_row = list(similarity[exon].values())
+            sim_matrix_rows.append(new_row)
+        sim_matrix = np.array(sim_matrix_rows)
+        log_matrix = -np.log(1 - np.clip(sim_matrix, epsilon, 1 - epsilon))
+        plot_heat_map(log_matrix, similarity[1].keys())
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")
