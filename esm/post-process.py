@@ -12,7 +12,7 @@ input_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
 output_dir = "/gpfs/commons/home/nkeung/data/embeddings"
 
 # Example names: "foxp2_hg38_full.pt" and "foxp2_hg38_exon_1.pt"
-gene = "brca2"
+gene = None
 
 def process_full_seq():
     full_dir = os.path.join(input_dir, "full-seq/")
@@ -57,6 +57,13 @@ def main(pool_type):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge ESM embeddings into a single dictionary")
     parser.add_argument(
+        "--gene",
+        type=str,
+        choices=["foxp2", "brca2", "hla-a", "tp53"],
+        required=True,
+        help="Gene for ESM input"
+    )
+    parser.add_argument(
         "--pool_type",
         type=str,
         choices=["full", "exon"],
@@ -64,4 +71,5 @@ if __name__ == "__main__":
         help="Pooling type for sequence representation (full sequence or exon)"
     )
     args = parser.parse_args()
+    gene = args.gene
     main(args.pool_type)

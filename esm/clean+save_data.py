@@ -11,12 +11,9 @@ alignment_file = "knownGene.exonAA.fa"
 # alignment_file = "test_truncated.fa"
 input_file = "/gpfs/commons/home/nkeung/data/" + alignment_file
 
-enst_id = {"foxp2": "ENST00000350908.9", "brca2": "ENST00000380152.7", "hla-a": "ENST00000376809.10"}
-gene = "brca2"
-# enst_id = "ENST00000350908.9"     # foxp2
-enst_id = "ENST00000380152.7"     # brca2
-# enst_id = "ENST00000376809.10"      # hla-a
-file_name = "{gene}-all-seqs"
+enst_id = {"foxp2": "ENST00000350908.9", "brca2": "ENST00000380152.7", "hla-a": "ENST00000376809.10", "tp53": "ENST00000269305.8"}
+gene = "tp53"
+file_name = f"{gene}-all-seqs"
 full_name = f'/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{file_name}'
 
 # ^ (required character) '>'

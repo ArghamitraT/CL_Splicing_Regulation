@@ -9,10 +9,42 @@ import esm
 from get_aa_seq import build_full_seq
 import pandas as pd
 
-gene = "brca2"
-input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
-output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
-num_exons = 26      # Number of exons in the gene
+gene = None
+num_exon_map = {"foxp2": 16, "brca2": 26, "hla-a":8, "tp53":10}
+num_exons = None      # Number of exons in the gene
+
+input_file = None       # See below
+output_dir = None
+
+def initialize_globals(args):
+    global gene, num_exons, input_file, output_dir
+    gene = args.gene
+    num_exons = num_exon_map[gene]
+    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
+    output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
+
+
+"""
+For genes with varying amino acid lengths, the batch size should be dynamic to avoid 
+out-of-memory errors while still batching smaller exons together.
+For example, BRCA2 has exons that are 142, 372, 203, 1644 amino acids long, but it
+also hads exons that are 14 amino acids long.
+"""
+def dynamic_batcher(data, max_tokens=3500):
+    batch = []
+    tokens = 0
+    for entry in sorted(data, key=lambda x:len(x[1])):
+        seq_len = len(entry[1])
+        if tokens + seq_len > max_tokens and batch:
+            yield batch
+
+            batch = [entry]
+            tokens = seq_len
+        else:
+            batch.append(entry)
+            tokens += seq_len
+    if batch:
+        yield batch
 
 def main(pool_type):
     # Load ESM-2 model
@@ -23,8 +55,7 @@ def main(pool_type):
     data = build_full_seq(input_file)
     batch_size = 5  # Set batch size for processing sequences
 
-    for i in range(0, len(data), batch_size):
-        batch_data = data[i:i + batch_size]
+    for batch_data in dynamic_batcher(data):
         batch_labels, batch_strs, batch_tokens = batch_converter(batch_data)
         batch_lens = (batch_tokens != alphabet.padding_idx).sum(1)  # Get lengths of sequences without padding
 
@@ -76,6 +107,13 @@ def main(pool_type):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")
     parser.add_argument(
+        "--gene",
+        type=str,
+        choices=["foxp2", "brca2", "hla-a", "tp53"],
+        required=True,
+        help="Gene for ESM input"
+    )
+    parser.add_argument(
         "--pool_type",
         type=str,
         choices=["full", "exon"],
@@ -83,4 +121,5 @@ if __name__ == "__main__":
         help="Pooling type for sequence representation (full sequence or exon)"
     )
     args = parser.parse_args()
+    initialize_globals(args)
     main(args.pool_type)

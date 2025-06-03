@@ -16,8 +16,10 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 input_dir = "/gpfs/commons/home/nkeung/data/"
 output_dir = "/gpfs/commons/home/nkeung/data/figures/"
-gene = "brca2"
-num_exons = 26      # Number of exons in the gene
+
+gene = None
+num_exon_map = {"foxp2": 16, "brca2": 26, "hla-a":8, "tp53": 10}
+num_exons = None      # Number of exons in the gene
 epsilon = 1e-6      # Small value to avoid log(0) issues
 
 species_colors = {}
@@ -99,13 +101,13 @@ def plot_bar(similarities: dict):
     plt.xlabel("Species")
     plt.ylabel("Log Cosine Similarity to hg38")
     plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
-    plt.savefig(output_dir+f"{gene}_full_cosine_similarity.png", dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir+f"{gene}/{gene}_full_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
 
 def draw_tree(similarities: dict):
     # Set all four node styles
     styles = {}
-    for color in ["tab:blue", "tab:orange", "tab:green", "tab:red"]:
+    for color in ["tab:blue", "tab:green", "tab:orange", "tab:red"]:
         hex_color = to_hex(color)
         style = NodeStyle()
         style["fgcolor"] = hex_color
@@ -125,7 +127,7 @@ def draw_tree(similarities: dict):
     ts = TreeStyle()
     ts.show_leaf_name = True
     ts.mode = "c"
-    common_tree.render(output_dir+f"{gene}_tree.png", tree_style=ts, dpi=300)
+    common_tree.render(output_dir+f"{gene}/{gene}_tree.png", tree_style=ts, dpi=300)
 
 
 def plot_heat_map(matrix, species):
@@ -136,7 +138,7 @@ def plot_heat_map(matrix, species):
                 labels=list(species), rotation=90)
     plt.yticks(ticks=np.arange(num_exons), labels=[f"Exon {i}" for i in range(1, num_exons + 1)])
     plt.title(f"Cosine Similarity of {gene} Exon Representations")
-    plt.savefig(input_dir+f"figures/{gene}_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir+f"{gene}/{gene}_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
 
 def main(pool_type):
@@ -169,14 +171,14 @@ def main(pool_type):
         species_colors = {"Human": "tab:blue"}
         for i in range(1, 100):
             if i <= 33:
-                species_colors[sorted_species[i]] = "tab:orange"
-            elif i <= 66:
                 species_colors[sorted_species[i]] = "tab:green"
+            elif i <= 66:
+                species_colors[sorted_species[i]] = "tab:orange"
             else:
                 species_colors[sorted_species[i]] = "tab:red"
 
-        # plot_bar(log_sim)
-        # draw_tree(log_sim)
+        plot_bar(log_sim)
+        draw_tree(log_sim)
 
         # --- HIGH DIMENSIONAL DIFFERENCES ---
         # MANHATTAN DISTANCE (L1)
@@ -190,7 +192,7 @@ def main(pool_type):
         plt.xlabel("Species")
         plt.ylabel("L1 Distance from hg38")
         plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
-        plt.savefig(output_dir+f"{gene}_full_manhattan.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}/{gene}_full_manhattan.png", dpi=300, bbox_inches='tight')
 
         # Cos Similarity vs Manhattan Distance
         plt.figure(figsize=(18, 6))
@@ -198,7 +200,7 @@ def main(pool_type):
         plt.xlabel("-Log (1 - Cosine Similarity)")
         plt.ylabel("L1 Distance from hg38")
         plt.title("Cosine Similarity vs Manhattan Distance")
-        plt.savefig(output_dir+f"{gene}_full_cos_vs_manhattan.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}/{gene}_full_cos_vs_manhattan.png", dpi=300, bbox_inches='tight')
 
         # EUCLIDEAN DISTANCE (L2)
         l2_diff = get_common_name(embedding_l1_dist(sequence_representations))
@@ -211,7 +213,7 @@ def main(pool_type):
         plt.xlabel("Species")
         plt.ylabel("L2 Distance from hg38")
         plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
-        plt.savefig(output_dir+f"{gene}_full_euclidean.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}/{gene}_full_euclidean.png", dpi=300, bbox_inches='tight')
 
         # Cos Similarity vs Euclidean Distance
         plt.figure(figsize=(18, 6))
@@ -219,7 +221,7 @@ def main(pool_type):
         plt.xlabel("-Log (1 - Cosine Similarity)")
         plt.ylabel("L2 Distance from hg38")
         plt.title("Cosine Similarity vs Euclidean Distance")
-        plt.savefig(output_dir+f"{gene}_full_cos_vs_euclidean.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}/{gene}_full_cos_vs_euclidean.png", dpi=300, bbox_inches='tight')
 
     elif pool_type == "exon":
         sequence_representations = torch.load(input_dir+f"embeddings/{gene}_exons.pt")
@@ -242,6 +244,13 @@ def main(pool_type):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")
     parser.add_argument(
+        "--gene",
+        type=str,
+        choices=["foxp2", "brca2", "hla-a", "tp53"],
+        required=True,
+        help="Gene to perform similarity testing on"
+    )
+    parser.add_argument(
         "--pool_type",
         type=str,
         choices=["full", "exon"],
@@ -249,4 +258,6 @@ if __name__ == "__main__":
         help="Pooling type for sequence representation (full sequence or exon)"
     )
     args = parser.parse_args()
+    gene = args.gene
+    num_exons = num_exon_map[gene]
     main(args.pool_type)
