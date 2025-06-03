@@ -11,7 +11,12 @@ alignment_file = "knownGene.exonAA.fa"
 # alignment_file = "test_truncated.fa"
 input_file = "/gpfs/commons/home/nkeung/data/" + alignment_file
 
-file_name = "foxp2-all-seqs"
+enst_id = {"foxp2": "ENST00000350908.9", "brca2": "ENST00000380152.7", "hla-a": "ENST00000376809.10"}
+gene = "brca2"
+# enst_id = "ENST00000350908.9"     # foxp2
+enst_id = "ENST00000380152.7"     # brca2
+# enst_id = "ENST00000376809.10"      # hla-a
+file_name = "{gene}-all-seqs"
 full_name = f'/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{file_name}'
 
 # ^ (required character) '>'
@@ -21,7 +26,6 @@ full_name = f'/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{file_nam
 
 pattern = re.compile(r"^>(\S+) (\d+) (\d+) (\d+) (\S+):(\d+)-(\d+)([+-]?)")
 
-enst_id = "ENST00000350908.9"
 # search_species = ["hg38", "mm10", "panTro4", "ponAbe2", "gorGor3", "rheMac3"]          # primate species
 search_species = ["pteAle1", "pteVam1", "myoDav1", "myoLuc2", "eptFus1", "oryLat2"]      # non-primate species
 
@@ -43,7 +47,7 @@ with open(input_file, "r") as file:
         else:
             continue    # Not a header line, ignore
         
-        if enst_id in header:                                       # match Ensembl transcript ID
+        if enst_id[gene] in header:                                       # match Ensembl transcript ID
             # For searching for species
             # found_species = None
             found_species = True                                    # Looking for ALL 100 species
@@ -73,7 +77,7 @@ with open(input_file, "r") as file:
                 
                 saved_species.add(species_name)
 
-print(f"Found {len(data)} sequences for {enst_id} in {len(saved_species)} species.")
+print(f"Found {len(data)} sequences for {enst_id[gene]} in {len(saved_species)} species.")
 
 df = pd.DataFrame(data, columns = [
      'Species', 'Number', 'AA Len', 'Start Phase', 'End Phase', 'Chromosome', 'Start Coord', 

@@ -1,6 +1,6 @@
 """
 Loads ESM model and calculates embeddings. Protein sequences comes from
-aa_exon_stitcher.py. Saves embeddings in "/gpfs/commons/home/nkeung/data/processed_data/foxp2-representations.pt"
+aa_exon_stitcher.py. Saves embeddings in "/gpfs/commons/home/nkeung/data/processed_data/{gene}-representations.pt"
 """
 
 import argparse
@@ -9,9 +9,10 @@ import esm
 from get_aa_seq import build_full_seq
 import pandas as pd
 
-input_file = "/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/foxp2-all-seqs.csv"
+gene = "brca2"
+input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
 output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
-num_exons = 16      # Number of exons in the foxp2 gene
+num_exons = 26      # Number of exons in the gene
 
 def main(pool_type):
     # Load ESM-2 model
@@ -20,7 +21,7 @@ def main(pool_type):
     model.eval()  # disables dropout for deterministic results
 
     data = build_full_seq(input_file)
-    batch_size = 10  # Set batch size for processing sequences
+    batch_size = 5  # Set batch size for processing sequences
 
     for i in range(0, len(data), batch_size):
         batch_data = data[i:i + batch_size]
@@ -42,9 +43,8 @@ def main(pool_type):
                 vector = token_representations[i, 1 : tokens_len - 1].mean(0)
                 # sequence_representations[name] = vector
                 # print(f"Shape of {name}: {vector.shape}")       # (1280)
-                torch.save(vector, output_dir + f"full-seq/foxp2_{name}_full.pt")         # Save individual sequence representations
+                torch.save(vector, output_dir + f"full-seq/{gene}_{name}_full.pt")         # Save individual sequence representations
 
-            # torch.save(sequence_representations, output_dir + "full-seq/foxp2_full.pt")  # Save all representations in a dictionary
         
         elif (pool_type == "exon"):
                 # Generate per-EXON representations via averaging
@@ -70,9 +70,8 @@ def main(pool_type):
                         # if j not in exon_representations:
                         #     exon_representations[j] = {}
                         # exon_representations[j][name] = vector
-                        torch.save(vector, output_dir + f"exon-seq/foxp2_{name}_exon_{j}.pt")
+                        torch.save(vector, output_dir + f"exon-seq/{gene}_{name}_exon_{j}.pt")
 
-                # torch.save(exon_representations, output_dir+ "exon-seq/foxp2_exons.pt")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")

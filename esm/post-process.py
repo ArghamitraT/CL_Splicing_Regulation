@@ -12,6 +12,7 @@ input_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
 output_dir = "/gpfs/commons/home/nkeung/data/embeddings"
 
 # Example names: "foxp2_hg38_full.pt" and "foxp2_hg38_exon_1.pt"
+gene = "brca2"
 
 def process_full_seq():
     full_dir = os.path.join(input_dir, "full-seq/")
@@ -26,7 +27,7 @@ def process_full_seq():
             full_seq_dict[species] = vector
             os.remove(os.path.join(full_dir, file))
 
-    torch.save(full_seq_dict, os.path.join(output_dir, "foxp2_full.pt"))
+    torch.save(full_seq_dict, os.path.join(output_dir, f"{gene}_full.pt"))
 
 def process_exon():
     full_dir = os.path.join(input_dir, "exon-seq/")
@@ -45,7 +46,7 @@ def process_exon():
         exon_dict[exon_num][species] = vector
         os.remove(os.path.join(full_dir, file))
 
-    torch.save(exon_dict, os.path.join(output_dir, "foxp2_exons.pt"))
+    torch.save(exon_dict, os.path.join(output_dir, f"{gene}_exons.pt"))
 
 def main(pool_type):
     if pool_type == "full":

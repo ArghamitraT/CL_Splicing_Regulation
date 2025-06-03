@@ -1,5 +1,5 @@
 """
-Calculate cosine similarity from embeddings saved in "/gpfs/commons/home/nkeung/data/processed_data/foxp2-representations.pt"
+Calculate cosine similarity from embeddings saved in "/gpfs/commons/home/nkeung/data/processed_data/{gene}-representations.pt"
 """
 
 import argparse
@@ -16,7 +16,8 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 input_dir = "/gpfs/commons/home/nkeung/data/"
 output_dir = "/gpfs/commons/home/nkeung/data/figures/"
-num_exons = 16      # Number of exons in the foxp2 gene
+gene = "brca2"
+num_exons = 26      # Number of exons in the gene
 epsilon = 1e-6      # Small value to avoid log(0) issues
 
 species_colors = {}
@@ -97,8 +98,8 @@ def plot_bar(similarities: dict):
     plt.xticks(rotation=90)
     plt.xlabel("Species")
     plt.ylabel("Log Cosine Similarity to hg38")
-    plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
-    plt.savefig(output_dir+"foxp2_full_cosine_similarity.png", dpi=300, bbox_inches='tight')
+    plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
+    plt.savefig(output_dir+f"{gene}_full_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
 
 def draw_tree(similarities: dict):
@@ -124,7 +125,7 @@ def draw_tree(similarities: dict):
     ts = TreeStyle()
     ts.show_leaf_name = True
     ts.mode = "c"
-    common_tree.render(output_dir+"foxp2_tree.png", tree_style=ts, dpi=300)
+    common_tree.render(output_dir+f"{gene}_tree.png", tree_style=ts, dpi=300)
 
 
 def plot_heat_map(matrix, species):
@@ -134,14 +135,14 @@ def plot_heat_map(matrix, species):
     plt.xticks(ticks=np.arange(len(species)), 
                 labels=list(species), rotation=90)
     plt.yticks(ticks=np.arange(num_exons), labels=[f"Exon {i}" for i in range(1, num_exons + 1)])
-    plt.title("Cosine Similarity of FoxP2 Exon Representations")
-    plt.savefig(input_dir+"figures/foxp2_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
+    plt.title(f"Cosine Similarity of {gene} Exon Representations")
+    plt.savefig(input_dir+f"figures/{gene}_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
 
 def main(pool_type):
     if pool_type == "full":
         # --- COSINE SIMILARITY ---
-        sequence_representations = torch.load(input_dir+"embeddings/foxp2_full.pt")
+        sequence_representations = torch.load(input_dir+f"embeddings/{gene}_full.pt")
         similarity = calculate_cosine_similarity(sequence_representations)
         similarity = get_common_name(similarity)
 
@@ -188,8 +189,8 @@ def main(pool_type):
         plt.xticks(rotation=90)
         plt.xlabel("Species")
         plt.ylabel("L1 Distance from hg38")
-        plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
-        plt.savefig(output_dir+"foxp2_full_manhattan.png", dpi=300, bbox_inches='tight')
+        plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
+        plt.savefig(output_dir+f"{gene}_full_manhattan.png", dpi=300, bbox_inches='tight')
 
         # Cos Similarity vs Manhattan Distance
         plt.figure(figsize=(18, 6))
@@ -197,7 +198,7 @@ def main(pool_type):
         plt.xlabel("-Log (1 - Cosine Similarity)")
         plt.ylabel("L1 Distance from hg38")
         plt.title("Cosine Similarity vs Manhattan Distance")
-        plt.savefig(output_dir+"foxp2_full_cos_vs_manhattan.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}_full_cos_vs_manhattan.png", dpi=300, bbox_inches='tight')
 
         # EUCLIDEAN DISTANCE (L2)
         l2_diff = get_common_name(embedding_l1_dist(sequence_representations))
@@ -209,8 +210,8 @@ def main(pool_type):
         plt.xticks(rotation=90)
         plt.xlabel("Species")
         plt.ylabel("L2 Distance from hg38")
-        plt.title("Cosine Similarity of FoxP2 Full Sequence Representations")
-        plt.savefig(output_dir+"foxp2_full_euclidean.png", dpi=300, bbox_inches='tight')
+        plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
+        plt.savefig(output_dir+f"{gene}_full_euclidean.png", dpi=300, bbox_inches='tight')
 
         # Cos Similarity vs Euclidean Distance
         plt.figure(figsize=(18, 6))
@@ -218,10 +219,10 @@ def main(pool_type):
         plt.xlabel("-Log (1 - Cosine Similarity)")
         plt.ylabel("L2 Distance from hg38")
         plt.title("Cosine Similarity vs Euclidean Distance")
-        plt.savefig(output_dir+"foxp2_full_cos_vs_euclidean.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}_full_cos_vs_euclidean.png", dpi=300, bbox_inches='tight')
 
     elif pool_type == "exon":
-        sequence_representations = torch.load(input_dir+"embeddings/foxp2_exons.pt")
+        sequence_representations = torch.load(input_dir+f"embeddings/{gene}_exons.pt")
         similarity = {}
         for i in range(1, num_exons + 1):
             # print(f"Exon {i} cosine similarity:")
