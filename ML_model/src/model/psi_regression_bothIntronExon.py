@@ -10,31 +10,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class PSIRegressionModel(pl.LightningModule):
-    def __init__(self, encoder, config):
+    def __init__(self, encoder_5p, encoder_3p, encoder_exon, config):
         super().__init__()
         # self.save_hyperparameters(ignore=['encoder'])
 
-        self.encoder = encoder
+        self.encoder_5p = encoder_5p
+        self.encoder_3p = encoder_3p
+        self.encoder_exon = encoder_exon
         self.config = config
 
-        if self.config.aux_models.freeze_encoder:
-            for param in self.encoder.parameters():
-                param.requires_grad = False
+        # if self.config.aux_models.freeze_encoder:
+        #     for param in self.encoder_5p.parameters():
+        #         param.requires_grad = False
+        #     for param in self.encoder_3p.parameters():
+        #         param.requires_grad = False
 
-        # if hasattr(encoder, "output_dim"):
-        #     encoder_output_dim = encoder.output_dim
-        # else:
-        #     print("⚠️ Warning: `encoder.output_dim` not defined, inferring from dummy input.")
-        #     dummy_input = torch.randint(0, 4, (1, self.config.dataset.seq_len))
-        #     with torch.no_grad():
-        #         dummy_output = encoder(dummy_input)
-        #         encoder_output_dim = dummy_output.shape[-1]
-        #     print(f"Inferred encoder output_dim = {encoder_output_dim}")
-
-    
-        if hasattr(encoder, "get_last_embedding_dimension") and callable(encoder.get_last_embedding_dimension):
+       
+        if hasattr(encoder_5p, "get_last_embedding_dimension") and callable(encoder_5p.get_last_embedding_dimension):
             print("📏 Using encoder.get_last_embedding_dimension()")
-            encoder_output_dim = encoder.get_last_embedding_dimension()
+            encoder_output_dim = encoder_5p.get_last_embedding_dimension()
 
         else:
             print("⚠️ Warning: `encoder.output_dim` not defined, falling back to dummy input.")
@@ -44,26 +38,20 @@ class PSIRegressionModel(pl.LightningModule):
                 raise ValueError("`seq_len` not found in config.dataset — can't create dummy input.")
 
             dummy_input = torch.full((1, 4, seq_len), 1.0)  # one-hot-style dummy input
-            dummy_input = dummy_input.to(next(encoder.parameters()).device)
+            dummy_input = dummy_input.to(next(encoder_5p.parameters()).device)
 
             with torch.no_grad():
-                dummy_output = encoder(dummy_input)
+                dummy_output = encoder_5p(dummy_input)
                 encoder_output_dim = dummy_output.shape[-1]
 
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
-        # self.regressor = nn.Sequential(nn.Linear(201*encoder_output_dim, config.aux_models.hidden_dim),
-        #                                nn.ReLU(),
-        #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
+        
+        total_dim = encoder_output_dim * 3  # concat of 3 encoders
 
-        # self.regressor = nn.Linear(201, config.aux_models.output_dim)
-        # self.regressor = nn.Sequential(nn.Linear(201, config.aux_models.hidden_dim),
-        #                                nn.ReLU(),
-        #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
-
-        self.regressor = nn.Sequential(nn.Linear(encoder_output_dim, config.aux_models.hidden_dim),
-                                       nn.ReLU(),
-                                       nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
-
+        self.regressor = nn.Sequential(
+            nn.Linear(total_dim, config.aux_models.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
 
 
         # Instantiate loss and metrics via Hydra
@@ -76,16 +64,23 @@ class PSIRegressionModel(pl.LightningModule):
 
     
     def forward(self, x):
-        features = self.encoder(x)
-        # features = features.flatten(start_dim=1)
-        # return self.regressor(features)
-        # return self.regressor(features.mean(dim=2))
-        # return self.regressor(x.float())
+        x_5p, x_3p, x_exon = x
+        emb_5p = self.encoder_5p(x_5p)
+        emb_3p = self.encoder_3p(x_3p)
+        emb_exon = self.encoder_exon(x_exon)
+
+        features = torch.cat([emb_5p, emb_3p, emb_exon], dim=-1)
+
         return self.regressor(features)
 
     def training_step(self, batch, batch_idx):
         x, y, _ = batch
         y_pred = self(x).squeeze()
+        # y_pred = 100 * torch.sigmoid(y_pred)
+        if torch.isnan(y_pred).any() or torch.isinf(y_pred).any():
+            print(f"\n[🚨 Warning] NaN or Inf in y_pred at batch {batch_idx}")
+            print(f"y_pred: {y_pred}")
+
         # y_pred = self(x)
 
         # # Combine masks for any invalid predictions or targets
@@ -94,7 +89,7 @@ class PSIRegressionModel(pl.LightningModule):
         # y_pred = y_pred[valid_mask]
         # y = y[valid_mask]
         loss = self.loss_fn(y_pred, y)
-
+        # print(f"batch {batch_idx}, loss {loss}")
         self.log("train_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
         for metric_fn in self.metric_fns:
             # value = metric_fn(y_pred, y)
@@ -106,6 +101,7 @@ class PSIRegressionModel(pl.LightningModule):
         x, y, _ = batch
         # y_pred = self(x)
         y_pred = self(x).squeeze()
+        # y_pred = 100 * torch.sigmoid(y_pred)
 
         # Combine masks for any invalid predictions or targets
         # valid_mask = ~(torch.isnan(y_pred) | torch.isinf(y_pred) | torch.isnan(y) | torch.isinf(y))
@@ -122,6 +118,7 @@ class PSIRegressionModel(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y, exon_ids = batch
         y_pred = self(x).squeeze()
+        # y_pred = 100 * torch.sigmoid(y_pred)
         loss = self.loss_fn(y_pred, y)
 
         for metric_fn in self.metric_fns:
@@ -176,7 +173,7 @@ class PSIRegressionModel(pl.LightningModule):
         # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
         # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
 
-        # Assume self.dataset.entries is available and maps index → (exon_id, entry_dict)
+        # # Assume self.dataset.entries is available and maps index → (exon_id, entry_dict)
         # dataset_entries = self.trainer.datamodule.test_dataloader().dataset.entries  # get from dataloader
 
         # logit_mean_list = []
@@ -197,6 +194,24 @@ class PSIRegressionModel(pl.LightningModule):
         # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
         # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
             
+        # === Plotting and saving ===
+        # plt.figure(figsize=(5, 5))
+        # plt.scatter(delta_y_pred, delta_y_true, alpha=0.6, s=10, color='black')
+        # plt.plot(
+        #     np.unique(delta_y_pred),
+        #     np.poly1d(np.polyfit(delta_y_pred, delta_y_true, 1))(np.unique(delta_y_pred)),
+        #     linestyle='--',
+        #     color='gray'
+        # )
+        # plt.xlabel("Predicted Δ logit(Ψ)")
+        # plt.ylabel("Measured Δ logit(Ψ)")
+        # plt.title("Differential Splicing (logit scale)")
+        # plt.text(0.05, 0.95, f"ρ = {rho:.2f}", transform=plt.gca().transAxes, ha='left', va='top', fontsize=12)
+        # plt.grid(True, linestyle=':', linewidth=0.5)
+        # plt.tight_layout()
+        # plt.savefig("/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/figures/delta_logit_scatter.png", dpi=300)
+        # print("📈 Plot saved as delta_logit_scatter.png")
+
 
     def on_train_epoch_start(self):
         self.epoch_start_time = time.time()
