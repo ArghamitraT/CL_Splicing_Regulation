@@ -165,6 +165,7 @@ def main(pool_type):
         sorted_vals = sorted(log_sim.items(), key=lambda s: s[1], reverse=True)
         sorted_species, desc_log_cos = zip(*sorted_vals)
         log_sim = dict(sorted_vals)
+        sorted_cos = {sp: similarity[sp] for sp in sorted_species}
 
         # Set colors after sorting
         global species_colors
@@ -191,7 +192,7 @@ def main(pool_type):
         plt.xticks(rotation=90)
         plt.xlabel("Species")
         plt.ylabel("L1 Distance from hg38")
-        plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
+        plt.title(f"L1 Distance of {gene} Full Sequence Representations")
         plt.savefig(output_dir+f"{gene}/{gene}_full_manhattan.png", dpi=300, bbox_inches='tight')
 
         # Cos Similarity vs Manhattan Distance
@@ -200,7 +201,7 @@ def main(pool_type):
         plt.xlabel("-Log (1 - Cosine Similarity)")
         plt.ylabel("L1 Distance from hg38")
         plt.title("Cosine Similarity vs Manhattan Distance")
-        plt.savefig(output_dir+f"{gene}/{gene}_full_cos_vs_manhattan.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}/{gene}_logcos_vs_manhattan.png", dpi=300, bbox_inches='tight')
 
         # EUCLIDEAN DISTANCE (L2)
         l2_diff = get_common_name(embedding_l1_dist(sequence_representations))
@@ -212,7 +213,7 @@ def main(pool_type):
         plt.xticks(rotation=90)
         plt.xlabel("Species")
         plt.ylabel("L2 Distance from hg38")
-        plt.title(f"Cosine Similarity of {gene} Full Sequence Representations")
+        plt.title(f"L2 Distance of {gene} Full Sequence Representations")
         plt.savefig(output_dir+f"{gene}/{gene}_full_euclidean.png", dpi=300, bbox_inches='tight')
 
         # Cos Similarity vs Euclidean Distance
@@ -221,7 +222,7 @@ def main(pool_type):
         plt.xlabel("-Log (1 - Cosine Similarity)")
         plt.ylabel("L2 Distance from hg38")
         plt.title("Cosine Similarity vs Euclidean Distance")
-        plt.savefig(output_dir+f"{gene}/{gene}_full_cos_vs_euclidean.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir+f"{gene}/{gene}_logcos_vs_euclidean.png", dpi=300, bbox_inches='tight')
 
     elif pool_type == "exon":
         sequence_representations = torch.load(input_dir+f"embeddings/{gene}_exons.pt")
