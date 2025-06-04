@@ -29,7 +29,7 @@ def create_prg_file(prg_file_path):
     set -e
     cd $HOME
     source ~/.bashrc
-    conda activate cl_splicing_regulation2
+    conda activate cl_splicing_regulation3
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.cl_training \\
@@ -41,6 +41,9 @@ def create_prg_file(prg_file_path):
             embedder={embedder} \\
             embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
+            dataset.train_data_file={train_file} \\
+            dataset.val_data_file={val_file} \\
+            dataset.test_data_file={test_file} \\
             ++wandb.dir="'{wandb_dir}'"\\
             ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
@@ -109,27 +112,32 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CL_intrprtblWfastknzr'
+slurm_file_name = 'CLResnet3prime'
 gpu_num = 1
-hour=5
+hour=3
 memory=100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 0.5
 global_batch_size = 8192
-embedder="interpretable"
-tokenizer="onehot_tokenizer"
+embedder="resnet"
+tokenizer="custom_tokenizer"
 max_epochs = 25
 maxpooling = True
 optimizer = "sgd"
+TRAIN_FILE="train_3primeIntron_filtered.pkl"
+VAL_FILE="val_3primeIntron_filtered.pkl"
+TEST_FILE="test_3primeIntron_filtered.pkl"
 readme_comment = (
-    "interpretable encoder, with faster tokenizer to sanity check. We should get similar result as before, tokenizer should not have any effect"
+    "resnet50, training with 3 prime intron"
 )
-wandb_logger_NOTES="interpretable encoder faster tokenizer" ## do NOT use any special character or new line
-
+wandb_logger_NOTES="resnet50 3 prime intron" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
+train_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
+val_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
+test_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
 
 
 name = slurm_file_name

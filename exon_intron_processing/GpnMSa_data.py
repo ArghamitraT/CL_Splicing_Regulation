@@ -2,6 +2,8 @@
 How to read the GPN-MSA data
 """
 
+# Environment is CntrstvlLrn_1
+
 # from gpn.data import GenomeMSA, Tokenizer
 from gpn.data import GenomeMSA
 # import gpn.model
@@ -15,7 +17,7 @@ import numpy as np
 
 model_path = "songlab/gpn-msa-sapiens"
 # see README in https://huggingface.co/datasets/songlab/multiz100way for faster queries
-msa_path = "data/initial_data/99.zarr.zip"
+msa_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/99.zarr.zip"
 # msa_path = "data/89.zarr.zip"
 
 genome_msa = GenomeMSA(msa_path)  # can take a minute or two

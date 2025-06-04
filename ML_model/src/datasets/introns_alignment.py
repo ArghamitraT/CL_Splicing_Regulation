@@ -39,7 +39,10 @@ class ContrastiveIntronsDataset(Dataset):
         intronic_sequences = self.data[exon_name]
                 
         # Randomly sample two augmentations (intronic sequences)
-        species_sample = random.sample(intronic_sequences.keys(), 2)
+        try:
+            species_sample = random.sample(intronic_sequences.keys(), 2)
+        except:
+            print("only 1 species", exon_name)
         # Retrieve the sequences for the sampled species
         augmentation1 = intronic_sequences[species_sample[0]]
         augmentation2 = intronic_sequences[species_sample[1]]

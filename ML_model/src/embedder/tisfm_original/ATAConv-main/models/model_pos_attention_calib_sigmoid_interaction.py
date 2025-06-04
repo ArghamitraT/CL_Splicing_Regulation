@@ -33,7 +33,7 @@ class TISFM(TemplateModel):
 
     def forward(self, x):
 
-        l = x.shape[2]
+        l = x.shape[2] #2x4x200
 
         if self.l != l:
             ii_f = torch.arange(l//2, device = x.get_device())
@@ -42,23 +42,25 @@ class TISFM(TemplateModel):
             self.ii = torch.cat([ii_f, ii_r])
             self.l = l
 
-        pos = self.position_emb(self.ii).view(1,1,-1)
+        pos = self.position_emb(self.ii).view(1,1,-1) #1x1x200
 
         #positional embedding
-        attention = self.attention_layer(x + pos)
-        x = x + attention
+        attention = self.attention_layer(x + pos) #2x4x200
+        x = x + attention #2x4x200
 
-        x = self.motif_layer(x)
+        x = self.motif_layer(x) #2x256x189
 
         x = self.sigmoid(x)
+        #2x128x378
         x = x.view(x.shape[0], x.shape[1]//2, x.shape[2]*2)
 
         #attention pooling
-        x, _ = self.attentionpooling(x)
-        x = x.view(x.shape[0], x.shape[1])
+        x, _ = self.attentionpooling(x) #2x128x1
+        x = x.view(x.shape[0], x.shape[1]) #2x128
 
+        #2x128
         interactions = self.sigmoid(self.interaction_layer(x))
-        x = x * interactions
+        x = x * interactions    #2x128
 
         #regression
         # y = self.linreg(x)
