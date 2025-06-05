@@ -10,6 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity, manhattan_distances, euc
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 from ete3 import Tree, TreeStyle, NodeStyle, TextFace
+import json
 
 # Set offscreen rendering for ete3
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -82,6 +83,28 @@ def embedding_l2_dist(representations):
     # Sort embeddings in order of ucsc_codes
     in_order = {sp: diff[sp] for sp in ucsc_codes}
     return in_order
+
+
+def levenshteinDistance(s1, s2):
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+
+    distances = range(len(s1) + 1)
+    for i2, c2 in enumerate(s2):
+        distances_ = [i2+1]
+        for i1, c1 in enumerate(s1):
+            if c1 == c2:
+                distances_.append(distances[i1])
+            else:
+                distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
+        distances = distances_
+    return distances[-1]
+
+
+def edit_distance(embeddings: dict):
+    hg38_vector = embeddings["Human"]
+    edit_dist = {sp:levenshteinDistance(hg38_vector, embeddings[sp]) for sp in embeddings.keys()}
+    return edit_dist
 
 
 def get_common_name(embeddings: dict):
@@ -181,6 +204,26 @@ def main(pool_type):
         plot_bar(log_sim)
         draw_tree(log_sim)
 
+        # --- SEQUENCE SIMILARITY ---
+        with open(f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-full-stitched.json", "r") as file:
+            aa_seqs = dict(json.load(file))
+        aa_seqs = get_common_name(aa_seqs)
+        for sp_name in common_names:
+            if sp_name not in aa_seqs: 
+                aa_seqs[sp_name] = ""       # Account for missing species
+        sorted_aa = {sp: aa_seqs[sp] for sp in sorted_species}
+        edit_dist = edit_distance(sorted_aa)
+        fig = plt.figure(figsize=(18,6))
+        ax = fig.add_subplot(111)
+        plt.scatter(edit_dist.values(), desc_log_cos, color=[species_colors[s] for s in sorted_species])
+        plt.xlabel("Levenshtein Distance")
+        plt.ylabel("Log Cosine Similarity")
+        plt.title(f"Edit Distance vs Cosine Similarity for {gene}")
+        # for i, label in enumerate(sorted_species):
+        #     if label == "Gorilla" or label == "Rhesus":
+        #         ax.text(list(edit_dist.values())[i], desc_log_cos[i], label)
+        plt.savefig(output_dir+f"{gene}/{gene}_edit_dist.png", dpi=300, bbox_inches='tight')
+        
         # --- HIGH DIMENSIONAL DIFFERENCES ---
         # MANHATTAN DISTANCE (L1)
         l1_diff = get_common_name(embedding_l1_dist(sequence_representations))
