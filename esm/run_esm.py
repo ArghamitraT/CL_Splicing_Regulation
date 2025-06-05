@@ -8,6 +8,7 @@ import torch
 import esm
 from get_aa_seq import build_full_seq
 import pandas as pd
+import json
 
 gene = None
 num_exon_map = {"foxp2": 16, "brca2": 26, "hla-a":8, "tp53":10}
@@ -20,7 +21,7 @@ def initialize_globals(args):
     global gene, num_exons, input_file, output_dir
     gene = args.gene
     num_exons = num_exon_map[gene]
-    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
+    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-full-stitched.json"
     output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
 
 
@@ -52,8 +53,8 @@ def main(pool_type):
     batch_converter = alphabet.get_batch_converter()
     model.eval()  # disables dropout for deterministic results
 
-    data = build_full_seq(input_file)
-    batch_size = 5  # Set batch size for processing sequences
+    with open(input_file, "r") as file:
+        data = json.load(file)
 
     for batch_data in dynamic_batcher(data):
         batch_labels, batch_strs, batch_tokens = batch_converter(batch_data)
