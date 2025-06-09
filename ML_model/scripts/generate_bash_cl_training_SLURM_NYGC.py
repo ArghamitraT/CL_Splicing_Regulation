@@ -112,7 +112,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLResnet3prime'
+slurm_file_name = 'CLResnetExon'
 gpu_num = 1
 hour=3
 memory=100 # GB
@@ -122,16 +122,19 @@ val_check_interval = 0.5
 global_batch_size = 8192
 embedder="resnet"
 tokenizer="custom_tokenizer"
-max_epochs = 25
+max_epochs = 50
 maxpooling = True
 optimizer = "sgd"
-TRAIN_FILE="train_3primeIntron_filtered.pkl"
-VAL_FILE="val_3primeIntron_filtered.pkl"
-TEST_FILE="test_3primeIntron_filtered.pkl"
+# TRAIN_FILE="train_3primeIntron_filtered.pkl"
+# VAL_FILE="val_3primeIntron_filtered.pkl"
+# TEST_FILE="test_3primeIntron_filtered.pkl"
+TRAIN_FILE="train_ExonSeq_filtered.pkl"
+VAL_FILE="val_ExonSeq_filtered.pkl"
+TEST_FILE="test_ExonSeq_filtered.pkl"
 readme_comment = (
-    "resnet50, training with 3 prime intron"
+    "resnet50, training with exon"
 )
-wandb_logger_NOTES="resnet50 3 prime intron" ## do NOT use any special character or new line
+wandb_logger_NOTES="resnet50 exon" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
