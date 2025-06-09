@@ -11,9 +11,9 @@ python -m scripts.psi_regression_training \
         embedder.maxpooling=true\
         optimizer="sgd" \
         optimizer.lr=1e-3 \
-        aux_models.freeze_encoder=false\
+        aux_models.freeze_encoder=true\
         aux_models.warm_start=true\
-        logger.name="Psi__$(date +%Y%m%d_%H%M%S)" \
+        logger.name="Psi_frzencdr__$(date +%Y%m%d_%H%M%S)" \
         logger.notes="$NOTES"
        
          
