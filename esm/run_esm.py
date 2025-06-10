@@ -1,27 +1,30 @@
 """
-Loads ESM model and calculates embeddings. Protein sequences comes from
-aa_exon_stitcher.py. Saves embeddings in "/gpfs/commons/home/nkeung/data/processed_data/{gene}-representations.pt"
+Loads ESM model and calculates embeddings. Protein sequences come from 
+.json files saved by save_aa_seq.py. Embeddings for each protein/exon 
+are saved individually. Afterwards, run post-process.py to group embeddings
+together.
 """
 
 import argparse
 import torch
 import esm
-from get_aa_seq import build_full_seq
 import pandas as pd
 import json
 
 gene = None
-num_exon_map = {"foxp2": 16, "brca2": 26, "hla-a":8, "tp53":10}
+num_exon_map = {"foxp2": 16, "brca2": 26, "hla-a":8, "tp53":10, "test": 2}
 num_exons = None      # Number of exons in the gene
 
 input_file = None       # See below
+input_csv = None
 output_dir = None
 
 def initialize_globals(args):
-    global gene, num_exons, input_file, output_dir
+    global gene, num_exons, input_file, input_csv, output_dir
     gene = args.gene
     num_exons = num_exon_map[gene]
     input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-full-stitched.json"
+    input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
     output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
 
 
@@ -81,22 +84,31 @@ def main(pool_type):
         elif (pool_type == "exon"):
                 # Generate per-EXON representations via averaging
                 # Get exon length from input file
-                df = pd.read_csv(input_file)
+                df = pd.read_csv(input_csv)
                 df = df.sort_values(by=["Species", "Number"])
                 # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
                 # exon_representations = {}         # Not used, but can be used to save representations in a dictionary
                 for i, tokens_len in enumerate(batch_lens):
                     name = batch_labels[i]
+                    start_index = 1                 # Initialize index for first amino acid
                     for j in range(1, num_exons + 1):
                         # Get exon length
-                        start_index = 1
                         match = df[(df["Species"] == name) & (df["Number"] == j)]
+                        # Check for missing exon
                         if match.empty:
                             print(f"Exon {j} not found for species {name}")
                             continue
-                        exon_len = match["AA Len"].values[0]
+                        exon_seq = match["Seq"].iloc[0]
+                        exon_len = len(exon_seq.strip().replace("-", ""))
+                        # Check for deleted exon
+                        if exon_len == 0:
+                            print(f"Exon missing. Skipped exon {j} for species {name}")
+                            continue
 
                         end_index = start_index + exon_len
+                        if end_index > token_representations.shape[1]:
+                            print(f"Exon length exceeds tokens represented. Skipping exon {j} for {name}")
+                            continue
                         vector = token_representations[i, start_index : end_index].mean(0)
                         start_index = end_index
                         # if j not in exon_representations:
@@ -110,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--gene",
         type=str,
-        choices=["foxp2", "brca2", "hla-a", "tp53"],
+        choices=["foxp2", "brca2", "hla-a", "tp53", "test"],
         required=True,
         help="Gene for ESM input"
     )
