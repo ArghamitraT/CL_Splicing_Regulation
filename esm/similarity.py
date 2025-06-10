@@ -1,5 +1,8 @@
 """
-Calculate cosine similarity from embeddings saved in "/gpfs/commons/home/nkeung/data/processed_data/{gene}-representations.pt"
+Calculate similarities between amino acid embeddings for genes
+FOXP2, HLA-A, and TP53. This script will generate plots showing the 
+cosine similarity, color-coded phylogenetic tree, L1 and L2 distances,
+and edit distance.
 """
 
 import argparse
@@ -21,7 +24,7 @@ output_dir = "/gpfs/commons/home/nkeung/data/figures/"
 gene = None
 num_exon_map = {"foxp2": 16, "brca2": 26, "hla-a":8, "tp53": 10}
 num_exons = None      # Number of exons in the gene
-epsilon = 1e-6      # Small value to avoid log(0) issues
+epsilon = 1e-6      # Small value to aid log(0) issues
 
 species_colors = {}
 
@@ -154,8 +157,10 @@ def draw_tree(similarities: dict):
 
 
 def plot_heat_map(matrix, species):
+    cmap = plt.get_cmap('viridis')
+    cmap.set_bad(to_hex("tab:red"))
     plt.figure(figsize=(18, 6))
-    plt.imshow(matrix, cmap='viridis', aspect='auto')
+    plt.imshow(matrix, cmap, aspect='auto')
     plt.colorbar(label='Log Cosine Similarity to hg38')
     plt.xticks(ticks=np.arange(len(species)), 
                 labels=list(species), rotation=90)
@@ -282,7 +287,9 @@ def main(pool_type):
             new_row = list(similarity[exon].values())
             sim_matrix_rows.append(new_row)
         sim_matrix = np.array(sim_matrix_rows)
-        log_matrix = -np.log(1 - np.clip(sim_matrix, epsilon, 1 - epsilon))
+        masked_matrix = sim_matrix.copy()
+        masked_matrix[masked_matrix==0.0] = np.nan
+        log_matrix = -np.log(1 - np.clip(masked_matrix, epsilon, 1 - epsilon))
         plot_heat_map(log_matrix, similarity[1].keys())
     
 if __name__ == "__main__":
