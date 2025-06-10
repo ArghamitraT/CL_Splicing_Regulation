@@ -35,7 +35,7 @@ class PSIRegressionDataset(Dataset):
         exon_id, entry = self.entries[idx]
         psi_value = entry["psi_val"]
 
-        if self.mode == "intronexon":
+        if self.mode == "intronexon" or self.mode == "intronOnly":
             seq_3p = entry["3p"]
             seq_5p = entry["5p"]
             seq_exon = self._process_exon(entry["exon"])
@@ -125,7 +125,8 @@ class PSIRegressionDataModule(pl.LightningDataModule):
             self.val_set = PSIRegressionDataset(self.val_files["5p"], self.tokenizer, mode=self.mode)
             self.test_set = PSIRegressionDataset(self.test_files["5p"], self.tokenizer, mode=self.mode)
 
-        elif self.mode == "intronexon":
+        # elif self.mode == "intronexon":
+        else:
             self.train_set = PSIRegressionDataset(self.train_files["intronexon"], self.tokenizer, mode=self.mode)
             self.val_set = PSIRegressionDataset(self.val_files["intronexon"], self.tokenizer, mode=self.mode)
             self.test_set = PSIRegressionDataset(self.test_files["intronexon"], self.tokenizer, mode=self.mode)
@@ -145,13 +146,16 @@ class PSIRegressionDataModule(pl.LightningDataModule):
             #     "3p": PSIRegressionDataset(self.test_files["3p"], self.tokenizer),
             #     "exon": PSIRegressionDataset(self.test_files["exon"], self.tokenizer)
             # }
-        else:
-            raise ValueError(f"Unsupported mode: {self.mode}")
+        # else:
+        #     raise ValueError(f"Unsupported mode: {self.mode}")
    
     def train_dataloader(self):
+        # return DataLoader(
+        #     self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True,
+        #     generator=torch.Generator().manual_seed(42) ###❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌ remove the seed
+        # )
         return DataLoader(
-            self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True,
-            generator=torch.Generator().manual_seed(42) ###❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌ remove the seed
+            self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True
         )
 
     def val_dataloader(self):

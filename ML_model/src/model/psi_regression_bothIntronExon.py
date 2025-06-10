@@ -16,14 +16,14 @@ class PSIRegressionModel(pl.LightningModule):
 
         self.encoder_5p = encoder_5p
         self.encoder_3p = encoder_3p
-        self.encoder_exon = encoder_exon
         self.config = config
+        self.mode = config.aux_models.mode
 
-        # if self.config.aux_models.freeze_encoder:
-        #     for param in self.encoder_5p.parameters():
-        #         param.requires_grad = False
-        #     for param in self.encoder_3p.parameters():
-        #         param.requires_grad = False
+        if self.config.aux_models.freeze_encoder:
+            for param in self.encoder_5p.parameters():
+                param.requires_grad = False
+            for param in self.encoder_3p.parameters():
+                param.requires_grad = False
 
        
         if hasattr(encoder_5p, "get_last_embedding_dimension") and callable(encoder_5p.get_last_embedding_dimension):
@@ -46,7 +46,11 @@ class PSIRegressionModel(pl.LightningModule):
 
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
         
-        total_dim = encoder_output_dim * 3  # concat of 3 encoders
+        if self.mode == "intronOnly":
+            total_dim = encoder_output_dim * 2  # concat of 3 encoders
+        else:
+            self.encoder_exon = encoder_exon
+            total_dim = encoder_output_dim * 3  # con
 
         self.regressor = nn.Sequential(
             nn.Linear(total_dim, config.aux_models.hidden_dim),
@@ -64,14 +68,23 @@ class PSIRegressionModel(pl.LightningModule):
 
     
     def forward(self, x):
-        x_5p, x_3p, x_exon = x
-        emb_5p = self.encoder_5p(x_5p)
-        emb_3p = self.encoder_3p(x_3p)
-        emb_exon = self.encoder_exon(x_exon)
+        if self.mode == "intronOnly":
+            x_5p, x_3p, _ = x
+            emb_5p = self.encoder_5p(x_5p)
+            emb_3p = self.encoder_3p(x_3p)
+            features = torch.cat([emb_5p, emb_3p], dim=-1)
 
-        features = torch.cat([emb_5p, emb_3p, emb_exon], dim=-1)
+            return self.regressor(features)
 
-        return self.regressor(features)
+        else:
+            x_5p, x_3p, x_exon = x
+            emb_5p = self.encoder_5p(x_5p)
+            emb_3p = self.encoder_3p(x_3p)
+            emb_exon = self.encoder_exon(x_exon)
+
+            features = torch.cat([emb_5p, emb_exon, emb_3p], dim=-1)
+
+            return self.regressor(features)
 
     def training_step(self, batch, batch_idx):
         x, y, _ = batch

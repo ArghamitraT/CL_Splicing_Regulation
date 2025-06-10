@@ -1,9 +1,11 @@
 name_or_path: psi_regression
-mode: "intronexon"  # or "3p", "5p"
+mode: "intronexon"  # or "3p", "5p", "intronOnly"
 # mode: "3p"  # or "3p", "5p"
 5p_weights: "exprmnt_2025_06_01__21_15_08"
 # 5p_weights: "exprmnt_2025_05_04__11_29_05"
 3p_weights: "exprmnt_2025_06_01__21_16_19"
+# 5p_weights: "exprmnt_2025_06_08__20_39_37"
+# 3p_weights: "exprmnt_2025_06_08__20_38_28"
 hidden_dim: 512
 output_dim: 1  # Single output for PSI value prediction
 freeze_encoder: False  # Set to false for fine-tuning

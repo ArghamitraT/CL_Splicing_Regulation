@@ -2,9 +2,25 @@ import torch
 from hydra.utils import instantiate
 from src.model.simclr import get_simclr_model
 # from src.model import psi_regression
-
 from src.model import psi_regression, psi_regression_bothIntronExon
 
+import inspect
+import os
+
+############# DEBUG Message ###############
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️  DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
 
 def load_encoder(config, root_path, result_dir):
     # model = get_simclr_model(config)
@@ -57,20 +73,26 @@ def initialize_encoders_and_model(config, root_path):
         encoder = load_encoder(config, root_path, result_dirs["5p"])
         return psi_regression.PSIRegressionModel(encoder, config)
 
-    elif mode == "intronexon":
+    elif mode == "intronexon" or mode == "intronOnly":
+        
+        
         encoder_5p = load_encoder(config, root_path, result_dirs["5p"])
         encoder_3p = load_encoder(config, root_path, result_dirs["3p"])
-        encoder_exon = get_simclr_model(config).encoder  # randomly initialized
-
-        if config.aux_models.freeze_encoder:
-            for param in encoder_5p.parameters():
-                param.requires_grad = False
-            for param in encoder_3p.parameters():
-                param.requires_grad = False
-
-        return psi_regression_bothIntronExon.PSIRegressionModel(
-            encoder_5p, encoder_3p, encoder_exon, config
-        )
+        reset_debug_warning()
+        debug_warning("exon encdr wrmstarted")
+        # encoder_exon = get_simclr_model(config).encoder  # randomly initialized
+        encoder_exon = load_encoder(config, root_path, "exprmnt_2025_06_08__21_34_21")
 
     else:
         raise ValueError(f"❌ Unsupported aux_models.mode: {mode}")
+
+    # if config.aux_models.freeze_encoder:
+    #         for param in encoder_5p.parameters():
+    #             param.requires_grad = False
+    #         for param in encoder_3p.parameters():
+    #             param.requires_grad = False
+
+    
+    return psi_regression_bothIntronExon.PSIRegressionModel(
+        encoder_5p, encoder_3p, encoder_exon, config
+    )

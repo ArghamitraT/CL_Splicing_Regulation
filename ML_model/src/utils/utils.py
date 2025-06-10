@@ -181,3 +181,24 @@ def fsspec_listdir(dirname):
     """Listdir in manner compatible with fsspec."""
     fs, _ = fsspec.core.url_to_fs(dirname)
     return fs.ls(dirname)
+
+
+import inspect
+import os
+_warned_debug = False  # Define the global flag once
+def debug_warning(message="Using fixed species views! REMEMBER TO REVERT!",
+                  file_override=None, line_override=None):
+    global _warned_debug
+    if not _warned_debug:
+        if file_override and line_override:
+            filename, lineno = file_override, line_override
+        else:
+            frame = inspect.currentframe().f_back
+            filename = os.path.basename(frame.f_code.co_filename)
+            lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️ DEBUG WARNING in {filename}:{lineno} — {message}\033[0m")
+        _warned_debug = True
+
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
