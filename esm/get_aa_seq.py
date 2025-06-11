@@ -1,6 +1,7 @@
 """
 Function searches input file and stitches together all exons
-in order of the same species. 
+into a single sequence. It also removes all dashes and exludes
+and sequence/exon that is empty (all deletions).
 """
 
 import pandas as pd
@@ -34,7 +35,8 @@ def build_full_seq(cfg: Config):
             exon = exon.replace("-", "")
             exon = exon.replace("\n", "")
             sequence += exon
-        species_seq.append((species, sequence))
+        if len(sequence) != 0:
+            species_seq.append((species, sequence))
 
     with open(cfg.output_file+"-full-stitched.json", "w") as f:
         json.dump(species_seq, f)
@@ -57,7 +59,8 @@ def single_exons(cfg: Config):
                 exon = match["Seq"].iloc[0]
                 exon = exon.replace("-", "")
                 exon = exon.replace("\n", "")
-                exon_seqs.append(((species, i+1), exon))
+                if len(exon) != 0:
+                    exon_seqs.append(((species, i+1), exon))
 
     with open(cfg.output_file+f"-exons.json", "w") as f:
         json.dump(exon_seqs, f)
