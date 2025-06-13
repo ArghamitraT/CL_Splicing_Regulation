@@ -282,31 +282,31 @@ def main(pool_type, exon_to_compare=None):
                 elif torch.any(torch.isnan(vec)):
                     print(f"[Warning] Exon {i}, Species {sp}: Embedding has NaNs")
 
-        # Take weighted average of each exon and compare it to the sequence representation
-        full_seq = torch.load(input_dir + f"embeddings/{gene}_full.pt")
-        df = pd.read_csv(f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv")
-        df = df.sort_values(by=["Species","Number"])
+        # # Take weighted average of each exon and compare it to the sequence representation
+        # full_seq = torch.load(input_dir + f"embeddings/{gene}_full.pt")
+        # df = pd.read_csv(f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv")
+        # df = df.sort_values(by=["Species","Number"])
 
-        for sp in ucsc_codes:
-            if sp not in full_seq.keys():
-                continue
-            total_len = 0
-            tensor_sum = torch.zeros(1280)
-            for exon_num in range(1, num_exons + 1):
-                match = df[(df["Species"] == sp) & (df["Number"] == exon_num)]
-                exon_len = 0
-                if not match.empty:
-                    sequence = match["Seq"].iloc[0]
-                    exon_len = len(sequence.strip().replace("-",""))
-                total_len += exon_len
-                # Take weighted sum
-                if exon_num in sequence_representations and sp in sequence_representations[exon_num]:
-                    tensor_sum += exon_len * (sequence_representations[exon_num][sp])
-            avg_tensor = tensor_sum / total_len
-            if torch.all(torch.isclose(avg_tensor, full_seq[sp])):
-                print(f"{sp} averages match")
-            else:
-                print(f"*** {sp} average embeddings do not match! ***")
+        # for sp in ucsc_codes:
+        #     if sp not in full_seq.keys():
+        #         continue
+        #     total_len = 0
+        #     tensor_sum = torch.zeros(1280)
+        #     for exon_num in range(1, num_exons + 1):
+        #         match = df[(df["Species"] == sp) & (df["Number"] == exon_num)]
+        #         exon_len = 0
+        #         if not match.empty:
+        #             sequence = match["Seq"].iloc[0]
+        #             exon_len = len(sequence.strip().replace("-",""))
+        #         total_len += exon_len
+        #         # Take weighted sum
+        #         if exon_num in sequence_representations and sp in sequence_representations[exon_num]:
+        #             tensor_sum += exon_len * (sequence_representations[exon_num][sp])
+        #     avg_tensor = tensor_sum / total_len
+        #     if torch.all(torch.isclose(avg_tensor, full_seq[sp])):
+        #         print(f"{sp} averages match")
+        #     else:
+        #         print(f"*** {sp} average embeddings do not match! ***")
                 
 
         similarity = {}
@@ -326,6 +326,34 @@ def main(pool_type, exon_to_compare=None):
         masked_matrix[masked_matrix==0.0] = np.nan
         log_matrix = -np.log(1 - np.clip(masked_matrix, epsilon, 1 - epsilon))
         plot_heat_map(log_matrix, similarity[1].keys())
+
+        # --- EDIT DISTANCE ---
+        if exon_to_compare:
+            if exon_to_compare > num_exons or exon_to_compare <= 0:
+                print("Exon does not exist")
+                return
+            
+            with open(f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-exons.json", "r") as file:
+                raw = json.load(file)
+                all_seqs = {tuple(k): v for k, v in raw}        # Convert list [spec, #] to a tuple
+            exon_seqs = {sp: all_seqs[(sp, exon_to_compare)] 
+                        for (sp, ex) in all_seqs.keys()
+                        if ex == exon_to_compare}
+            exon_seqs = get_common_name(exon_seqs)
+
+            found_species = list(exon_seqs.keys())
+            sorted_aa = {sp: exon_seqs[sp] for sp in similarity[1].keys() if sp in found_species}
+            edit_dist = edit_distance(sorted_aa)
+
+            filtered_log = [val for sp, val in zip(similarity[1].keys(), log_matrix[exon_to_compare].tolist()) if sp in found_species]
+            fig = plt.figure(figsize=(18,6))
+            ax = fig.add_subplot(111)
+            plt.scatter(edit_dist.values(), filtered_log)
+            plt.xlabel("Levenshtein Distance")
+            plt.ylabel("Log Cosine Similarity")
+            plt.title(f"Edit Distance vs Cosine Similarity for {gene} Exon {exon_to_compare} ")
+            plt.savefig(output_dir+f"{gene}/{gene}_{exon_to_compare}_edit_dist.png", dpi=300, bbox_inches='tight')
+
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")
