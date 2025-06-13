@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 from ete3 import Tree, TreeStyle, NodeStyle, TextFace
 import json
+import pandas as pd
 
 # Set offscreen rendering for ete3
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -169,7 +170,7 @@ def plot_heat_map(matrix, species):
     plt.savefig(output_dir+f"{gene}/{gene}_exon_cosine_similarity.png", dpi=300, bbox_inches='tight')
 
 
-def main(pool_type):
+def main(pool_type, exon_to_compare=None):
     if pool_type == "full":
         # --- COSINE SIMILARITY ---
         sequence_representations = torch.load(input_dir+f"embeddings/{gene}_full.pt")
@@ -224,9 +225,6 @@ def main(pool_type):
         plt.xlabel("Levenshtein Distance")
         plt.ylabel("Log Cosine Similarity")
         plt.title(f"Edit Distance vs Cosine Similarity for {gene}")
-        # for i, label in enumerate(sorted_species):
-        #     if label == "Gorilla" or label == "Rhesus":
-        #         ax.text(list(edit_dist.values())[i], desc_log_cos[i], label)
         plt.savefig(output_dir+f"{gene}/{gene}_edit_dist.png", dpi=300, bbox_inches='tight')
         
         # --- HIGH DIMENSIONAL DIFFERENCES ---
@@ -273,7 +271,44 @@ def main(pool_type):
         plt.savefig(output_dir+f"{gene}/{gene}_logcos_vs_euclidean.png", dpi=300, bbox_inches='tight')
 
     elif pool_type == "exon":
-        sequence_representations = torch.load(input_dir+f"embeddings/{gene}_exons.pt")
+        sequence_representations = torch.load(input_dir+f"embeddings/{gene}_exons.pt")      # dictionary: seq_representations[exon][species]
+        
+        # Check for any all-zero embeddings
+        for i in range(1, num_exons + 1):
+            exon_repr = sequence_representations[i]
+            for sp, vec in exon_repr.items():
+                if torch.all(vec == 0):
+                    print(f"[Warning] Exon {i}, Species {sp}: All-zero embedding")
+                elif torch.any(torch.isnan(vec)):
+                    print(f"[Warning] Exon {i}, Species {sp}: Embedding has NaNs")
+
+        # Take weighted average of each exon and compare it to the sequence representation
+        full_seq = torch.load(input_dir + f"embeddings/{gene}_full.pt")
+        df = pd.read_csv(f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv")
+        df = df.sort_values(by=["Species","Number"])
+
+        for sp in ucsc_codes:
+            if sp not in full_seq.keys():
+                continue
+            total_len = 0
+            tensor_sum = torch.zeros(1280)
+            for exon_num in range(1, num_exons + 1):
+                match = df[(df["Species"] == sp) & (df["Number"] == exon_num)]
+                exon_len = 0
+                if not match.empty:
+                    sequence = match["Seq"].iloc[0]
+                    exon_len = len(sequence.strip().replace("-",""))
+                total_len += exon_len
+                # Take weighted sum
+                if exon_num in sequence_representations and sp in sequence_representations[exon_num]:
+                    tensor_sum += exon_len * (sequence_representations[exon_num][sp])
+            avg_tensor = tensor_sum / total_len
+            if torch.all(torch.isclose(avg_tensor, full_seq[sp])):
+                print(f"{sp} averages match")
+            else:
+                print(f"*** {sp} average embeddings do not match! ***")
+                
+
         similarity = {}
         for i in range(1, num_exons + 1):
             # print(f"Exon {i} cosine similarity:")
@@ -308,7 +343,13 @@ if __name__ == "__main__":
         default="full",
         help="Pooling type for sequence representation (full sequence or exon)"
     )
+    parser.add_argument(
+        "--exon",
+        type=int,
+        default=None,
+        help="Specific exon to compare cosine similarity and edit distance"
+    )
     args = parser.parse_args()
     gene = args.gene
     num_exons = num_exon_map[gene]
-    main(args.pool_type)
+    main(args.pool_type, args.exon)
