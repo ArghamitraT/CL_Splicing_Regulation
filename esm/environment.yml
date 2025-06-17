@@ -16,4 +16,5 @@ dependencies:
   - matplotlib
   - python=3.10
   - ete3
+  - pyfaidx
 prefix: /gpfs/commons/home/nkeung/miniconda3/envs/esm-v3
