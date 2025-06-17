@@ -250,7 +250,7 @@ def main(pool_type, exon_to_compare=None):
         plt.savefig(output_dir+f"{gene}/{gene}_logcos_vs_manhattan.png", dpi=300, bbox_inches='tight')
 
         # EUCLIDEAN DISTANCE (L2)
-        l2_diff = get_common_name(embedding_l1_dist(sequence_representations))
+        l2_diff = get_common_name(embedding_l2_dist(sequence_representations))
         sorted_l2 = {sp: l2_diff[sp] for sp in sorted_species}
         
         # Euclidean Distance Across Species
