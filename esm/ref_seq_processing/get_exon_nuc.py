@@ -16,7 +16,8 @@ import time
 start_totalcode = time.time()
 
 # === Input arguments ===
-IntronExonPosFile_default = '/gpfs/commons/home/nkeung/data/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
+# IntronExonPosFile_default = '/gpfs/commons/home/nkeung/data/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
+IntronExonPosFile_default = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/exon_intron_positions_5and3prime/alignmentknownGene.multiz100way.exonNuc_exon_intron_positions_split_file_2.csv'
 parser = argparse.ArgumentParser()
 parser.add_argument("--IntronExonPosFile", type=str, default=IntronExonPosFile_default)
 args = parser.parse_args()
@@ -25,7 +26,7 @@ csv_file_path = args.IntronExonPosFile
 # species_url_csv = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls_hg38.csv'
 species_url_csv = '/gpfs/commons/home/nkeung/data/species_refSeq_urls.csv'
 refseq_main_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/'
-output_path = '/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/nuc_seqs'
+output_path = '/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/ref_seq_processing'
 os.makedirs(output_path, exist_ok=True)
 
 # === Load inputs ===
@@ -34,7 +35,7 @@ refseq_files = dict(zip(species_df['Species Name'], species_df['URL']))
 df = pd.read_csv(csv_file_path)
 
 # === Initialize dicts ===
-intron_3prime_dict = {}
+# intron_3prime_dict = {}
 exon_parts_dict = {}
 
 # === Helpers ===
@@ -50,17 +51,11 @@ def get_seq(genome, chrom, start, end, strand):
     except:
         return None
 
-def get_exon_segments(genome, chrom, start, end, strand):
+def get_exon(genome, chrom, start, end, strand):
     try:
         exon_len = end - start + 1
-        if exon_len >= 200:
-            e_start = genome[chrom][start-1:start-1+100].seq
-            e_end   = genome[chrom][end-100:end].seq
-        else:
-            half = exon_len // 2
-            e_start = genome[chrom][start-1:start-1+half].seq
-            e_end   = genome[chrom][start-1+half:end].seq
-        return (reverse_complement(e_start), reverse_complement(e_end)) if strand == '-' else (e_start, e_end)
+        e_seq = genome[chrom][start-1:end].seq
+        return reverse_complement(e_seq) if strand == '-' else e_seq
     except:
         return None, None
 
@@ -98,16 +93,15 @@ for species in refseq_files:
         strand = row['Strand']
 
         # === 3' intron ===
-        intron = get_seq(genome, chrom, row['3prime_Intron_Start'], row['3prime_Intron_End'], strand)
-        if intron:
-            intron_3prime_dict.setdefault(exon, {})[species] = intron
+        # intron = get_seq(genome, chrom, row['3prime_Intron_Start'], row['3prime_Intron_End'], strand)
+        # if intron:
+        #     intron_3prime_dict.setdefault(exon, {})[species] = intron
 
         # === exon segments ===
-        ex_start, ex_end = get_exon_segments(genome, chrom, row['Exon_Start'], row['Exon_End'], strand)
-        if ex_start and ex_end:
-            exon_parts_dict.setdefault(exon, {'exon_start': {}, 'exon_end': {}})
-            exon_parts_dict[exon]['exon_start'][species] = ex_start
-            exon_parts_dict[exon]['exon_end'][species] = ex_end
+        ex_seq = get_exon(genome, chrom, row['Exon_Start'], row['Exon_End'], strand)
+        if ex_seq:
+            exon_parts_dict.setdefault(exon, {})        # format: dictionary[exon][species] = "ACTG..."
+            exon_parts_dict[exon][species] = ex_seq
 
     # Strand-specific processing
     df_plus = species_df[species_df['Strand'] == '+']
@@ -122,16 +116,15 @@ for species in refseq_files:
     print(f"✅ {species} done in {(time.time() - start):.1f}s")
 
 # === Save outputs ===
-base = os.path.basename(csv_file_path).rsplit('.', 1)[0]
-intron_out = os.path.join(output_path, f"{base}_3primeIntronSeq.pkl")
-exon_out = os.path.join(output_path, f"{base}_ExonSeq.pkl")
+# intron_out = os.path.join(output_path, f"{base}_3primeIntronSeq.pkl")
+exon_out = os.path.join(output_path, f"exon_nuc_seq.pkl")
 
-with open(intron_out, 'wb') as f:
-    pickle.dump(intron_3prime_dict, f)
+# with open(intron_out, 'wb') as f:
+#     pickle.dump(intron_3prime_dict, f)
 
 with open(exon_out, 'wb') as f:
     pickle.dump(exon_parts_dict, f)
 
-print(f"\n✅ 3′ intron saved to: {intron_out}")
+# print(f"\n✅ 3' intron saved to: {intron_out}")
 print(f"✅ Exon start/end saved to: {exon_out}")
 print(f"🕒 Total time: {(time.time() - start_totalcode)/60:.2f} min")
