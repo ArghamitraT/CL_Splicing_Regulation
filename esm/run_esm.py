@@ -23,8 +23,10 @@ def initialize_globals(args):
     global gene, num_exons, input_file, input_csv, output_dir
     gene = args.gene
     num_exons = num_exon_map[gene]
-    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-full-stitched.json"
-    input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
+    # input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-full-stitched.json"
+    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/from_ref_seqs/{gene}-full-stitched.json"
+    # input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/{gene}-all-seqs.csv"
+    input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/from_ref_seqs/{gene}-all-seqs.csv"
     output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
 
 
