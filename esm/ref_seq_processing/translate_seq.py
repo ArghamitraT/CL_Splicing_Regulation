@@ -24,6 +24,9 @@ def main(cfg: Config):
     with open(cfg.input_file, "rb") as file:
         data = pickle.load(file)        # data[exon code][species] = string
     
+    print("Type of data: ", type(data))
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected a dict, got {type(data)} instead")
     # Keep only this chosen gene, ignore all others
     filtered_exons = {key: value for (key, value) in data.items() if cfg.code in key}
 
@@ -72,7 +75,7 @@ def main(cfg: Config):
         if len(leftover) != 0:
             print(f"Warning: {len(leftover)} unused nucleotides for {species}")
         
-        aa_seq = str(Seq(nuc_seq).translate()).replace("*", "")     # Trime stop codons
+        aa_seq = str(Seq(nuc_seq).translate()).replace("*", "")     # Trim stop codons
         aa_dict[species] = aa_seq
 
     aa_list = [(key, str(value)) for key, value in aa_dict.items()]
@@ -81,7 +84,7 @@ def main(cfg: Config):
 
     # Saving info in CSV for exon pooling
     df = pandas.DataFrame(csv_data, columns = ["Species", "Number", "Start Phase", "End Phase", "Seq"])
-    df.to_csv(f"{cfg.output_dir}/{cfg.gene}-all-seqs.csv")
+    df.to_csv(f"{cfg.output_dir}/{cfg.gene}-all-seqs.csv", index=False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Grab specified gene and translate to amino acid")
