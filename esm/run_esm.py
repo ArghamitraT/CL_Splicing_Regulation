@@ -86,7 +86,8 @@ def main(pool_type):
         elif (pool_type == "exon"):
                 # Generate per-EXON representations via averaging
                 # Get exon length from input file
-                df = pd.read_csv(input_csv)
+                df = pd.read_csv(input_csv, dtype={"Seq": str})
+                df["Seq"] = df["Seq"].fillna('')        # Turn nan sequences to an empty string
                 df = df.sort_values(by=["Species", "Number"])
                 # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
                 # exon_representations = {}         # Not used, but can be used to save representations in a dictionary
