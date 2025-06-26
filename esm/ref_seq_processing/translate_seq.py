@@ -24,7 +24,6 @@ def main(cfg: Config):
     with open(cfg.input_file, "rb") as file:
         data = pickle.load(file)        # data[exon code][species] = string
     
-    print("Type of data: ", type(data))
     if not isinstance(data, dict):
         raise ValueError(f"Expected a dict, got {type(data)} instead")
     # Keep only this chosen gene, ignore all others
