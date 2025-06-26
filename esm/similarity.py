@@ -303,10 +303,12 @@ def main(pool_type, exon_to_compare=None):
         #         if exon_num in sequence_representations and sp in sequence_representations[exon_num]:
         #             tensor_sum += exon_len * (sequence_representations[exon_num][sp])
         #     avg_tensor = tensor_sum / total_len
-        #     if torch.all(torch.isclose(avg_tensor, full_seq[sp])):
+        #     if torch.allclose(avg_tensor, full_seq[sp]):
         #         print(f"{sp} averages match")
         #     else:
         #         print(f"*** {sp} average embeddings do not match! ***")
+        #         print(f"\t{avg_tensor}")
+        #         print(f"\t{full_seq[sp]}")
                 
 
         similarity = {}
