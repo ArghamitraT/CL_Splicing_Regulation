@@ -4,10 +4,11 @@ import lightning.pytorch as pl
 from hydra.utils import instantiate
 from torchmetrics import R2Score
 import time
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, pearsonr
 from scipy.special import logit
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class PSIRegressionModel(pl.LightningModule):
     def __init__(self, encoder_5p, encoder_3p, encoder_exon, config):
@@ -170,60 +171,23 @@ class PSIRegressionModel(pl.LightningModule):
         self.log("test_spearman_logit", rho, prog_bar=True, sync_dist=True)
         print(f"\n🔬 Spearman ρ (logit PSI, test set): {rho:.4f}")
 
-        # === Compute Δ tissue logit PSI ===
-        # # Load the same exon_ids (in order) as used in the test set
-        # # Assumes self.test_exon_ids is a list aligned with y_true_all
-        # logit_mean_list = [logit(np.clip(self.test_exon_dict[exon]['psi_mean'] / 100, eps, 1 - eps))
-        #                 for exon in self.test_exon_ids]
+        pearson, _ = pearsonr(y_true_logit, y_pred_logit)
+        self.log("test_pearson_logit", pearson, prog_bar=True, sync_dist=True)
+        print(f"\n🔬 Pearson ρ (logit PSI, test set): {pearson:.4f}")
 
-        # logit_mean_arr = np.array(logit_mean_list)
+        import time
+        trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
 
-        # delta_y_true = y_true_logit - logit_mean_arr
-        # delta_y_pred = y_pred_logit - logit_mean_arr
+        # Save results to CSV
+        df = pd.DataFrame({
+            "index": np.arange(len(y_true_all)),
+            "y_true": y_true_all,
+            "y_pred": y_pred_all,
+            "y_true_logit": y_true_logit,
+            "y_pred_logit": y_pred_logit,
+        })
+        df.to_csv(f"/gpfs/commons/home/atalukder/Contrastive_Learning/files/test_predictions_with_index_{trimester}.csv", index=False)
 
-        # # === Spearman correlation for Δ tissue splicing ===
-        # rho, _ = spearmanr(delta_y_true, delta_y_pred)
-        # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
-        # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
-
-        # # Assume self.dataset.entries is available and maps index → (exon_id, entry_dict)
-        # dataset_entries = self.trainer.datamodule.test_dataloader().dataset.entries  # get from dataloader
-
-        # logit_mean_list = []
-        # for exon_id in self.test_exon_ids:
-        #     for entry_id, entry in dataset_entries:
-        #         if entry_id == exon_id:
-        #             psi_mean = entry["psi_mean"]
-        #             logit_mean = logit(np.clip(psi_mean / 100, eps, 1 - eps))
-        #             logit_mean_list.append(logit_mean)
-        #             break
-
-        # logit_mean_arr = np.array(logit_mean_list)
-
-        # delta_y_true = y_true_logit - logit_mean_arr
-        # delta_y_pred = y_pred_logit - logit_mean_arr
-
-        # rho, _ = spearmanr(delta_y_true, delta_y_pred)
-        # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
-        # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
-            
-        # === Plotting and saving ===
-        # plt.figure(figsize=(5, 5))
-        # plt.scatter(delta_y_pred, delta_y_true, alpha=0.6, s=10, color='black')
-        # plt.plot(
-        #     np.unique(delta_y_pred),
-        #     np.poly1d(np.polyfit(delta_y_pred, delta_y_true, 1))(np.unique(delta_y_pred)),
-        #     linestyle='--',
-        #     color='gray'
-        # )
-        # plt.xlabel("Predicted Δ logit(Ψ)")
-        # plt.ylabel("Measured Δ logit(Ψ)")
-        # plt.title("Differential Splicing (logit scale)")
-        # plt.text(0.05, 0.95, f"ρ = {rho:.2f}", transform=plt.gca().transAxes, ha='left', va='top', fontsize=12)
-        # plt.grid(True, linestyle=':', linewidth=0.5)
-        # plt.tight_layout()
-        # plt.savefig("/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/figures/delta_logit_scatter.png", dpi=300)
-        # print("📈 Plot saved as delta_logit_scatter.png")
 
 
     def on_train_epoch_start(self):

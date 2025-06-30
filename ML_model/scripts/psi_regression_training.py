@@ -82,34 +82,7 @@ def main(config: OmegaConf):
     data_module.setup()
     print()
 
-
-
-
-
-    # # Get the SimCLR model using its own configß
-    # simclr_model = get_simclr_model(config)
-
-    # if config.aux_models.warm_start:
-    #     # simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
-    #     # simclr_ckpt = "/mnt/home/at3836/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
-        
-    #     simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
-
-    #     ckpt = torch.load(simclr_ckpt)
-    #     state_dict = ckpt["state_dict"]
-
-    #     # REMOVE "model." prefix from all keys
-    #     cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
-
-    #     missing, unexpected = simclr_model.load_state_dict(cleaned_state_dict, strict=False)
-    
-    # # Instantiate PSIRegressionModel with encoder and psi_model config
-    # # model = PSIRegressionModel(simclr_model.encoder, config)
-    # PSIRegressionModel = load_model_class(config)
-    # model = PSIRegressionModel(encoder_5p, encoder_3p, encoder_exon, config)
     model = initialize_encoders_and_model(config, root_path)
-
-    
 
 
     # Traingi

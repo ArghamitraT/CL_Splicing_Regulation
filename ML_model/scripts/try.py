@@ -2,8 +2,8 @@ import os
 import pickle
 import random
 
-main_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
-data_file = main_dir+"test_3primeIntron.pkl"
+main_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/"
+data_file = main_dir+"psi_variable_Retina___Eye_psi_MERGED.pkl"
 with open(data_file, 'rb') as file:
     data = pickle.load(file)
 

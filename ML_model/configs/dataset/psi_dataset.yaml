@@ -19,10 +19,10 @@ val_files:
   exon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_exon_sequences_dict.pkl
   intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl
 test_files:
-  3p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_3primeintron_sequences_dict.pkl
-  5p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_5primeintron_sequences_dict.pkl
-  exon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_exon_sequences_dict.pkl
-  intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl
+  3p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+  5p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_5primeintron_sequences_dict.pkl
+  exon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_exon_sequences_dict.pkl
+  intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_MERGED.pkl
 # train_files:
 #   3p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_3primeintron_sequences_dict.pkl
 #   5p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_intron_sequences_dict.pkl

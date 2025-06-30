@@ -9,7 +9,7 @@ defaults:
   - loss: mse_loss
   - model: simclr
   - aux_models: psi_regression_model 
-  - optimizer: adamw
+  - optimizer: sgd
 
 hydra:
   run:

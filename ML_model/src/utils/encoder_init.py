@@ -78,10 +78,12 @@ def initialize_encoders_and_model(config, root_path):
         
         encoder_5p = load_encoder(config, root_path, result_dirs["5p"])
         encoder_3p = load_encoder(config, root_path, result_dirs["3p"])
-        reset_debug_warning()
-        debug_warning("exon encdr wrmstarted")
-        # encoder_exon = get_simclr_model(config).encoder  # randomly initialized
-        encoder_exon = load_encoder(config, root_path, "exprmnt_2025_06_08__21_34_21")
+        if mode == "intronOnly":
+            encoder_exon = get_simclr_model(config).encoder  # randomly initialized
+        else:
+            # reset_debug_warning()
+            # debug_warning("exon encdr wrmstarted")
+            encoder_exon = load_encoder(config, root_path, "exprmnt_2025_06_08__21_34_21")
 
     else:
         raise ValueError(f"❌ Unsupported aux_models.mode: {mode}")
