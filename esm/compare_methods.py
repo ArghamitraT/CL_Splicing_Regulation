@@ -34,7 +34,7 @@ parser.add_argument(
     type = str,
     nargs = 2,
     required = True,
-    choices = ['m', 'r', 'e']
+    choices = ['m', 'r', 'e', 'p']
 )
 
 args = parser.parse_args()
@@ -81,6 +81,11 @@ method_map = {
         'label': "EMBL-EBI Seq",
         'cos_path': input_dir + f"embl_cos_{gene}.json",
         'seq_path': sequence_dir + f"embl_ebi/{gene}-full-stitched.json"
+    },
+    'p': {
+        'label': "Reference Proteome",
+        'cos_path': input_dir + f"ref_prot_cos_{gene}.json",
+        'seq_path': sequence_dir + f"from_ref_prot/{gene}-full-stitched.json"
     }
 }
 
