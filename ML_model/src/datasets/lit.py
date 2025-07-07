@@ -22,6 +22,7 @@ def make_collate_fn(tokenizer, padding_strategy):
 
         view1_sequences = [item[0] for item in batch]
         view2_sequences = [item[1] for item in batch]
+        exon_ids = [item[2] for item in batch]
         
         token_start = time.time()
         if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):  # 
@@ -31,7 +32,7 @@ def make_collate_fn(tokenizer, padding_strategy):
         elif callable(tokenizer):  # HuggingFace-style
             view1 = tokenizer(view1_sequences, return_tensors='pt', padding=padding_strategy).input_ids
             view2 = tokenizer(view2_sequences, return_tensors='pt', padding=padding_strategy).input_ids
-            output = view1, view2
+            output = view1, view2, exon_ids
         else:
             output = view1_sequences, view2_sequences
         # print(f"👷 Worker {info.id if info else 'MAIN'}: Collate time = {time.time() - start:.2f}s")

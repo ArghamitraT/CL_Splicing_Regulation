@@ -39,6 +39,7 @@ def create_prg_file(prg_file_path):
             trainer.max_epochs={max_epochs}\\
             tokenizer={tokenizer} \\
             embedder={embedder} \\
+            loss={loss_name} \\
             embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
             dataset.train_data_file={train_file} \\
@@ -112,9 +113,10 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLResnetExon'
+slurm_file_name = 'CLSupcon2augOne'
+loss_name = "supcon"
 gpu_num = 1
-hour=3
+hour=4
 memory=100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
@@ -122,19 +124,19 @@ val_check_interval = 0.5
 global_batch_size = 8192
 embedder="resnet"
 tokenizer="custom_tokenizer"
-max_epochs = 50
+max_epochs = 30
 maxpooling = True
 optimizer = "sgd"
-# TRAIN_FILE="train_3primeIntron_filtered.pkl"
-# VAL_FILE="val_3primeIntron_filtered.pkl"
-# TEST_FILE="test_3primeIntron_filtered.pkl"
-TRAIN_FILE="train_ExonSeq_filtered.pkl"
-VAL_FILE="val_ExonSeq_filtered.pkl"
-TEST_FILE="test_ExonSeq_filtered.pkl"
+TRAIN_FILE="train_3primeIntron_filtered.pkl"
+VAL_FILE="val_3primeIntron_filtered.pkl"
+TEST_FILE="test_3primeIntron_filtered.pkl"
+# TRAIN_FILE="train_ExonSeq_filtered.pkl"
+# VAL_FILE="val_ExonSeq_filtered.pkl"
+# TEST_FILE="test_ExonSeq_filtered.pkl"
 readme_comment = (
-    "resnet50, training with exon"
+    "supcon, 2 augmentation trial, one mode, 3p intron"
 )
-wandb_logger_NOTES="resnet50 exon" ## do NOT use any special character or new line
+wandb_logger_NOTES="supcon one mode two aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

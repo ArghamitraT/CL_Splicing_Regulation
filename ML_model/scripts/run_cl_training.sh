@@ -5,13 +5,13 @@
 MAIN_DIR="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
 
 # === Just specify file names ===
-# TRAIN_FILE="train_3primeIntron_filtered.pkl"
-# VAL_FILE="val_3primeIntron_filtered.pkl"
-# TEST_FILE="test_3primeIntron_filtered.pkl"
+TRAIN_FILE="train_3primeIntron_filtered.pkl"
+VAL_FILE="val_3primeIntron_filtered.pkl"
+TEST_FILE="test_3primeIntron_filtered.pkl"
 
-TRAIN_FILE="train_ExonSeq_filtered.pkl"
-VAL_FILE="val_ExonSeq_filtered.pkl"
-TEST_FILE="test_ExonSeq_filtered.pkl"
+# TRAIN_FILE="train_ExonSeq_filtered.pkl"
+# VAL_FILE="val_ExonSeq_filtered.pkl"
+# TEST_FILE="test_ExonSeq_filtered.pkl"
 
 # === Full paths constructed here ===
 export TRAIN_DATA_FILE="${MAIN_DIR}/${TRAIN_FILE}"
@@ -25,6 +25,7 @@ NOTES="try"
 python -m scripts.cl_training \
         task=introns_cl \
         embedder="resnet"\
+        loss="supcon"\
         tokenizer="custom_tokenizer"\
         task.global_batch_size=8192\
         trainer.max_epochs=5 \
