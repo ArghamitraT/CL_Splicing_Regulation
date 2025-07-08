@@ -32,9 +32,10 @@ python -m scripts.cl_training \
         trainer.val_check_interval=1.0\
         optimizer="sgd" \
         trainer.devices=1\
-        logger.name="cl_$(date +%Y%m%d_%H%M%S)"\
+        logger.name="cl_supconAllaug$(date +%Y%m%d_%H%M%S)"\
         embedder.maxpooling=True\
         logger.notes="$NOTES"\
+        dataset.n_augmentations='all' \
         dataset.train_data_file=$TRAIN_DATA_FILE \
         dataset.val_data_file=$VAL_DATA_FILE \
         dataset.test_data_file=$TEST_DATA_FILE

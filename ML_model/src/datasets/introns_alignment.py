@@ -21,15 +21,14 @@ def debug_warning():
         _warned_debug = True
 
 class ContrastiveIntronsDataset(Dataset):
-    def __init__(self, data_file):
+    def __init__(self, data_file, n_augmentations=2):
         # Load the merged data and exon names
         with open(data_file, 'rb') as file:
             self.data = pickle.load(file)
-        self.exon_names = list(self.data.keys())  # ✅ load from the pkl directly
+        self.exon_names = list(self.data.keys())  
         self.exon_name_to_id = {name: i for i, name in enumerate(self.exon_names)}
+        self.n_augmentations = n_augmentations   # <-- store as an attribute
 
-        # with open(exon_names_path, 'r') as file:
-        #     self.exon_names = [line.strip() for line in file]
     
     def __len__(self):
         return len(self.data)

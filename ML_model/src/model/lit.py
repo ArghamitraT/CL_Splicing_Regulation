@@ -73,39 +73,87 @@ class LitModel(pl.LightningModule):
     def forward(self, *inputs):
         return self.model.forward(*inputs)
 
+    ## (AT) dynamic view code
     def training_step(self, batch, batch_idx):
+
+        # import os
+        # print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
+        # print("torch.cuda.device_count():", torch.cuda.device_count())
+        # if torch.cuda.is_available():
+        #     print("Using logical cuda:0 →", torch.cuda.get_device_name(0))
+
+
         import time
         start = time.time()
 
-        view0, view1, exon_names = batch
-        # Forward pass
+        # Unpack all views and exon_names from batch
+        *views, exon_names = batch
+
+        # Forward pass for all views
         start_fwd = time.time()
-        z0 = self.forward(view0)
-        z1 = self.forward(view1)
+        z_views = [self.forward(view) for view in views]
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
-        # loss = self.loss_fn(z0, z1)
-        if str(self.loss_fn)=='SupConLoss()':
-            # Combine for SupConLoss: [bsz, 2, D]
-            features = torch.stack([z0, z1], dim=1)
-            n_views = features.shape[1]
-            
-            exon_ids = torch.tensor(exon_names, device=z0.device)
-            # labels = exon_ids.repeat_interleave(n_views)
-            labels = exon_ids.repeat_interleave(1)
-
+        # Loss computation and safety checks
+        if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+            features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
+            exon_ids = torch.tensor(exon_names, device=features.device)
             loss = self.loss_fn(features)
         else:
-            # Standard InfoNCE-style NTXentLoss: separate
-            loss = self.loss_fn(z0, z1)
+            if len(z_views) != 2:
+                raise ValueError(
+                    f"{self.loss_fn.__class__.__name__} only supports 2 views per sample "
+                    f"(got {len(z_views)} views). If you want more, use SupConLoss."
+                )
+            loss = self.loss_fn(z_views[0], z_views[1])
 
-        # self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
-        self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True, batch_size=len(view0))
-        # ⏱️ Print timing
+        self.log(
+            'train_loss',
+            loss,
+            on_epoch=True,
+            on_step=True,
+            prog_bar=True,
+            sync_dist=True,
+            batch_size=z_views[0].shape[0]
+        )
         step_time = time.time() - start
         # print(f"⏱️ Batch {batch_idx}: {step_time:.2f}s")
 
         return loss
+
+    # def training_step(self, batch, batch_idx):
+    #     import time
+    #     start = time.time()
+
+    #     view0, view1, exon_names = batch
+    #     # Forward pass
+    #     start_fwd = time.time()
+    #     z0 = self.forward(view0)
+    #     z1 = self.forward(view1)
+    #     # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
+
+    #     # loss = self.loss_fn(z0, z1)
+    #     if str(self.loss_fn)=='SupConLoss()':
+    #         # Combine for SupConLoss: [bsz, 2, D]
+    #         features = torch.stack([z0, z1], dim=1)
+    #         n_views = features.shape[1]
+            
+    #         exon_ids = torch.tensor(exon_names, device=z0.device)
+    #         # labels = exon_ids.repeat_interleave(n_views)
+    #         labels = exon_ids.repeat_interleave(1)
+
+    #         loss = self.loss_fn(features)
+    #     else:
+    #         # Standard InfoNCE-style NTXentLoss: separate
+    #         loss = self.loss_fn(z0, z1)
+
+    #     # self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+    #     self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True, batch_size=len(view0))
+    #     # ⏱️ Print timing
+    #     step_time = time.time() - start
+    #     # print(f"⏱️ Batch {batch_idx}: {step_time:.2f}s")
+
+    #     return loss
 
     def validation_step(self, batch, batch_idx):
         

@@ -54,7 +54,7 @@ def main(config: OmegaConf):
 
     # Initialize the IntronsDataModule with dataset-specific configs
     data_module = ContrastiveIntronsDataModule(config)
-    data_module.prepare_data()
+    # data_module.prepare_data()
     data_module.setup()
     
     tokenizer = data_module.tokenizer
