@@ -34,6 +34,10 @@ def dynamic_batcher(data, max_tokens=3500):
     tokens = 0
     for entry in sorted(data, key=lambda x:len(x[1])):
         seq_len = len(entry[1])
+        if seq_len > max_tokens:
+            # CAUTION: skips any protein with more than 3000 amino acids to avoid OOM. May bias results!
+            print(f"Skipping {entry[0]} with length {seq_len}!")
+            continue
         if tokens + seq_len > max_tokens and batch:
             yield batch
 
@@ -66,7 +70,7 @@ def main(pool_type):
         # print(f"Shape of token_representations: {token_representations.shape}")     # (batch_size, seq_len, 1280)
 
         if (pool_type == "full"):
-            print("Pooling...")
+            # print("Pooling...")
             # Generate full SEQUENCE representations via averaging
             # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
             # sequence_representations = {}         # Not used, but can be used to save representations in a dictionary
@@ -79,7 +83,7 @@ def main(pool_type):
 
         
         elif (pool_type == "exon"):
-                print("Pooling...")
+                # print("Pooling...")
                 # Generate per-EXON representations via averaging
                 # Get exon length from input file
                 df = pd.read_csv(input_csv, dtype={"Seq": str})
