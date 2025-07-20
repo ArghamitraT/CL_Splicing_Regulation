@@ -1,7 +1,7 @@
 # "intronexon"  # or "3p", "5p", "intronOnly"
 # aux_models.5p_weights: "exprmnt_2025_06_08__20_39_37"
 # aux_models.3p_weights: "exprmnt_2025_06_08__20_38_28"
-NOTES="supcon loss try"
+NOTES="supcon loss 10 aug"
 
 python -m scripts.psi_regression_training \
         task.global_batch_size=2048\
@@ -15,7 +15,7 @@ python -m scripts.psi_regression_training \
         aux_models.freeze_encoder=false\
         aux_models.warm_start=true\
         aux_models.mode="3p"\
-        logger.name="Psi_supcon2augOne__$(date +%Y%m%d_%H%M%S)" \
+        logger.name="Psi_3pTestData__$(date +%Y%m%d_%H%M%S)" \
         logger.notes="$NOTES"
        
          

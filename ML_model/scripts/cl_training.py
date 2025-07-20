@@ -32,7 +32,10 @@ from src.datasets.lit import ContrastiveIntronsDataModule
 def get_optimal_num_workers():
     num_cpus = os.cpu_count()
     num_gpus = torch.cuda.device_count()
-    return min(num_cpus // max(1, num_gpus), 8)
+    return min(num_cpus // max(1, num_gpus), 8) #(AT) modified to run in empireAI
+    # return 2
+
+
     # num_cpus = os.cpu_count()
     # suggested_max = 1  # Override based on warning
     # return min(num_cpus // max(1, torch.cuda.device_count()), suggested_max)
@@ -50,6 +53,13 @@ def main(config: OmegaConf):
 
     # Print and process configuration
     print_config(config, resolve=True)
+
+
+    # print(torch.cuda.is_available())
+    # print(torch.cuda.device_count())
+    # print(torch.version.cuda)
+    # print(torch.backends.cudnn.version())
+
 
 
     # Initialize the IntronsDataModule with dataset-specific configs

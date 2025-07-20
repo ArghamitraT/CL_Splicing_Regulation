@@ -39,8 +39,13 @@ def create_prg_file(prg_file_path):
             trainer.max_epochs={max_epochs}\\
             tokenizer={tokenizer} \\
             embedder={embedder} \\
+            loss={loss_name} \\
             embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
+            dataset.n_augmentations={n_augmentations} \\
+            dataset.train_data_file={train_file} \\
+            dataset.val_data_file={val_file} \\
+            dataset.test_data_file={test_file} \\
             ++wandb.dir="'{wandb_dir}'"\\
             ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
@@ -109,26 +114,34 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLtisfm'
+slurm_file_name = 'CLSupcon10augAll'
 gpu_num = 1
-hour = 3
+hour = 7
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
-val_check_interval = 0.5
-global_batch_size = 8192
-embedder="tisfm"
-tokenizer="onehot_tokenizer"
-max_epochs = 50
+val_check_interval = 1.0
+global_batch_size = 2048
+embedder="resnet"
+tokenizer="custom_tokenizer"
+loss_name="supcon"
+max_epochs = 20
+n_augmentations = 10
 maxpooling = True
 optimizer = "sgd"
+TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
+VAL_FILE="val_3primeIntron_filtered.pkl"
+TEST_FILE="test_3primeIntron_filtered.pkl"
 readme_comment = (
-    "pre-training, 50 epochs, tisfm encoder"
+     "supcon, 10 augmentation trial, All mode, 3p intron"
 )
-wandb_logger_NOTES="pretraining 50 epochs tisfm emprireAI" ## do NOT use any special character or new line
+wandb_logger_NOTES="supcon All mode ten aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
+train_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
+val_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
+test_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
 
 
 name = slurm_file_name
