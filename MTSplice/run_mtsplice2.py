@@ -22,7 +22,7 @@ for exon_id, info in data.items():
     intron_5p = info['5p']
     exon_seq = info['exon']['start'] + info['exon']['end']
 
-    full_seq = intron_3p + exon_seq + intron_5p
+    full_seq = intron_5p + exon_seq + intron_3p 
     overhang = (len(intron_3p), len(intron_5p))
 
     logit_psi = mtsplice.predict(full_seq, overhang=overhang)

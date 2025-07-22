@@ -51,53 +51,53 @@ from mmsplice.vcf_dataloader import SplicingVCFDataloader
 from mmsplice.mtsplice import MTSplice
 from scipy.special import expit
 
-main_dir = "/home/atalukder/Contrastive_Learning/models/MMSplice_MTSplice-master/"
-# example files
-gtf = main_dir+'tests/data/test.gtf'
-vcf = main_dir+'tests/data/test.vcf.gz'
-fasta = main_dir+'tests/data/hg19.nochr.chr17.fa'
-# csv = main_dir+'pred.csv'
+# main_dir = "/home/atalukder/Contrastive_Learning/models/MMSplice_MTSplice-master/"
+# # example files
+# gtf = main_dir+'tests/data/test.gtf'
+# vcf = main_dir+'tests/data/test.vcf.gz'
+# fasta = main_dir+'tests/data/hg19.nochr.chr17.fa'
+# # csv = main_dir+'pred.csv'
 
 
-# # # Files you need
-# # gtf = "your.gtf"
-# # fasta = "your.fa"
-# # vcf = "dummy.vcf"  # Must exist, but you won't use the alt sequences
+# # # # Files you need
+# # # gtf = "your.gtf"
+# # # fasta = "your.fa"
+# # # vcf = "dummy.vcf"  # Must exist, but you won't use the alt sequences
 
 
 
-# # Initialize MTSplice
-mtsplice = MTSplice(deep=True)
+# # # Initialize MTSplice
+# mtsplice = MTSplice(deep=True)
 
-# # Load exon sequences using the dataloader
-dl = SplicingVCFDataloader(gtf, fasta, vcf, encode=False, tissue_specific=True, tissue_overhang=(200, 200))
+# # # Load exon sequences using the dataloader
+# dl = SplicingVCFDataloader(gtf, fasta, vcf, encode=False, tissue_specific=True, overhang=(300, 300))
 
-# Predict Ψ for each exon (reference only)
-for batch in dl:
-    ref_seq = batch['inputs']  # only use reference
-    logit_psi = mtsplice.predict(ref_seq)
-    psi = expit(logit_psi)
-    print(psi)  # Ψ across 56 tissues
-    break  # remove to loop over all exons
+# # Predict Ψ for each exon (reference only)
+# for batch in dl:
+#     ref_seq = batch['inputs']['seq']  # only use reference
+#     logit_psi = mtsplice.predict(ref_seq)
+#     psi = expit(logit_psi)
+#     print(psi)  # Ψ across 56 tissues
+#     break  # remove to loop over all exons
 
 
 
 
 
 #####################################
-# # import tensorflow as tf
-# # print("GPUs available:", tf.config.list_physical_devices('GPU'))
+# import tensorflow as tf
+# print("GPUs available:", tf.config.list_physical_devices('GPU'))
 
 
-# # Import
+# Import
 
-# from help import print_stuff
+from help import print_stuff
 
-# print_stuff("hello")
+print_stuff("hello")
 
 from mmsplice.vcf_dataloader import SplicingVCFDataloader
 from mmsplice import MMSplice, predict_save, predict_all_table
-# from mmsplice.utils import max_varEff
+from mmsplice.utils import max_varEff
 
 main_dir = "/home/atalukder/Contrastive_Learning/models/MMSplice_MTSplice-master/"
 # example files
@@ -109,28 +109,28 @@ csv = main_dir+'pred.csv'
 # # dl = SplicingVCFDataloader(gtf, fasta, vcf, encode=False, split_seq=True)
 
 model = MMSplice()
-dl = SplicingVCFDataloader(gtf, fasta, vcf)
+dl = SplicingVCFDataloader(gtf, fasta, vcf, tissue_specific=True)
 
 predictions = predict_all_table(model, dl, pathogenicity=True, splicing_efficiency=True)
 
-# predictionsMax = max_varEff(predictions)
+predictionsMax = max_varEff(predictions)
 
-# predictionsMax.sort_values(['delta_logit_psi']).head()
-
-
-
-# # next(dl)
+predictionsMax.sort_values(['delta_logit_psi']).head()
 
 
 
+# next(dl)
 
-# # dl = SplicingVCFDataloader(gtf, fasta, vcf, tissue_specific=False)
-# # dl = SplicingVCFDataloader(gtf, fasta, vcf, tissue_specific=True)
 
-# # # Specify model
-# # model = MMSplice()
 
-# # # Or predict and return as df
-# # predictions = predict_all_table(model, dl, pathogenicity=True, splicing_efficiency=True)
+
+# dl = SplicingVCFDataloader(gtf, fasta, vcf, tissue_specific=False)
+# dl = SplicingVCFDataloader(gtf, fasta, vcf, tissue_specific=True)
+
+# # Specify model
+# model = MMSplice()
+
+# # Or predict and return as df
+# predictions = predict_all_table(model, dl, pathogenicity=True, splicing_efficiency=True)
 
 print("all done")
