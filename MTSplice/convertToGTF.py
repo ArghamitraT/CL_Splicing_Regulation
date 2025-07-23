@@ -1,7 +1,10 @@
 import csv
 
-input_csv = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons.csv"
-output_gtf = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons.gtf"
+# input_csv = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons.csv"
+# output_gtf = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons.gtf"
+
+input_csv = "/home/atalukder/Contrastive_Learning/data/ASCOT/test_cassette_exons.csv"
+output_gtf = "/home/atalukder/Contrastive_Learning/data/ASCOT/test_cassette_exons.gtf"
 
 with open(input_csv, newline='') as csvfile, open(output_gtf, "w") as gtffile:
     reader = csv.DictReader(csvfile)

@@ -6,17 +6,11 @@ import pickle
 
 from mmsplice.vcf_dataloader import SplicingVCFDataloader
 from mmsplice import MMSplice, predict_save, predict_all_table
-# from mmsplice.utils import max_varEff
 
 main_dir = "/home/atalukder/Contrastive_Learning/models/MMSplice_MTSplice-master/"
-# example files
-# gtf = main_dir+'tests/data/test.gtf'
-# vcf = main_dir+'tests/data/test.vcf.gz'
-# fasta = main_dir+'tests/data/hg19.nochr.chr17.fa'
-# csv = main_dir+'pred.csv'
 
 gtf = '/home/atalukder/Contrastive_Learning/data/MTSplice/variable_cassette_exons.gtf'
-vcf = '/home/atalukder/Contrastive_Learning/data/MTSplice/dummy_new.vcf.gz'
+vcf = '/home/atalukder/Contrastive_Learning/data/MTSplice/variable_cassette_exons.vcf.gz'
 fasta = '/home/atalukder/Contrastive_Learning/data/MTSplice/hg38.fa'
 
 model = MMSplice()
@@ -26,28 +20,76 @@ predictions = predict_all_table(model, dl, pathogenicity=True, splicing_efficien
 
 print()
 
-# from scipy.special import logit
-# from scipy.stats import spearmanr
-# import numpy as np
+import pandas as pd
+import numpy as np
+from scipy.special import logit, expit
+from scipy.stats import spearmanr
 
-# # Step 1: Extract matching ground-truth psi values
-# retina_df["psi_val"] = retina_df.index.map(lambda k: data[k]["psi_val"])
+########################## psi splicing ##########################
 
-# # Step 2: Convert both to numpy arrays
-# y_pred_logit = retina_df["Retina_logit_psi"].values
-# y_true_raw = retina_df["psi_val"].values  # Assumes in percent [0–100]
+ground_truth = pd.read_csv("/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons_with_logit_mean_psi.csv")
 
-# # Step 3: Convert PSI to logit(ψ), with clipping to avoid logit(0) or logit(1)
-# eps = 1e-6
-# y_true_logit = logit(np.clip(y_true_raw / 100, eps, 1 - eps))
+tissue = "Retina - Eye"
 
-# # Step 4: Compute Spearman correlation
-# rho, _ = spearmanr(y_true_logit, y_pred_logit)
-
-# print(f"\n🔬 Spearman ρ (Retina logit PSI): {rho:.4f}")
-
-
-# retina_df.to_csv("mtsplice_retina_predictions.tsv", sep="\t")
+# ---- Merge on exon_id ----
+df = pd.merge(
+    ground_truth[['exon_id', 'logit_mean_psi', tissue]],  # ground truth PSI
+    predictions[['exon_id', tissue]],   # predicted logit(delta)
+    on='exon_id',
+    suffixes=('_true', '_logit_delta_pred')
+)
 
 
+# ---- Compute final predicted PSI: sigmoid(logit_delta + logit_mean_psi) ----
+df['final_predicted_psi'] = expit(df['Retina - Eye_logit_delta_pred'] + df['logit_mean_psi'])   # as percent
 
+# ---- Spearman in PSI space ----
+valid = (df[f'{tissue}_true'] >= 0) & (df[f'{tissue}_true'] <= 100) & (~df[f'{tissue}_true'].isnull())
+rho_psi, _ = spearmanr(df.loc[valid, f'{tissue}_true'], df.loc[valid, 'final_predicted_psi'])
+print(f"\n🔬 Spearman ρ (PSI): {rho_psi:.4f}")
+
+# ---- Save results ----
+# df[['exon_id', f'{tissue}_true', 'logit_mean_psi', 'logit_delta_pred', 'final_predicted_psi']].to_csv(
+#     f"tsplice_final_predictions_{tissue.replace(' ', '_')}.tsv", sep="\t", index=False
+# )
+df.to_csv(
+    f"tsplice_final_predictions_{tissue.replace(' ', '_')}.tsv", sep="\t", index=False
+)
+print(df.head())
+
+
+
+
+
+########################## differential psi splicing ##########################
+
+ground_truth = pd.read_csv("/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons_with_logit_mean_psi.csv")
+
+tissue = "Retina - Eye"
+
+# ---- Merge on exon_id ----
+df = pd.merge(
+    ground_truth[['exon_id', 'logit_mean_psi', tissue]],  # ground truth PSI
+    predictions[['exon_id', tissue]],   # predicted logit(delta)
+    on='exon_id',
+    suffixes=('_true', '_logit_delta_pred')
+)
+
+
+# 1. Calculate ground-truth logit-delta for each exon
+eps = 1e-6
+df['Retina_frac_true'] = np.clip(df[f'{tissue}_true'] / 100, eps, 1 - eps)
+df['truth_delta_psi'] = logit(df['Retina_frac_true']) - df['logit_mean_psi']
+
+# 2. Prepare valid mask (avoid -1 and NaN in both columns)
+valid = (
+    (df[f'{tissue}_true'] >= 0) & (df[f'{tissue}_true'] <= 100) & (~df[f'{tissue}_true'].isnull()) &
+    (~df['logit_mean_psi'].isnull()) & (~df[f'{tissue}_logit_delta_pred'].isnull())
+)
+
+# 3. Compute Spearman correlation between truth_delta_psi and predicted logit-delta
+rho_delta, _ = spearmanr(
+    df.loc[valid, 'truth_delta_psi'],
+    df.loc[valid, f'{tissue}_logit_delta_pred']
+)
+print(f"\n🔬 Spearman ρ (logit-delta): {rho_delta:.4f}")
