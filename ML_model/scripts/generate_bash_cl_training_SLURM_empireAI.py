@@ -114,7 +114,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon10augAll'
+slurm_file_name = 'CLSupcon10augAll_resnet101'
 gpu_num = 1
 hour = 7
 memory = 100 # GB
@@ -122,7 +122,7 @@ nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
 global_batch_size = 2048
-embedder="resnet"
+embedder="resnet101"
 tokenizer="custom_tokenizer"
 loss_name="supcon"
 max_epochs = 20
@@ -133,9 +133,9 @@ TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 VAL_FILE="val_3primeIntron_filtered.pkl"
 TEST_FILE="test_3primeIntron_filtered.pkl"
 readme_comment = (
-     "supcon, 10 augmentation trial, All mode, 3p intron"
+     "supcon, 10 augmentation trial, All mode, 3p intron, resnet 101"
 )
-wandb_logger_NOTES="supcon All mode ten aug" ## do NOT use any special character or new line
+wandb_logger_NOTES="supcon resnet one o one 10 aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

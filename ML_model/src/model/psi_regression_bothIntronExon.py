@@ -186,7 +186,7 @@ class PSIRegressionModel(pl.LightningModule):
             "y_true_logit": y_true_logit,
             "y_pred_logit": y_pred_logit,
         })
-        df.to_csv(f"/gpfs/commons/home/atalukder/Contrastive_Learning/files/test_predictions_with_index_{trimester}.csv", index=False)
+        df.to_csv(f"/mnt/home/at3836/Contrastive_Learning/files/test_predictions_with_index_{trimester}.csv", index=False)
 
 
 

@@ -2,9 +2,8 @@
 
 
 # === Set main data directory once ===
+
 # MAIN_DIR="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
-
-
 MAIN_DIR="/mnt/home/at3836/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
 
 
@@ -29,14 +28,13 @@ NOTES="try"
 
 python -m scripts.cl_training \
         task=introns_cl \
-        embedder="resnet"\
+        embedder="resnet101"\
         loss="supcon"\
         tokenizer="custom_tokenizer"\
-        task.global_batch_size=3800\
+        task.global_batch_size=2048\
         trainer.max_epochs=2 \
         trainer.val_check_interval=1.0\
         optimizer="sgd" \
-        trainer.accelerator=gpu \
         trainer.devices=1\
         logger.name="cl_supconAllaug$(date +%Y%m%d_%H%M%S)"\
         embedder.maxpooling=True\

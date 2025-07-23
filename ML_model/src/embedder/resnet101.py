@@ -44,9 +44,9 @@ class Bottleneck1D(nn.Module):
         return out
 
 # ResNet-50 architecture adapted for 1D convolutions
-class ResNet1D(BaseEmbedder):
+class ResNet1D101(BaseEmbedder):
     def __init__(self,
-                 layers=[3, 4, 6, 3],
+                 layers=[3, 4, 23, 3],
                  vocab_size=11,
                  embedding_dim=768,
                  **kwargs):

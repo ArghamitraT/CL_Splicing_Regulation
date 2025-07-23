@@ -8,6 +8,7 @@ from scipy.stats import spearmanr
 from scipy.special import logit
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class PSIRegressionModel(pl.LightningModule):
     def __init__(self, encoder, config):
@@ -196,7 +197,16 @@ class PSIRegressionModel(pl.LightningModule):
         # rho, _ = spearmanr(delta_y_true, delta_y_pred)
         # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
         # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
-            
+        # Save results to CSV
+        df = pd.DataFrame({
+            "index": np.arange(len(y_true_all)),
+            "y_true": y_true_all,
+            "y_pred": y_pred_all,
+            "y_true_logit": y_true_logit,
+            "y_pred_logit": y_pred_logit,
+        })
+        df.to_csv(f"/mnt/home/at3836/Contrastive_Learning/files/test_predictions_with_index_{trimester}.csv", index=False)
+
 
     def on_train_epoch_start(self):
         self.epoch_start_time = time.time()
