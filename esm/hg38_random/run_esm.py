@@ -5,7 +5,7 @@ are saved individually. Afterwards, run post-process.py to group embeddings
 together.
 """
 
-import argparse
+import os
 import torch
 import esm
 import pandas as pd
@@ -14,13 +14,19 @@ import json
 
 input_file = None       # See below
 input_csv = None
-output_dir = None
+output = None
+processed = None        # Dictionary storing all vectors with keys as (gene, exon)
 
-def initialize_globals(args):
-    global input_file, input_csv, output_dir
-    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38-rand-seqs.json"
+def initialize_globals():
+    global input_file, input_csv, output, processed
+    input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38_rand_seqs.json"
     input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38_all_exons.csv"
-    output_dir = "/gpfs/commons/home/nkeung/data/embeddings/"
+    output = "/gpfs/commons/home/nkeung/data/embeddings/hg38_exons1.pt"
+
+    if os.path.exists(output):
+        processed = torch.load(output)
+    else:
+        processed = {}
 
 
 """
@@ -49,7 +55,7 @@ def dynamic_batcher(data, max_tokens=3500):
     if batch:
         yield batch
 
-def main(pool_type):
+def main():
     print("Running model...")
     # Load ESM-2 model
     model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
@@ -67,78 +73,71 @@ def main(pool_type):
         with torch.no_grad():
             results = model(batch_tokens, repr_layers=[33], return_contacts=True)
         token_representations = results["representations"][33]      # results dictionary stores dictionary "representations" with keys for each layer
-        # print(f"Shape of token_representations: {token_representations.shape}")     # (batch_size, seq_len, 1280)
 
-        if (pool_type == "full"):
-            # print("Pooling...")
-            # Generate full SEQUENCE representations via averaging
-            # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
-            # sequence_representations = {}         # Not used, but can be used to save representations in a dictionary
-            for i, tokens_len in enumerate(batch_lens):
-                name = batch_labels[i]
-                vector = token_representations[i, 1 : tokens_len - 1].mean(0)
-                # sequence_representations[name] = vector
-                # print(f"Shape of {name}: {vector.shape}")       # (1280)
-                torch.save(vector, output_dir + f"full-seq/{name}_full.pt")         # Save individual sequence representations
 
-        
-        elif (pool_type == "exon"):
-                # print("Pooling...")
-                # Generate per-EXON representations via averaging
-                # Get exon length from input file
-                df = pd.read_csv(input_csv, dtype={"Seq": str})
-                df["Seq"] = df["Seq"].fillna('')        # Turn nan sequences to an empty string
-                df = df.sort_values(by=["Gene", "Number"])
-                # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
-                # exon_representations = {}         # Not used, but can be used to save representations in a dictionary
-                stop_found = False
-                for i, tokens_len in enumerate(batch_lens):
-                    name = batch_labels[i]
-                    start_index = 1                 # Initialize index for first amino acid
-                    sub_df = df[df["Gene"] == name]
-                    print(f"Pooling gene {name}")
-                    for j in range(1, sub_df["Number"].max() + 1):
-                        if stop_found:              # Stop codon "Z" found
-                            # print("Stop codon found! Breaking out of loop!")
-                            break
-                        match = df[(df["Gene"] == name) & (df["Number"] == j)]
-                        # Check for missing exon or reached end of file
-                        if match.empty:
-                            print(f"\tNo matches found for exon {j}")
-                            continue
-                        # Get exon length
-                        exon_seq = match["Seq"].iloc[0]
-                        if "Z" in exon_seq:
-                            exon_seq = exon_seq[:exon_seq.index("Z")]
-                            stop_found = True
-                        exon_len = len(exon_seq.strip().replace("-", ""))
-                        # Check for deleted exon
-                        if exon_len == 0:
-                            print(f"Exon missing. Skipped exon {j} for {name}")
-                            continue
+        # Generate per-EXON representations via averaging
+        # Get exon length from input file
+        df = pd.read_csv(input_csv, dtype={"Seq": str})
+        df["Seq"] = df["Seq"].fillna('')        # Turn nan sequences to an empty string
+        df = df.sort_values(by=["Gene", "Number"])
+        # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
+        # exon_representations = {}         # Not used, but can be used to save representations in a dictionary
+        for i, tokens_len in enumerate(batch_lens):
+            name = batch_labels[i]
+            stop_found = False              # Track any stop codons for this sequence
+            start_index = 1                 # Initialize index for first amino acid
+            sub_df = df[df["Gene"] == name]
+            print(f"Pooling gene {name}")
+            computed_full_len = 0
+            for j in range(1, sub_df["Number"].max() + 1):
+                exon_id = (name, j)
+                # Already processed this exon
+                if exon_id in processed:
+                    continue
 
-                        end_index = start_index + exon_len
-                        if end_index > token_representations.shape[1]:
-                            print(f"Exon length exceeds tokens represented. Skipping exon {j} for {name}")
-                            continue
-                        vector = token_representations[i, start_index : end_index].mean(0)
-                        start_index = end_index
-                        # if j not in exon_representations:
-                        #     exon_representations[j] = {}
-                        # exon_representations[j][name] = vector
-                        torch.save(vector, output_dir + f"exon-seq/{name}_exon_{j}.pt")
+                if stop_found:              # Stop codon "Z" found
+                    # print("Stop codon found! Breaking out of loop!")
+                    break
+                match = df[(df["Gene"] == name) & (df["Number"] == j)]
+                # Check for missing exon or reached end of file
+                if match.empty:
+                    print(f"\tNo matches found for exon {j}")
+                    continue
+                # Get exon length
+                exon_seq = match["Seq"].iloc[0]
+                if "Z" in exon_seq:
+                    exon_seq = exon_seq[:exon_seq.index("Z")]
+                    stop_found = True
+                exon_len = len(exon_seq.strip().replace("-", ""))
+                computed_full_len += exon_len
+                # Check for deleted exon
+                if exon_len == 0:
+                    print(f"Exon missing. Skipped exon {j} for {name}")
+                    continue
+
+                end_index = start_index + exon_len
+                if end_index > token_representations.shape[1]:
+                    print(f"Exon length exceeds tokens represented. Skipping exon {j} for {name}")
+                    continue
+                vector = token_representations[i, start_index : end_index].mean(0)
+                start_index = end_index
+                processed[exon_id] = vector
+            if i % 100 == 0:
+                torch.save(processed, output)
+            if (tokens_len-2) != computed_full_len:
+                print(f"❌ Error! Mismatch in full sequence lengths for {name}")
+                print(f"Expected: {tokens_len}. Found: {computed_full_len}")
+                keys_to_remove = [key for key in processed if key[0] == name]
+                for keys in keys_to_remove:
+                    processed.pop(keys)
+                print(f"\tRemoved all embeddings for {name}")
+                torch.save(processed, output)
+    
+    torch.save(processed, output)
+    unique_genes = set(genes for genes, _ in processed.keys())
+    print(f"Saved {len(unique_genes)} genes and {len(processed)} exons!")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run ESM-2 model on protein sequences")
-    parser.add_argument(
-        "--pool_type",
-        type=str,
-        choices=["full", "exon"],
-        default="full",
-        help="Pooling type for sequence representation (full sequence or exon)"
-    )
-    args = parser.parse_args()
-    initialize_globals(args)
-    print("Globals initialized...")
-    main(args.pool_type)
+    initialize_globals()
+    main()
