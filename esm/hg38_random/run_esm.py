@@ -12,21 +12,17 @@ import pandas as pd
 import json
 
 
-input_file = None       # See below
-input_csv = None
-output = None
-processed = None        # Dictionary storing all vectors with keys as (gene, exon)
-
 def initialize_globals():
-    global input_file, input_csv, output, processed
+    global input_file, input_csv, output, processed, completed_genes
     input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38_rand_seqs.json"
     input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38_all_exons.csv"
-    output = "/gpfs/commons/home/nkeung/data/embeddings/hg38_exons1.pt"
+    output = "/gpfs/commons/home/nkeung/data/embeddings/hg38_exons.pt"      # Updated periodically, a dict that with keys (gene, exon)
 
     if os.path.exists(output):
         processed = torch.load(output)
     else:
         processed = {}
+    completed_genes = set(gene for (gene, exon) in processed.keys())
 
 
 """
@@ -39,9 +35,11 @@ def dynamic_batcher(data, max_tokens=3500):
     batch = []
     tokens = 0
     for entry in sorted(data, key=lambda x:len(x[1])):
+        if entry[0] in completed_genes:
+            continue    # Skip, already computed embedding before
         seq_len = len(entry[1])
         if seq_len > max_tokens:
-            # CAUTION: skips any protein with more than 3000 amino acids to avoid OOM. May bias results!
+            # CAUTION: skips any protein with more than 3500 amino acids to avoid OOM.
             print(f"Skipping {entry[0]} with length {seq_len}!")
             continue
         if tokens + seq_len > max_tokens and batch:
@@ -72,7 +70,10 @@ def main():
         # Extract per-residue representations (on CPU)
         with torch.no_grad():
             results = model(batch_tokens, repr_layers=[33], return_contacts=True)
-        token_representations = results["representations"][33]      # results dictionary stores dictionary "representations" with keys for each layer
+        token_representations = results["representations"][33].detach()      # results dictionary stores dictionary "representations" with keys for each layer
+        print(f"Embedding Size: {token_representations.shape}")
+        del results
+        torch.cuda.empty_cache()
 
 
         # Generate per-EXON representations via averaging
