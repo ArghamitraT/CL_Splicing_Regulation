@@ -59,20 +59,37 @@ def main():
     model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
     batch_converter = alphabet.get_batch_converter()
     model.eval()  # disables dropout for deterministic results
-
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    model = model.to(device)
+    print("Model on device:", next(model.parameters()).device)
+   
     with open(input_file, "r") as file:
         data = json.load(file)
 
     for batch_data in dynamic_batcher(data):
         batch_labels, batch_strs, batch_tokens = batch_converter(batch_data)
+        batch_tokens = batch_tokens.to(device)
+        print("Batch tokens on device:", batch_tokens.device)
         batch_lens = (batch_tokens != alphabet.padding_idx).sum(1)  # Get lengths of sequences without padding
 
-        # Extract per-residue representations (on CPU)
-        with torch.no_grad():
-            results = model(batch_tokens, repr_layers=[33], return_contacts=True)
-        token_representations = results["representations"][33].detach()      # results dictionary stores dictionary "representations" with keys for each layer
+        # Extract per-residue representations (on GPU if available)
+        try:
+            with torch.no_grad():
+                results = model(batch_tokens, repr_layers=[33], return_contacts=True)
+            if torch.cuda.is_available():
+                print(f"Allocated memory: {torch.cuda.memory_allocated() / 1e6:.2f} MB")
+                print(f"Max allocated: {torch.cuda.max_memory_allocated() / 1e6:.2f} MB")
+        except RuntimeError as e:
+            if "CUDA out of memory" in str(e):
+                print("OOM on this batch - skipping.")
+                continue
+            else:
+                raise e
+        token_representations = results["representations"][33].detach().cpu()      # results dictionary stores dictionary "representations" with keys for each layer
         print(f"Embedding Size: {token_representations.shape}")
-        del results
+        del results, batch_tokens
         torch.cuda.empty_cache()
 
 
