@@ -1,20 +1,24 @@
-name: esm-v3
+name: esm-v4
 channels:
-  - https://repo.anaconda.com/pkgs/main
-  - https://repo.anaconda.com/pkgs/r
+  - nvidia
+  - pytorch
+  - bioconda
+  - conda-forge
+  - defaults
 dependencies:
-  - ipykernel
-  - jupyterlab
-  - conda-forge::pytorch-gpu
-  - scipy
-  - seaborn
-  - tqdm
-  - numpy[version='<2']
-  - pandas
-  - scikit-learn
+  - pytorch-cuda=12.4
+  - python=3.11
+  - pytorch
+  - torchvision
   - biopython
+  - pandas
+  - jupyterlab
+  - scipy
+  - tqdm
   - matplotlib
-  - python=3.10
   - ete3
+  - ipykernel
+  - scikit-learn
+  - numpy[version='<2']
+  - seaborn
   - pyfaidx
-prefix: /gpfs/commons/home/nkeung/miniconda3/envs/esm-v3
