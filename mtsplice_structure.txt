@@ -1,0 +1,384 @@
+
+
+=== Model 0: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice0.h5 ===
+Model: "model_18"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_69 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_70 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_69[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_70[0][0]']            
+                                                                                                  
+ concatenate_18 (Concatenat  (None, 800, 64)              0         ['splinel[0][0]',             
+ e)                                                                  'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_18[0][0]']      
+ 8 (GlobalAveragePooling1D)                                                                       
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_18[
+                                                                    0][0]']                       
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_18 (Dropout)        (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_18[0][0]']          
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 1: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice1.h5 ===
+Model: "model_7"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_25 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_26 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_25[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_26[0][0]']            
+                                                                                                  
+ concatenate_7 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_7  (None, 64)                   0         ['concatenate_7[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_7[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_7 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_7[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 2: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice2.h5 ===
+Model: "model_24"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_93 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_94 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_93[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_94[0][0]']            
+                                                                                                  
+ concatenate_24 (Concatenat  (None, 800, 64)              0         ['splinel[0][0]',             
+ e)                                                                  'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_2  (None, 64)                   0         ['concatenate_24[0][0]']      
+ 4 (GlobalAveragePooling1D)                                                                       
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_24[
+                                                                    0][0]']                       
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_24 (Dropout)        (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_24[0][0]']          
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 3: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice3.h5 ===
+Model: "model_22"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_85 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_86 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_85[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_86[0][0]']            
+                                                                                                  
+ concatenate_22 (Concatenat  (None, 800, 64)              0         ['splinel[0][0]',             
+ e)                                                                  'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_2  (None, 64)                   0         ['concatenate_22[0][0]']      
+ 2 (GlobalAveragePooling1D)                                                                       
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_22[
+                                                                    0][0]']                       
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_22 (Dropout)        (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_22[0][0]']          
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 4: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice4.h5 ===
+Model: "model_9"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_33 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_34 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_33[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_34[0][0]']            
+                                                                                                  
+ concatenate_9 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_9  (None, 64)                   0         ['concatenate_9[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_9[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_9 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_9[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 5: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice5.h5 ===
+Model: "model_1"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_1 (ReLU)              (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_2 (ReLU)              (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_1[0][0]']             
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_2[0][0]']             
+                                                                                                  
+ concatenate_1 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_1[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_1[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_1 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_1[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 6: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice6.h5 ===
+Model: "model_19"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_73 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_74 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_73[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_74[0][0]']            
+                                                                                                  
+ concatenate_19 (Concatenat  (None, 800, 64)              0         ['splinel[0][0]',             
+ e)                                                                  'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_19[0][0]']      
+ 9 (GlobalAveragePooling1D)                                                                       
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_19[
+                                                                    0][0]']                       
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_19 (Dropout)        (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_19[0][0]']          
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 7: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice7.h5 ===
+Model: "model_4"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv_exon (Conv1D)          (None, 400, 64)              2368      ['seql[0][0]',                
+                                                                     'seqr[0][0]']                
+                                                                                                  
+ bn1 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[0][0]']           
+                                                                                                  
+ bn2 (BatchNormalization)    (None, 400, 64)              256       ['conv_exon[1][0]']           
+                                                                                                  
+ re_lu_13 (ReLU)             (None, 400, 64)              0         ['bn1[0][0]']                 
+                                                                                                  
+ re_lu_14 (ReLU)             (None, 400, 64)              0         ['bn2[0][0]']                 
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_13[0][0]']            
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['re_lu_14[0][0]']            
+                                                                                                  
+ concatenate_4 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_4  (None, 64)                   0         ['concatenate_4[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_4[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_4 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_4[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 8472 (33.09 KB)
+Trainable params: 8024 (31.34 KB)
+Non-trainable params: 448 (1.75 KB)
+__________________________________________________________________________________________________
