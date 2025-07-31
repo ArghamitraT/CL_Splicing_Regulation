@@ -3,6 +3,7 @@ from hydra.utils import instantiate
 from src.model.simclr import get_simclr_model
 # from src.model import psi_regression
 from src.model import psi_regression, psi_regression_bothIntronExon
+from src.model import MTSpliceBCE
 
 import inspect
 import os
@@ -61,8 +62,9 @@ def load_encoder(config, root_path, result_dir):
 def initialize_encoders_and_model(config, root_path):
     mode = config.aux_models.mode
     result_dirs = {
-        "5p": config.aux_models["5p_weights"],
-        "3p": config.aux_models["3p_weights"]
+        "5p": config.aux_models["weights_5p"],
+        "3p": config.aux_models["weights_3p"],
+        "mtsplice_weights": config.aux_models["mtsplice_weights"]
     }
 
     if mode == "3p":
@@ -73,9 +75,7 @@ def initialize_encoders_and_model(config, root_path):
         encoder = load_encoder(config, root_path, result_dirs["5p"])
         return psi_regression.PSIRegressionModel(encoder, config)
 
-    elif mode == "intronexon" or mode == "intronOnly":
-        
-        
+    elif mode == "intronexon" or mode == "intronOnly":      
         encoder_5p = load_encoder(config, root_path, result_dirs["5p"])
         encoder_3p = load_encoder(config, root_path, result_dirs["3p"])
         if mode == "intronOnly":
@@ -84,7 +84,15 @@ def initialize_encoders_and_model(config, root_path):
             # reset_debug_warning()
             # debug_warning("exon encdr wrmstarted")
             encoder_exon = load_encoder(config, root_path, "exprmnt_2025_06_08__21_34_21")
-
+    
+    elif mode == "mtsplice":
+        encoder = load_encoder(config, root_path, result_dirs["mtsplice_weights"])
+        if config.aux_models.mtsplice_BCE:
+            # If using BCE loss, return a mtsplice like model
+            return MTSpliceBCE.MTSpliceBCE(encoder, config)
+        else:
+            # If using regression, return the standard model
+            return psi_regression.PSIRegressionModel(encoder, config)
     else:
         raise ValueError(f"❌ Unsupported aux_models.mode: {mode}")
 

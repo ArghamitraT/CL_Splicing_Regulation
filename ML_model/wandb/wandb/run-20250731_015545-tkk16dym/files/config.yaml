@@ -1,0 +1,242 @@
+_wandb:
+    value:
+        cli_version: 0.18.7
+        m:
+            - "1": train_loss_step
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": trainer/global_step
+              "6":
+                - 3
+              "7": []
+            - "1": val_loss_step
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": gpu_reserved_memory
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": gpu_memory_usage
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": epoch
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": epoch_time
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": test_loss_epoch
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": lr-SGD
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": gpu_peak_memory
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": test_loss_step
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": val_loss_epoch
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": train_loss_epoch
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": test_spearman_logit
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": test_spearman_Deltalogit
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+        python_version: 3.10.15
+        t:
+            "1":
+                - 1
+                - 11
+                - 41
+                - 49
+                - 50
+                - 55
+                - 71
+                - 106
+            "2":
+                - 1
+                - 11
+                - 41
+                - 49
+                - 50
+                - 55
+                - 71
+                - 106
+            "3":
+                - 7
+                - 13
+                - 16
+                - 23
+                - 55
+                - 66
+            "4": 3.10.15
+            "5": 0.18.7
+            "6": 4.46.2
+            "8":
+                - 5
+            "12": 0.18.7
+            "13": linux-x86_64
+aux_models:
+    value:
+        freeze_encoder: false
+        hidden_dim: 512
+        mode: mtsplice
+        mtsplice_BCE: 1
+        mtsplice_weights: exprmnt_2025_07_30__13_10_26
+        name_or_path: psi_regression
+        output_dim: 1
+        warm_start: true
+        weights_3p: exprmnt_2025_07_19__21_32_18
+        weights_5p: exprmnt_2025_06_01__21_15_08
+callbacks:
+    value:
+        learning_rate_monitor:
+            _target_: lightning.pytorch.callbacks.LearningRateMonitor
+            logging_interval: step
+        model_checkpoint:
+            _target_: lightning.pytorch.callbacks.ModelCheckpoint
+            dirpath: checkpoints/
+            filename: psi_regression/MTSplice/201/best-checkpoint
+            mode: min
+            monitor: val_loss
+            save_last: true
+            save_top_k: 1
+            verbose: true
+dataset:
+    value:
+        batch_size_per_device: 2048
+        cache_dir: ../data
+        num_workers: 16
+        seq_len: 201
+        test_files:
+            3p: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+            5p: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_5primeintron_sequences_dict.pkl
+            exon: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_exon_sequences_dict.pkl
+            intronexon: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_MERGED.pkl
+        train_files:
+            3p: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+            5p: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_5primeintron_sequences_dict.pkl
+            exon: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_exon_sequences_dict.pkl
+            intronexon: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_MERGED.pkl
+        val_files:
+            3p: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+            5p: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_5primeintron_sequences_dict.pkl
+            exon: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_exon_sequences_dict.pkl
+            intronexon: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl
+embedder:
+    value:
+        _name_: MTSplice
+        maxpooling: true
+        motif_path: /mnt/home/at3836/Contrastive_Learning/data/motifs/cisBP_mouse.meme
+        name_or_path: MTSplice
+        num_of_response: 1
+        pad_motif: 4
+        seq_len: 400
+        stride: 1
+logger:
+    value:
+        _target_: lightning.pytorch.loggers.WandbLogger
+        group: psi_regression
+        id: psi_regression-Psi_mtspliceBCE_Frz0Wrm1__20250731_015526
+        log_model: true
+        name: Psi_mtspliceBCE_Frz0Wrm1__20250731_015526
+        notes: mtspliceBCE warm start true freeze encoder false
+        project: PSI_REGRESSION
+        save_dir: ./wandb/
+        settings:
+            init_timeout: 600
+loss:
+    value:
+        _target_: src.loss.MTSpliceBCELoss.MTSpliceBCELoss
+        csv_dir: /mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/
+model:
+    value:
+        hidden_dim: 512
+        name_or_path: simclr
+        projection_dim: 128
+optimizer:
+    value:
+        _target_: torch.optim.SGD
+        lr: 0.001
+        momentum: 0.9
+        weight_decay: 0
+task:
+    value:
+        _name_: psi_regression
+        global_batch_size: 2048
+        metrics:
+            - r2_score
+        pretraining_weights: ""
+        val_check_interval: 0.5
+tokenizer:
+    value:
+        _target_: src.tokenizers.onehot_tokenizer.FastOneHotPreprocessor
+        padding: right
+        seq_len: 400
+trainer:
+    value:
+        _target_: lightning.pytorch.Trainer
+        accumulate_grad_batches: 1
+        callbacks: null
+        devices: 1
+        gradient_clip_val: 1
+        limit_train_batches: 1
+        limit_val_batches: 1
+        log_every_n_steps: 1
+        max_epochs: 10
+        num_nodes: 1
+        num_sanity_val_steps: 0
+        precision: 16-mixed
+        val_check_interval: 0.5
+wandb:
+    value:
+        api_key: 6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66
+        dir: ./wandb/

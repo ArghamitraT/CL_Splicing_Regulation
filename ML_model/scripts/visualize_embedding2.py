@@ -34,7 +34,7 @@ trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
 def get_optimal_num_workers():
     num_cpus = os.cpu_count()
     num_gpus = torch.cuda.device_count()
-    return min(num_cpus // max(1, num_gpus), 16)
+    return min(num_cpus // max(1, num_gpus), 8)
 
 
 # Add parent directory to path
@@ -46,7 +46,7 @@ from src.datasets.lit import ContrastiveIntronsDataModule
 
 
 ######### parameters #############
-result_dir = "exprmnt_2025_05_17__19_11_12"
+result_dir = "exprmnt_2025_07_06__23_36_50"
 ######### parameters ##############
 # exprmnt_2025_05_04__11_29_05
 
@@ -206,8 +206,8 @@ def main(config: OmegaConf):
     view0, view1 = next(iter(train_loader))
 
     # Choose one of the following:
-    # get_2view_embedding(config, device, view0, view1)
-    all_pos_of_anchor(config, device, view0, train_loader, tokenizer)
+    get_2view_embedding(config, device, view0, view1)
+    # all_pos_of_anchor(config, device, view0, train_loader, tokenizer)
     # distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer)
 
 if __name__ == "__main__":

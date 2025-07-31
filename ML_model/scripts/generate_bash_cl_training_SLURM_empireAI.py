@@ -38,6 +38,7 @@ def create_prg_file(prg_file_path):
             task.global_batch_size={global_batch_size}\\
             trainer.max_epochs={max_epochs}\\
             tokenizer={tokenizer} \\
+            tokenizer.seq_len={tokenizer_seq_len} \\
             embedder={embedder} \\
             loss={loss_name} \\
             embedder.maxpooling={maxpooling} \\
@@ -114,28 +115,34 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon10augAll_resnet101'
+slurm_file_name = 'CLSupcon2augAll_mtsplice'
 gpu_num = 1
-hour = 7
+hour = 3
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
-global_batch_size = 2048
-embedder="resnet101"
-tokenizer="custom_tokenizer"
-loss_name="supcon"
-max_epochs = 20
-n_augmentations = 10
+global_batch_size = 8196
+embedder = "mtsplice"
+tokenizer = "onehot_tokenizer"
+loss_name = "supcon"
+max_epochs = 40
+n_augmentations = 2
 maxpooling = True
 optimizer = "sgd"
-TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
-VAL_FILE="val_3primeIntron_filtered.pkl"
-TEST_FILE="test_3primeIntron_filtered.pkl"
+tokenizer_seq_len = 400
+# TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
+# VAL_FILE="val_3primeIntron_filtered.pkl"
+# TEST_FILE="test_3primeIntron_filtered.pkl"
+
+TRAIN_FILE="train_merged_filtered_min30Views.pkl"
+VAL_FILE="val_merged_filtered_min30Views.pkl"
+TEST_FILE="test_merged_filtered_min30Views.pkl"
+
 readme_comment = (
-     "supcon, 10 augmentation trial, All mode, 3p intron, resnet 101"
+     "supcon, 2 augmentation trial, All mode, 3p intron, mtsplice, lastlayer 64"
 )
-wandb_logger_NOTES="supcon resnet one o one 10 aug" ## do NOT use any special character or new line
+wandb_logger_NOTES="supcon mtsplice one o one 2 aug last layer 64" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

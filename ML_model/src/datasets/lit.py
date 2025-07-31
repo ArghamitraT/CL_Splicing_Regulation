@@ -47,7 +47,7 @@ start = time.time()
 
 
 
-def make_collate_fn(tokenizer, padding_strategy):
+def make_collate_fn(tokenizer, padding_strategy, embedder_name):
     def collate_fn(batch):
         from torch.utils.data import get_worker_info
         import os
@@ -65,8 +65,28 @@ def make_collate_fn(tokenizer, padding_strategy):
         view_lists = [[item[0][i] for item in batch] for i in range(min_n_views)]
         token_start = time.time()
         if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):  # 
-            tokenized_views = [tokenizer(view) for view in view_lists]
-            output = (*tokenized_views, exon_ids)
+            if embedder_name == "MTSplice":
+                # Tokenize both acceptor and donor parts
+                views = []
+
+                for exon_view_group in view_lists:  # loop over each view across all exons
+                    acceptors = [view['acceptor'] for view in exon_view_group]  # length = batch_size
+                    donors    = [view['donor']    for view in exon_view_group]
+
+                    seql = tokenizer(acceptors)  # shape: (batch_size, 4, L)
+                    seqr = tokenizer(donors)     # shape: (batch_size, 4, L)
+
+                    views.append((seql, seqr))  # keep view-wise grouping
+                
+                output = (*views, exon_ids)
+
+                    # tokenized_views = [
+                    # [ (tokenizer(view['acceptor']), tokenizer(view['donor'])) for view in view_list ]
+                    # for view_list in view_lists]
+                    # output = (*tokenized_views, exon_ids)
+            else:
+                tokenized_views = [tokenizer(view) for view in view_lists]
+                output = (*tokenized_views, exon_ids)
         elif callable(tokenizer):  # HuggingFace-style
             tokenized_views = [
                 tokenizer(view, return_tensors='pt', padding=padding_strategy).input_ids
@@ -99,7 +119,8 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         self.num_workers = config.dataset.num_workers
         self.tokenizer = hydra.utils.instantiate(config.tokenizer)
         self.padding_strategy = config.tokenizer.padding
-        self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy)
+        self.embedder = config.embedder
+        self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder.name_or_path)
 
     def prepare_data(self):
         # Data preparation steps if needed, such as data checks or downloads.
@@ -109,17 +130,20 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         
         self.train_set = ContrastiveIntronsDataset(
             data_file=self.train_file,
-            n_augmentations=self.n_augmentations #(AT)
+            n_augmentations=self.n_augmentations,
+            embedder=self.embedder
         )
 
         self.val_set = ContrastiveIntronsDataset(
             data_file=self.val_file,
-            n_augmentations=self.n_augmentations #(AT)
+            n_augmentations=self.n_augmentations,
+            embedder=self.embedder
             )
 
         self.test_set = ContrastiveIntronsDataset(
             data_file=self.test_file,
-            n_augmentations=self.n_augmentations #(AT)
+            n_augmentations=self.n_augmentations,
+            embedder=self.embedder
              )
     
         

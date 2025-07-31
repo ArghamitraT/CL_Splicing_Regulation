@@ -5,6 +5,44 @@ from transformers import AutoTokenizer
 import pickle
 import lightning.pytorch as pl
 
+
+def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
+                             tissue_acceptor_intron, tissue_acceptor_exon,
+                             tissue_donor_exon, tissue_donor_intron):
+            # Acceptors: region around exon start (3' splice site)
+            acceptor_intron = len_3p  # region before the exon (3' intron)
+            # Donor: region around exon end (5' splice site)
+            donor_intron = len_5p     # region after the exon (5' intron)
+
+            # Get acceptor window
+            acceptor_start = len_5p + 0 - tissue_acceptor_intron
+            acceptor_end = len_5p + tissue_acceptor_exon
+
+            # Pad acceptor if needed
+            seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
+            if acceptor_start < 0:
+                seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
+            if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
+                seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
+
+            # Get donor window
+            donor_end = len_5p + len_exon + tissue_donor_intron
+            donor_start = len_5p + len_exon - tissue_donor_exon
+
+            seq_donor = full_seq[donor_start:donor_end]
+            if donor_end > len(full_seq):
+                seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
+            if donor_start < 0:
+                seq_donor = "N" * abs(donor_start) + seq_donor
+            if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
+                seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
+
+            return {
+                'acceptor': seq_acceptor,
+                'donor': seq_donor
+            }
+
+
 class PSIRegressionDataset(Dataset):
     def __init__(self, data_file, tokenizer, max_length=201, mode="5p"):
         """
@@ -27,6 +65,15 @@ class PSIRegressionDataset(Dataset):
         self.mode = mode
         self.entries = list(self.data.items())  # Convert dictionary to list format
 
+        # Fixed lengths for MTSplice windowing
+        self.len_5p = 200
+        self.len_exon = 100
+        self.len_3p = 200
+        self.tissue_acceptor_intron = 300
+        self.tissue_acceptor_exon = 100
+        self.tissue_donor_intron = 300
+        self.tissue_donor_exon = 100
+
     def __len__(self):
         return len(self.entries)
 
@@ -35,7 +82,24 @@ class PSIRegressionDataset(Dataset):
         exon_id, entry = self.entries[idx]
         psi_value = entry["psi_val"]
 
-        if self.mode == "intronexon" or self.mode == "intronOnly":
+        if self.mode == "mtsplice":
+            full_seq =  entry["5p"] + self._process_exon(entry["exon"]) + entry["3p"]
+
+            windows = get_windows_with_padding(
+                full_seq,
+                self.len_5p, self.len_exon, self.len_3p,
+                self.tissue_acceptor_intron, self.tissue_acceptor_exon,
+                self.tissue_donor_exon, self.tissue_donor_intron
+            )
+
+            # Tokenize acceptor and donor
+            seql = self._tokenize(windows['acceptor'])  # acceptor
+            seqr = self._tokenize(windows['donor'])     # donor
+
+            return (seql, seqr), torch.tensor(psi_value, dtype=torch.float32), exon_id
+
+
+        elif self.mode == "intronexon" or self.mode == "intronOnly":
             seq_3p = entry["3p"]
             seq_5p = entry["5p"]
             seq_exon = self._process_exon(entry["exon"])
@@ -75,25 +139,7 @@ class PSIRegressionDataset(Dataset):
                 max_length=self.max_length
             ).input_ids.squeeze(0)
 
-        # entry_id, entry = self.entries[idx]
-        # psi_value = entry["psi_val"]
-        # sequence = entry["hg38"]
-
-        # if callable(self.tokenizer) and not hasattr(self.tokenizer, "vocab_size"):
-        #     # Custom one-hot tokenizer
-        #     encoded_seq = self.tokenizer([sequence])[0]  # shape: (C, L)
-        # else:
-        #     # HuggingFace-style tokenizer
-        #     encoded_seq = self.tokenizer(
-        #         sequence,
-        #         return_tensors="pt",
-        #         padding="max_length",
-        #         truncation=True,
-        #         max_length=self.max_length,
-        #     ).input_ids.squeeze(0)  # shape: (L,)
-
-        # return encoded_seq, torch.tensor(psi_value, dtype=torch.float32), entry_id
-
+        
 class PSIRegressionDataModule(pl.LightningDataModule):
     def __init__(self, config):
         """
@@ -168,72 +214,4 @@ class PSIRegressionDataModule(pl.LightningDataModule):
             self.test_set, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True
         )
 
-
-    # def _combined_loader(self, datasets):
-    #     return zip(
-    #         DataLoader(datasets["5p"], batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True),
-    #         DataLoader(datasets["3p"], batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True),
-    #         DataLoader(datasets["exon"], batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True),
-    #     )
-
-    # def train_dataloader(self):
-    #     return self._combined_loader(self.train_set) if self.mode == "intronexon" else DataLoader(
-    #         self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True
-    #     )
-
-    # def val_dataloader(self):
-    #     return self._combined_loader(self.val_set) if self.mode == "intronexon" else DataLoader(
-    #         self.val_set, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True
-    #     )
-
-    # def test_dataloader(self):
-    #     return self._combined_loader(self.test_set) if self.mode == "intronexon" else DataLoader(
-    #         self.test_set, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True
-    #     )
-
-
-"""
-        self.train_file = config.dataset.train_file
-        self.val_file = config.dataset.val_file
-        self.test_file = config.dataset.test_file
-        self.batch_size = config.dataset.batch_size_per_device
-        self.num_workers = config.dataset.num_workers
-        self.tokenizer = hydra.utils.instantiate(config.tokenizer)
-        
-    def setup(self, stage=None):
-        
-        # Load dataset and split into train/val/test sets.
-        
-        self.train_set = PSIRegressionDataset(self.train_file, self.tokenizer)
-        self.val_set = PSIRegressionDataset(self.val_file, self.tokenizer)
-        self.test_set = PSIRegressionDataset(self.test_file, self.tokenizer)
-    
-    
-    def train_dataloader(self):
-        return DataLoader(
-            self.train_set,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=True
-        )
-
-    def val_dataloader(self):
-        return DataLoader(
-            self.val_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True
-        )
-
-    def test_dataloader(self):
-        return DataLoader(
-            self.test_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True
-        )
-
-
-"""
         

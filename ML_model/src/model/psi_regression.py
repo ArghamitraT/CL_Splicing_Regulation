@@ -52,15 +52,7 @@ class PSIRegressionModel(pl.LightningModule):
                 encoder_output_dim = dummy_output.shape[-1]
 
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
-        # self.regressor = nn.Sequential(nn.Linear(201*encoder_output_dim, config.aux_models.hidden_dim),
-        #                                nn.ReLU(),
-        #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
-
-        # self.regressor = nn.Linear(201, config.aux_models.output_dim)
-        # self.regressor = nn.Sequential(nn.Linear(201, config.aux_models.hidden_dim),
-        #                                nn.ReLU(),
-        #                                nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
-
+        
         self.regressor = nn.Sequential(nn.Linear(encoder_output_dim, config.aux_models.hidden_dim),
                                        nn.ReLU(),
                                        nn.Linear(config.aux_models.hidden_dim, config.aux_models.output_dim))
@@ -77,7 +69,11 @@ class PSIRegressionModel(pl.LightningModule):
 
     
     def forward(self, x):
-        features = self.encoder(x)
+        if isinstance(x, (tuple, list)) and len(x) == 2:
+            seql, seqr = x
+            features = self.encoder(seql, seqr)
+        else:
+            features = self.encoder(x)
         # features = features.flatten(start_dim=1)
         # return self.regressor(features)
         # return self.regressor(features.mean(dim=2))
@@ -108,11 +104,6 @@ class PSIRegressionModel(pl.LightningModule):
         # y_pred = self(x)
         y_pred = self(x).squeeze()
 
-        # Combine masks for any invalid predictions or targets
-        # valid_mask = ~(torch.isnan(y_pred) | torch.isinf(y_pred) | torch.isnan(y) | torch.isinf(y))
-        # # Filter out invalid values
-        # y_pred = y_pred[valid_mask]
-        # y = y[valid_mask]
         loss = self.loss_fn(y_pred, y)
 
         self.log("val_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
@@ -161,43 +152,10 @@ class PSIRegressionModel(pl.LightningModule):
         self.log("test_spearman_logit", rho, prog_bar=True, sync_dist=True)
         print(f"\n🔬 Spearman ρ (logit PSI, test set): {rho:.4f}")
 
-        # === Compute Δ tissue logit PSI ===
-        # # Load the same exon_ids (in order) as used in the test set
-        # # Assumes self.test_exon_ids is a list aligned with y_true_all
-        # logit_mean_list = [logit(np.clip(self.test_exon_dict[exon]['psi_mean'] / 100, eps, 1 - eps))
-        #                 for exon in self.test_exon_ids]
+        import time
+        trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
 
-        # logit_mean_arr = np.array(logit_mean_list)
 
-        # delta_y_true = y_true_logit - logit_mean_arr
-        # delta_y_pred = y_pred_logit - logit_mean_arr
-
-        # # === Spearman correlation for Δ tissue splicing ===
-        # rho, _ = spearmanr(delta_y_true, delta_y_pred)
-        # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
-        # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
-
-        # Assume self.dataset.entries is available and maps index → (exon_id, entry_dict)
-        # dataset_entries = self.trainer.datamodule.test_dataloader().dataset.entries  # get from dataloader
-
-        # logit_mean_list = []
-        # for exon_id in self.test_exon_ids:
-        #     for entry_id, entry in dataset_entries:
-        #         if entry_id == exon_id:
-        #             psi_mean = entry["psi_mean"]
-        #             logit_mean = logit(np.clip(psi_mean / 100, eps, 1 - eps))
-        #             logit_mean_list.append(logit_mean)
-        #             break
-
-        # logit_mean_arr = np.array(logit_mean_list)
-
-        # delta_y_true = y_true_logit - logit_mean_arr
-        # delta_y_pred = y_pred_logit - logit_mean_arr
-
-        # rho, _ = spearmanr(delta_y_true, delta_y_pred)
-        # self.log("test_spearman_differential_logit", rho, prog_bar=True, sync_dist=True)
-        # print(f"\n🧪 Spearman ρ (Δ tissue logit PSI): {rho:.4f}")
-        # Save results to CSV
         df = pd.DataFrame({
             "index": np.arange(len(y_true_all)),
             "y_true": y_true_all,

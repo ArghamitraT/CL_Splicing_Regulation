@@ -23,9 +23,14 @@ class SimCLRModule(nn.Module):
     #     z = self.projection_head(embedding)
     #     return z
     
-    def forward(self, x):
-        embedding = self.encoder(x)
-        # embedding = features.mean(dim=1)
+    def forward(self, seql, seqr=None):
+        if self.encoder.__class__.__name__ == "MTSpliceEncoder":
+            # seql and seqr already have shape: (B, 4, L)
+            embedding = self.encoder(seql, seqr)
+        else:
+            # For other encoders, seql is the full input
+            embedding = self.encoder(seql)
+            # embedding = features.mean(dim=1)
         z = self.projection_head(embedding)
         return z
     

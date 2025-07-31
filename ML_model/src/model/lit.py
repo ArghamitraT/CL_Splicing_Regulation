@@ -93,7 +93,12 @@ class LitModel(pl.LightningModule):
 
         # Forward pass for all views
         start_fwd = time.time()
-        z_views = [self.forward(view) for view in views]
+      
+        if self.config.embedder.name_or_path == 'MTSplice':
+            # MTSpliceEncoder expects a tuple of sequences
+            z_views = [self.forward(seql, seqr) for (seql, seqr) in views]
+        else:
+            z_views = [self.forward(view) for view in views]
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
@@ -123,39 +128,7 @@ class LitModel(pl.LightningModule):
 
         return loss
 
-    # def training_step(self, batch, batch_idx):
-    #     import time
-    #     start = time.time()
 
-    #     view0, view1, exon_names = batch
-    #     # Forward pass
-    #     start_fwd = time.time()
-    #     z0 = self.forward(view0)
-    #     z1 = self.forward(view1)
-    #     # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
-
-    #     # loss = self.loss_fn(z0, z1)
-    #     if str(self.loss_fn)=='SupConLoss()':
-    #         # Combine for SupConLoss: [bsz, 2, D]
-    #         features = torch.stack([z0, z1], dim=1)
-    #         n_views = features.shape[1]
-            
-    #         exon_ids = torch.tensor(exon_names, device=z0.device)
-    #         # labels = exon_ids.repeat_interleave(n_views)
-    #         labels = exon_ids.repeat_interleave(1)
-
-    #         loss = self.loss_fn(features)
-    #     else:
-    #         # Standard InfoNCE-style NTXentLoss: separate
-    #         loss = self.loss_fn(z0, z1)
-
-    #     # self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
-    #     self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True, batch_size=len(view0))
-    #     # ⏱️ Print timing
-    #     step_time = time.time() - start
-    #     # print(f"⏱️ Batch {batch_idx}: {step_time:.2f}s")
-
-    #     return loss
 
     def validation_step(self, batch, batch_idx):
         import time
@@ -166,7 +139,11 @@ class LitModel(pl.LightningModule):
 
         # Forward pass for all views
         start_fwd = time.time()
-        z_views = [self.forward(view) for view in views]
+        if self.config.embedder.name_or_path == 'MTSplice':
+            # MTSpliceEncoder expects a tuple of sequences
+            z_views = [self.forward(seql, seqr) for (seql, seqr) in views]
+        else:
+            z_views = [self.forward(view) for view in views]
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
