@@ -23,7 +23,8 @@ epsilon = 1e-6      # Small value to aid log(0) issues
 
 
 def main():
-    flat_embeddings = torch.load(input_dir+f"embeddings/hg38_exons.pt")
+    # flat_embeddings = torch.load(input_dir+f"embeddings/hg38_exons.pt")
+    flat_embeddings = torch.load(input_dir+f"embeddings/hg38_empire.pt")
     embeddings = {}
     for (gene, exon), vector in flat_embeddings.items():
         embeddings.setdefault(gene, {})[exon] = vector
@@ -65,13 +66,15 @@ def main():
     plt.xlabel("Comparison Number")
     plt.ylabel("Cosine Similarity")
     plt.title("Cosine Similarity Between Random Exons")
-    plt.savefig(output_dir+f"hg38_random_scatter.png", dpi=300, bbox_inches='tight')
+    # plt.savefig(output_dir+f"hg38_random_scatter.png", dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir+f"hg38_empire_scatter.png", dpi=300, bbox_inches='tight')
 
     plt.figure(figsize=(18,6))
     plt.boxplot(cos_sims)
     plt.ylabel("Cosine Similarities")
     plt.title("Distribution of Cos Similarities")
-    plt.savefig(output_dir+f"hg38_random_box.png", dpi=300, bbox_inches='tight')
+    # plt.savefig(output_dir+f"hg38_random_box.png", dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir+f"hg38_empire_box.png", dpi=300, bbox_inches='tight')
 
     # Plot random exon similarities (your current baseline)
     sns.histplot(cos_sims, color='tab:blue', bins=50, kde=True)
@@ -81,7 +84,8 @@ def main():
     plt.xticks(xticks, xticks_labels)
     plt.ylabel("Count")
     plt.title("ESM Embedding Similarity Distributions")
-    plt.savefig(output_dir+f"hg38_histplot.png", dpi=300, bbox_inches='tight')
+    # plt.savefig(output_dir+f"hg38_histplot.png", dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir+f"hg38_empire_histplot.png", dpi=300, bbox_inches='tight')
 
 
     
