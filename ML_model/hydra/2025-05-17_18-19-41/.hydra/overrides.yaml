@@ -1,0 +1,11 @@
+- task=introns_cl
+- embedder=interpretable
+- tokenizer=onehot_tokenizer
+- task.global_batch_size=8192
+- trainer.max_epochs=2
+- trainer.val_check_interval=1.0
+- optimizer=sgd
+- trainer.devices=1
+- logger.name=cl_20250517_181909
+- embedder.maxpooling=True
+- logger.notes=interpretable encoder removed rc and out multi weight

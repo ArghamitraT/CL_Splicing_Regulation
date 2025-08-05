@@ -1,0 +1,12 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=3
+- trainer.val_check_interval=0.5
+- embedder=interpretable
+- tokenizer=onehot_tokenizer
+- embedder.maxpooling=true
+- optimizer=sgd
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=false
+- aux_models.warm_start=true
+- logger.name=Psi__20250512_120524
+- logger.notes=Anshul data

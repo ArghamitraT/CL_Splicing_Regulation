@@ -1,0 +1,740 @@
+
+
+=== Model 0: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice_deep0.h5 ===
+Model: "model_1"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv1d_1 (Conv1D)           (None, 400, 64)              2880      ['seql[0][0]']                
+                                                                                                  
+ conv1d_10 (Conv1D)          (None, 400, 64)              2880      ['seqr[0][0]']                
+                                                                                                  
+ batch_normalization_1 (Bat  (None, 400, 64)              256       ['conv1d_1[0][0]']            
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_9 (Bat  (None, 400, 64)              256       ['conv1d_10[0][0]']           
+ chNormalization)                                                                                 
+                                                                                                  
+ conv1d_2 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_1[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_11 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_9[0][0]'
+                                                                    ]                             
+                                                                                                  
+ add_1 (Add)                 (None, 400, 64)              0         ['conv1d_1[0][0]',            
+                                                                     'conv1d_2[0][0]']            
+                                                                                                  
+ add_9 (Add)                 (None, 400, 64)              0         ['conv1d_10[0][0]',           
+                                                                     'conv1d_11[0][0]']           
+                                                                                                  
+ batch_normalization_2 (Bat  (None, 400, 64)              256       ['add_1[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_10 (Ba  (None, 400, 64)              256       ['add_9[0][0]']               
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_3 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_2[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_12 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_10[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_2 (Add)                 (None, 400, 64)              0         ['add_1[0][0]',               
+                                                                     'conv1d_3[0][0]']            
+                                                                                                  
+ add_10 (Add)                (None, 400, 64)              0         ['add_9[0][0]',               
+                                                                     'conv1d_12[0][0]']           
+                                                                                                  
+ batch_normalization_3 (Bat  (None, 400, 64)              256       ['add_2[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_11 (Ba  (None, 400, 64)              256       ['add_10[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_4 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_3[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_13 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_11[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_3 (Add)                 (None, 400, 64)              0         ['add_2[0][0]',               
+                                                                     'conv1d_4[0][0]']            
+                                                                                                  
+ add_11 (Add)                (None, 400, 64)              0         ['add_10[0][0]',              
+                                                                     'conv1d_13[0][0]']           
+                                                                                                  
+ batch_normalization_4 (Bat  (None, 400, 64)              256       ['add_3[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_12 (Ba  (None, 400, 64)              256       ['add_11[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_5 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_4[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_14 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_12[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_4 (Add)                 (None, 400, 64)              0         ['add_3[0][0]',               
+                                                                     'conv1d_5[0][0]']            
+                                                                                                  
+ add_12 (Add)                (None, 400, 64)              0         ['add_11[0][0]',              
+                                                                     'conv1d_14[0][0]']           
+                                                                                                  
+ batch_normalization_5 (Bat  (None, 400, 64)              256       ['add_4[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_13 (Ba  (None, 400, 64)              256       ['add_12[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_6 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_5[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_15 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_13[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_5 (Add)                 (None, 400, 64)              0         ['add_4[0][0]',               
+                                                                     'conv1d_6[0][0]']            
+                                                                                                  
+ add_13 (Add)                (None, 400, 64)              0         ['add_12[0][0]',              
+                                                                     'conv1d_15[0][0]']           
+                                                                                                  
+ batch_normalization_6 (Bat  (None, 400, 64)              256       ['add_5[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_14 (Ba  (None, 400, 64)              256       ['add_13[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_7 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_6[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_16 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_14[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_6 (Add)                 (None, 400, 64)              0         ['add_5[0][0]',               
+                                                                     'conv1d_7[0][0]']            
+                                                                                                  
+ add_14 (Add)                (None, 400, 64)              0         ['add_13[0][0]',              
+                                                                     'conv1d_16[0][0]']           
+                                                                                                  
+ batch_normalization_7 (Bat  (None, 400, 64)              256       ['add_6[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_15 (Ba  (None, 400, 64)              256       ['add_14[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_8 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_7[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_17 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_15[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_7 (Add)                 (None, 400, 64)              0         ['add_6[0][0]',               
+                                                                     'conv1d_8[0][0]']            
+                                                                                                  
+ add_15 (Add)                (None, 400, 64)              0         ['add_14[0][0]',              
+                                                                     'conv1d_17[0][0]']           
+                                                                                                  
+ batch_normalization_8 (Bat  (None, 400, 64)              256       ['add_7[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_16 (Ba  (None, 400, 64)              256       ['add_15[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_9 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_8[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_18 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_16[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_8 (Add)                 (None, 400, 64)              0         ['add_7[0][0]',               
+                                                                     'conv1d_9[0][0]']            
+                                                                                                  
+ add_16 (Add)                (None, 400, 64)              0         ['add_15[0][0]',              
+                                                                     'conv1d_18[0][0]']           
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['add_8[0][0]']               
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['add_16[0][0]']              
+                                                                                                  
+ concatenate_1 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_1[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_1[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_1 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_1[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 213080 (832.34 KB)
+Trainable params: 210840 (823.59 KB)
+Non-trainable params: 2240 (8.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 1: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice_deep1.h5 ===
+Model: "model_1"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv1d_1 (Conv1D)           (None, 400, 64)              2880      ['seql[0][0]']                
+                                                                                                  
+ conv1d_10 (Conv1D)          (None, 400, 64)              2880      ['seqr[0][0]']                
+                                                                                                  
+ batch_normalization_1 (Bat  (None, 400, 64)              256       ['conv1d_1[0][0]']            
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_9 (Bat  (None, 400, 64)              256       ['conv1d_10[0][0]']           
+ chNormalization)                                                                                 
+                                                                                                  
+ conv1d_2 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_1[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_11 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_9[0][0]'
+                                                                    ]                             
+                                                                                                  
+ add_1 (Add)                 (None, 400, 64)              0         ['conv1d_1[0][0]',            
+                                                                     'conv1d_2[0][0]']            
+                                                                                                  
+ add_9 (Add)                 (None, 400, 64)              0         ['conv1d_10[0][0]',           
+                                                                     'conv1d_11[0][0]']           
+                                                                                                  
+ batch_normalization_2 (Bat  (None, 400, 64)              256       ['add_1[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_10 (Ba  (None, 400, 64)              256       ['add_9[0][0]']               
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_3 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_2[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_12 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_10[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_2 (Add)                 (None, 400, 64)              0         ['add_1[0][0]',               
+                                                                     'conv1d_3[0][0]']            
+                                                                                                  
+ add_10 (Add)                (None, 400, 64)              0         ['add_9[0][0]',               
+                                                                     'conv1d_12[0][0]']           
+                                                                                                  
+ batch_normalization_3 (Bat  (None, 400, 64)              256       ['add_2[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_11 (Ba  (None, 400, 64)              256       ['add_10[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_4 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_3[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_13 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_11[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_3 (Add)                 (None, 400, 64)              0         ['add_2[0][0]',               
+                                                                     'conv1d_4[0][0]']            
+                                                                                                  
+ add_11 (Add)                (None, 400, 64)              0         ['add_10[0][0]',              
+                                                                     'conv1d_13[0][0]']           
+                                                                                                  
+ batch_normalization_4 (Bat  (None, 400, 64)              256       ['add_3[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_12 (Ba  (None, 400, 64)              256       ['add_11[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_5 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_4[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_14 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_12[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_4 (Add)                 (None, 400, 64)              0         ['add_3[0][0]',               
+                                                                     'conv1d_5[0][0]']            
+                                                                                                  
+ add_12 (Add)                (None, 400, 64)              0         ['add_11[0][0]',              
+                                                                     'conv1d_14[0][0]']           
+                                                                                                  
+ batch_normalization_5 (Bat  (None, 400, 64)              256       ['add_4[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_13 (Ba  (None, 400, 64)              256       ['add_12[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_6 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_5[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_15 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_13[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_5 (Add)                 (None, 400, 64)              0         ['add_4[0][0]',               
+                                                                     'conv1d_6[0][0]']            
+                                                                                                  
+ add_13 (Add)                (None, 400, 64)              0         ['add_12[0][0]',              
+                                                                     'conv1d_15[0][0]']           
+                                                                                                  
+ batch_normalization_6 (Bat  (None, 400, 64)              256       ['add_5[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_14 (Ba  (None, 400, 64)              256       ['add_13[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_7 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_6[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_16 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_14[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_6 (Add)                 (None, 400, 64)              0         ['add_5[0][0]',               
+                                                                     'conv1d_7[0][0]']            
+                                                                                                  
+ add_14 (Add)                (None, 400, 64)              0         ['add_13[0][0]',              
+                                                                     'conv1d_16[0][0]']           
+                                                                                                  
+ batch_normalization_7 (Bat  (None, 400, 64)              256       ['add_6[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_15 (Ba  (None, 400, 64)              256       ['add_14[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_8 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_7[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_17 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_15[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_7 (Add)                 (None, 400, 64)              0         ['add_6[0][0]',               
+                                                                     'conv1d_8[0][0]']            
+                                                                                                  
+ add_15 (Add)                (None, 400, 64)              0         ['add_14[0][0]',              
+                                                                     'conv1d_17[0][0]']           
+                                                                                                  
+ batch_normalization_8 (Bat  (None, 400, 64)              256       ['add_7[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_16 (Ba  (None, 400, 64)              256       ['add_15[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_9 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_8[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_18 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_16[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_8 (Add)                 (None, 400, 64)              0         ['add_7[0][0]',               
+                                                                     'conv1d_9[0][0]']            
+                                                                                                  
+ add_16 (Add)                (None, 400, 64)              0         ['add_15[0][0]',              
+                                                                     'conv1d_18[0][0]']           
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['add_8[0][0]']               
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['add_16[0][0]']              
+                                                                                                  
+ concatenate_1 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_1[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_1[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_1 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_1[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 213080 (832.34 KB)
+Trainable params: 210840 (823.59 KB)
+Non-trainable params: 2240 (8.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 2: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice_deep2.h5 ===
+Model: "model_1"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv1d_1 (Conv1D)           (None, 400, 64)              2880      ['seql[0][0]']                
+                                                                                                  
+ conv1d_10 (Conv1D)          (None, 400, 64)              2880      ['seqr[0][0]']                
+                                                                                                  
+ batch_normalization_1 (Bat  (None, 400, 64)              256       ['conv1d_1[0][0]']            
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_9 (Bat  (None, 400, 64)              256       ['conv1d_10[0][0]']           
+ chNormalization)                                                                                 
+                                                                                                  
+ conv1d_2 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_1[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_11 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_9[0][0]'
+                                                                    ]                             
+                                                                                                  
+ add_1 (Add)                 (None, 400, 64)              0         ['conv1d_1[0][0]',            
+                                                                     'conv1d_2[0][0]']            
+                                                                                                  
+ add_9 (Add)                 (None, 400, 64)              0         ['conv1d_10[0][0]',           
+                                                                     'conv1d_11[0][0]']           
+                                                                                                  
+ batch_normalization_2 (Bat  (None, 400, 64)              256       ['add_1[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_10 (Ba  (None, 400, 64)              256       ['add_9[0][0]']               
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_3 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_2[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_12 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_10[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_2 (Add)                 (None, 400, 64)              0         ['add_1[0][0]',               
+                                                                     'conv1d_3[0][0]']            
+                                                                                                  
+ add_10 (Add)                (None, 400, 64)              0         ['add_9[0][0]',               
+                                                                     'conv1d_12[0][0]']           
+                                                                                                  
+ batch_normalization_3 (Bat  (None, 400, 64)              256       ['add_2[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_11 (Ba  (None, 400, 64)              256       ['add_10[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_4 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_3[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_13 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_11[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_3 (Add)                 (None, 400, 64)              0         ['add_2[0][0]',               
+                                                                     'conv1d_4[0][0]']            
+                                                                                                  
+ add_11 (Add)                (None, 400, 64)              0         ['add_10[0][0]',              
+                                                                     'conv1d_13[0][0]']           
+                                                                                                  
+ batch_normalization_4 (Bat  (None, 400, 64)              256       ['add_3[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_12 (Ba  (None, 400, 64)              256       ['add_11[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_5 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_4[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_14 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_12[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_4 (Add)                 (None, 400, 64)              0         ['add_3[0][0]',               
+                                                                     'conv1d_5[0][0]']            
+                                                                                                  
+ add_12 (Add)                (None, 400, 64)              0         ['add_11[0][0]',              
+                                                                     'conv1d_14[0][0]']           
+                                                                                                  
+ batch_normalization_5 (Bat  (None, 400, 64)              256       ['add_4[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_13 (Ba  (None, 400, 64)              256       ['add_12[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_6 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_5[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_15 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_13[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_5 (Add)                 (None, 400, 64)              0         ['add_4[0][0]',               
+                                                                     'conv1d_6[0][0]']            
+                                                                                                  
+ add_13 (Add)                (None, 400, 64)              0         ['add_12[0][0]',              
+                                                                     'conv1d_15[0][0]']           
+                                                                                                  
+ batch_normalization_6 (Bat  (None, 400, 64)              256       ['add_5[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_14 (Ba  (None, 400, 64)              256       ['add_13[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_7 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_6[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_16 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_14[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_6 (Add)                 (None, 400, 64)              0         ['add_5[0][0]',               
+                                                                     'conv1d_7[0][0]']            
+                                                                                                  
+ add_14 (Add)                (None, 400, 64)              0         ['add_13[0][0]',              
+                                                                     'conv1d_16[0][0]']           
+                                                                                                  
+ batch_normalization_7 (Bat  (None, 400, 64)              256       ['add_6[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_15 (Ba  (None, 400, 64)              256       ['add_14[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_8 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_7[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_17 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_15[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_7 (Add)                 (None, 400, 64)              0         ['add_6[0][0]',               
+                                                                     'conv1d_8[0][0]']            
+                                                                                                  
+ add_15 (Add)                (None, 400, 64)              0         ['add_14[0][0]',              
+                                                                     'conv1d_17[0][0]']           
+                                                                                                  
+ batch_normalization_8 (Bat  (None, 400, 64)              256       ['add_7[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_16 (Ba  (None, 400, 64)              256       ['add_15[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_9 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_8[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_18 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_16[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_8 (Add)                 (None, 400, 64)              0         ['add_7[0][0]',               
+                                                                     'conv1d_9[0][0]']            
+                                                                                                  
+ add_16 (Add)                (None, 400, 64)              0         ['add_15[0][0]',              
+                                                                     'conv1d_18[0][0]']           
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['add_8[0][0]']               
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['add_16[0][0]']              
+                                                                                                  
+ concatenate_1 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_1[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_1[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_1 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_1[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 213080 (832.34 KB)
+Trainable params: 210840 (823.59 KB)
+Non-trainable params: 2240 (8.75 KB)
+__________________________________________________________________________________________________
+
+
+=== Model 3: /home/atalukder/miniconda3/envs/mmsplice_env/lib/python3.9/site-packages/mmsplice/models/mtsplice_deep3.h5 ===
+Model: "model_1"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ seql (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ seqr (InputLayer)           [(None, 400, 4)]             0         []                            
+                                                                                                  
+ conv1d_1 (Conv1D)           (None, 400, 64)              2880      ['seql[0][0]']                
+                                                                                                  
+ conv1d_10 (Conv1D)          (None, 400, 64)              2880      ['seqr[0][0]']                
+                                                                                                  
+ batch_normalization_1 (Bat  (None, 400, 64)              256       ['conv1d_1[0][0]']            
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_9 (Bat  (None, 400, 64)              256       ['conv1d_10[0][0]']           
+ chNormalization)                                                                                 
+                                                                                                  
+ conv1d_2 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_1[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_11 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_9[0][0]'
+                                                                    ]                             
+                                                                                                  
+ add_1 (Add)                 (None, 400, 64)              0         ['conv1d_1[0][0]',            
+                                                                     'conv1d_2[0][0]']            
+                                                                                                  
+ add_9 (Add)                 (None, 400, 64)              0         ['conv1d_10[0][0]',           
+                                                                     'conv1d_11[0][0]']           
+                                                                                                  
+ batch_normalization_2 (Bat  (None, 400, 64)              256       ['add_1[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_10 (Ba  (None, 400, 64)              256       ['add_9[0][0]']               
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_3 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_2[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_12 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_10[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_2 (Add)                 (None, 400, 64)              0         ['add_1[0][0]',               
+                                                                     'conv1d_3[0][0]']            
+                                                                                                  
+ add_10 (Add)                (None, 400, 64)              0         ['add_9[0][0]',               
+                                                                     'conv1d_12[0][0]']           
+                                                                                                  
+ batch_normalization_3 (Bat  (None, 400, 64)              256       ['add_2[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_11 (Ba  (None, 400, 64)              256       ['add_10[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_4 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_3[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_13 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_11[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_3 (Add)                 (None, 400, 64)              0         ['add_2[0][0]',               
+                                                                     'conv1d_4[0][0]']            
+                                                                                                  
+ add_11 (Add)                (None, 400, 64)              0         ['add_10[0][0]',              
+                                                                     'conv1d_13[0][0]']           
+                                                                                                  
+ batch_normalization_4 (Bat  (None, 400, 64)              256       ['add_3[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_12 (Ba  (None, 400, 64)              256       ['add_11[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_5 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_4[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_14 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_12[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_4 (Add)                 (None, 400, 64)              0         ['add_3[0][0]',               
+                                                                     'conv1d_5[0][0]']            
+                                                                                                  
+ add_12 (Add)                (None, 400, 64)              0         ['add_11[0][0]',              
+                                                                     'conv1d_14[0][0]']           
+                                                                                                  
+ batch_normalization_5 (Bat  (None, 400, 64)              256       ['add_4[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_13 (Ba  (None, 400, 64)              256       ['add_12[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_6 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_5[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_15 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_13[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_5 (Add)                 (None, 400, 64)              0         ['add_4[0][0]',               
+                                                                     'conv1d_6[0][0]']            
+                                                                                                  
+ add_13 (Add)                (None, 400, 64)              0         ['add_12[0][0]',              
+                                                                     'conv1d_15[0][0]']           
+                                                                                                  
+ batch_normalization_6 (Bat  (None, 400, 64)              256       ['add_5[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_14 (Ba  (None, 400, 64)              256       ['add_13[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_7 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_6[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_16 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_14[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_6 (Add)                 (None, 400, 64)              0         ['add_5[0][0]',               
+                                                                     'conv1d_7[0][0]']            
+                                                                                                  
+ add_14 (Add)                (None, 400, 64)              0         ['add_13[0][0]',              
+                                                                     'conv1d_16[0][0]']           
+                                                                                                  
+ batch_normalization_7 (Bat  (None, 400, 64)              256       ['add_6[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_15 (Ba  (None, 400, 64)              256       ['add_14[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_8 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_7[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_17 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_15[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_7 (Add)                 (None, 400, 64)              0         ['add_6[0][0]',               
+                                                                     'conv1d_8[0][0]']            
+                                                                                                  
+ add_15 (Add)                (None, 400, 64)              0         ['add_14[0][0]',              
+                                                                     'conv1d_17[0][0]']           
+                                                                                                  
+ batch_normalization_8 (Bat  (None, 400, 64)              256       ['add_7[0][0]']               
+ chNormalization)                                                                                 
+                                                                                                  
+ batch_normalization_16 (Ba  (None, 400, 64)              256       ['add_15[0][0]']              
+ tchNormalization)                                                                                
+                                                                                                  
+ conv1d_9 (Conv1D)           (None, 400, 64)              12352     ['batch_normalization_8[0][0]'
+                                                                    ]                             
+                                                                                                  
+ conv1d_18 (Conv1D)          (None, 400, 64)              12352     ['batch_normalization_16[0][0]
+                                                                    ']                            
+                                                                                                  
+ add_8 (Add)                 (None, 400, 64)              0         ['add_7[0][0]',               
+                                                                     'conv1d_9[0][0]']            
+                                                                                                  
+ add_16 (Add)                (None, 400, 64)              0         ['add_15[0][0]',              
+                                                                     'conv1d_18[0][0]']           
+                                                                                                  
+ splinel (SplineWeight1D)    (None, 400, 64)              640       ['add_8[0][0]']               
+                                                                                                  
+ spliner (SplineWeight1D)    (None, 400, 64)              640       ['add_16[0][0]']              
+                                                                                                  
+ concatenate_1 (Concatenate  (None, 800, 64)              0         ['splinel[0][0]',             
+ )                                                                   'spliner[0][0]']             
+                                                                                                  
+ global_average_pooling1d_1  (None, 64)                   0         ['concatenate_1[0][0]']       
+  (GlobalAveragePooling1D)                                                                        
+                                                                                                  
+ bn5 (BatchNormalization)    (None, 64)                   256       ['global_average_pooling1d_1[0
+                                                                    ][0]']                        
+                                                                                                  
+ dense (Dense)               (None, 32)                   2080      ['bn5[0][0]']                 
+                                                                                                  
+ bn6 (BatchNormalization)    (None, 32)                   128       ['dense[0][0]']               
+                                                                                                  
+ dropout_1 (Dropout)         (None, 32)                   0         ['bn6[0][0]']                 
+                                                                                                  
+ dense2 (Dense)              (None, 56)                   1848      ['dropout_1[0][0]']           
+                                                                                                  
+==================================================================================================
+Total params: 213080 (832.34 KB)
+Trainable params: 210840 (823.59 KB)
+Non-trainable params: 2240 (8.75 KB)
+__________________________________________________________________________________________________

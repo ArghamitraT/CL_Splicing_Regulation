@@ -1,0 +1,14 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=15
+- trainer.val_check_interval=0.5
+- embedder=mtsplice
+- tokenizer=onehot_tokenizer
+- embedder.maxpooling=true
+- optimizer=sgd
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=false
+- aux_models.warm_start=true
+- aux_models.mtsplice_weights=exprmnt_2025_07_30__13_10_26
+- aux_models.mode=3p
+- logger.name=Psi_supcon2augAllmtsplice__20250730_142124
+- logger.notes=supcon loss two aug mtsplice our reg model

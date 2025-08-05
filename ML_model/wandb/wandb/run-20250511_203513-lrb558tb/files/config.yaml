@@ -1,0 +1,153 @@
+_wandb:
+    value:
+        cli_version: 0.18.7
+        m:
+            - "1": epoch
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": trainer/global_step
+              "6":
+                - 3
+              "7": []
+            - "1": lr-SGD
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+            - "1": train_loss_step
+              "5": 2
+              "6":
+                - 1
+                - 3
+              "7": []
+        python_version: 3.10.15
+        t:
+            "1":
+                - 1
+                - 11
+                - 41
+                - 49
+                - 50
+                - 55
+                - 71
+                - 106
+            "2":
+                - 1
+                - 11
+                - 41
+                - 49
+                - 50
+                - 55
+                - 71
+                - 106
+            "3":
+                - 7
+                - 13
+                - 16
+                - 23
+                - 55
+                - 66
+            "4": 3.10.15
+            "5": 0.18.7
+            "6": 4.46.2
+            "8":
+                - 5
+            "12": 0.18.7
+            "13": linux-x86_64
+callbacks:
+    value:
+        learning_rate_monitor:
+            _target_: lightning.pytorch.callbacks.LearningRateMonitor
+            logging_interval: step
+        model_checkpoint:
+            _target_: lightning.pytorch.callbacks.ModelCheckpoint
+            dirpath: checkpoints/
+            filename: introns_cl/InterpretableEncoder1D/199/best-checkpoint
+            mode: min
+            monitor: val_loss
+            save_last: true
+            save_top_k: 1
+            verbose: true
+config:
+    value: '{''wandb'': {''api_key'': ''6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66'', ''dir'': ''./wandb/''}, ''logger'': {''_target_'': ''lightning.pytorch.loggers.WandbLogger'', ''name'': ''cl_20250511_203439'', ''id'': ''${task._name_}-${.name}'', ''project'': ''INTRONS_CL'', ''group'': ''${task._name_}'', ''save_dir'': ''${wandb.dir}'', ''log_model'': True, ''notes'': ''interpretable encoder trial'', ''settings'': {''init_timeout'': 600}}, ''embedder'': {''name_or_path'': ''InterpretableEncoder1D'', ''seq_len'': 200, ''motif_dim'': 256, ''motif_width'': 12, ''pooling_window'': 10, ''bp_per_token'': 1, ''_name_'': ''InterpretableEncoder1D''}, ''dataset'': {''seq_len'': 199, ''data_file'': ''${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences.pkl'', ''exon_names_path'': ''${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronSeq_multizAlignment_noDash/all_exon_names.txt'', ''batch_size_per_device'': ''${div_up:${task.global_batch_size}, ${eval:${trainer.devices}  * ${trainer.num_nodes}}}'', ''num_workers'': ''${optimal_workers:}'', ''train_ratio'': 0.8, ''val_ratio'': 0.1, ''test_ratio'': None, ''cache_dir'': ''../data''}, ''task'': {''_name_'': ''introns_cl'', ''metrics'': [''accuracy''], ''val_check_interval'': 0.5, ''global_batch_size'': 8192}, ''trainer'': {''_target_'': ''lightning.pytorch.Trainer'', ''max_epochs'': 5, ''callbacks'': None, ''devices'': 1, ''log_every_n_steps'': 1, ''limit_train_batches'': 1.0, ''limit_val_batches'': 1.0, ''val_check_interval'': 1.0, ''gradient_clip_val'': 1.0, ''precision'': ''16-mixed'', ''num_sanity_val_steps'': 0, ''num_nodes'': 1, ''accumulate_grad_batches'': ''${div_up:${task.global_batch_size}, ${eval:${trainer.devices} * ${dataset.batch_size_per_device} * ${trainer.num_nodes}}}''}, ''callbacks'': {''model_checkpoint'': {''_target_'': ''lightning.pytorch.callbacks.ModelCheckpoint'', ''dirpath'': ''checkpoints/'', ''filename'': ''${task._name_}/${embedder._name_}/${dataset.seq_len}/best-checkpoint'', ''save_top_k'': 1, ''save_last'': True, ''verbose'': True, ''monitor'': ''val_loss'', ''mode'': ''min''}, ''learning_rate_monitor'': {''_target_'': ''lightning.pytorch.callbacks.LearningRateMonitor'', ''logging_interval'': ''step''}}, ''tokenizer'': {''_name_'': None, ''padding'': ''none''}, ''loss'': {''_target_'': ''lightly.loss.NTXentLoss'', ''temperature'': 0.5}, ''model'': {''name_or_path'': ''simclr'', ''hidden_dim'': 512, ''projection_dim'': 128}, ''optimizer'': {''_target_'': ''torch.optim.SGD'', ''lr'': 0.01, ''momentum'': 0.9, ''weight_decay'': 0.0}}'
+dataset:
+    value:
+        batch_size_per_device: 8192
+        cache_dir: ../data
+        data_file: /mnt/home/at3836/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/merged_intron_sequences.pkl
+        exon_names_path: /mnt/home/at3836/Contrastive_Learning/data/final_data/intronSeq_multizAlignment_noDash/all_exon_names.txt
+        num_workers: 16
+        seq_len: 199
+        test_ratio: null
+        train_ratio: 0.8
+        val_ratio: 0.1
+embedder:
+    value:
+        _name_: InterpretableEncoder1D
+        bp_per_token: 1
+        motif_dim: 256
+        motif_width: 12
+        name_or_path: InterpretableEncoder1D
+        pooling_window: 10
+        seq_len: 200
+logger:
+    value:
+        _target_: lightning.pytorch.loggers.WandbLogger
+        group: introns_cl
+        id: introns_cl-cl_20250511_203439
+        log_model: true
+        name: cl_20250511_203439
+        notes: interpretable encoder trial
+        project: INTRONS_CL
+        save_dir: ./wandb/
+        settings:
+            init_timeout: 600
+loss:
+    value:
+        _target_: lightly.loss.NTXentLoss
+        temperature: 0.5
+model:
+    value:
+        hidden_dim: 512
+        name_or_path: simclr
+        projection_dim: 128
+optimizer:
+    value:
+        _target_: torch.optim.SGD
+        lr: 0.01
+        momentum: 0.9
+        weight_decay: 0
+task:
+    value:
+        _name_: introns_cl
+        global_batch_size: 8192
+        metrics:
+            - accuracy
+        val_check_interval: 0.5
+tokenizer:
+    value:
+        _name_: null
+        padding: none
+trainer:
+    value:
+        _target_: lightning.pytorch.Trainer
+        accumulate_grad_batches: 1
+        callbacks: null
+        devices: 1
+        gradient_clip_val: 1
+        limit_train_batches: 1
+        limit_val_batches: 1
+        log_every_n_steps: 1
+        max_epochs: 5
+        num_nodes: 1
+        num_sanity_val_steps: 0
+        precision: 16-mixed
+        val_check_interval: 1
+wandb:
+    value:
+        api_key: 6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66
+        dir: ./wandb/
