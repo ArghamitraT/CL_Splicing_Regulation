@@ -17,6 +17,10 @@ def initialize_globals():
     input_file = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38_rand_seqs.json"
     input_csv = f"/gpfs/commons/home/nkeung/cl_splicing/esm/processed_data/hg38_all_exons.csv"
     output = "/gpfs/commons/home/nkeung/data/embeddings/hg38_exons.pt"      # Updated periodically, a dict that with keys (gene, exon)
+    # Empire AI:
+    # input_file = f"/mnt/home/nlk2136/cl_splicing/esm/processed_data/hg38_rand_seqs.json"
+    # input_csv = f"/mnt/home/nlk2136/cl_splicing/esm/processed_data/hg38_all_exons.csv"
+    # output = "/mnt/home/nlk2136/data/embeddings/hg38_exons.pt"     # Updated periodically, a dict that with keys (gene, exon)
 
     if os.path.exists(output):
         processed = torch.load(output)
