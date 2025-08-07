@@ -5,4 +5,4 @@ rcps: False
 maxpooling: true
 size: 50
 _name_: ResNet1D
-
+name_or_path: ResNet1D

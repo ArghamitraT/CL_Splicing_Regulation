@@ -10,9 +10,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def find_contrastive_root(start: Path = Path(__file__)) -> Path:
     for parent in start.resolve().parents:
-        if parent.name == "Contrastive_Learning":
+        if parent.name == "CL_Splicing_Regulation":
             return parent
-    raise RuntimeError("Could not find 'Contrastive_Learning' directory.")
+    raise RuntimeError("Could not find 'CL_Splicing_Regulation' directory.")
 
 # Set env var *before* hydra loads config
 # os.environ["CONTRASTIVE_ROOT"] = str(find_contrastive_root())

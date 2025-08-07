@@ -19,9 +19,8 @@ hydra:
     chdir: false
 
 wandb:
-  api_key: "6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66"
   dir: ./wandb/
-  #api_key: ${oc.env:WANDB_API_KEY,""}  # Load API key from environment variable (secure)
+  api_key: ${oc.env:WANDB_API_KEY,""}  # Load API key from environment variable (secure)
 
 
 logger:

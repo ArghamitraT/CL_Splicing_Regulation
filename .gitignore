@@ -1,2 +1,12 @@
 /esm/slurm
 /esm/processed_data
+/figures/
+/ML_model/wandb/
+.env
+/ML_model/scripts/__pycache__/
+*.pyc
+*.pyo
+/ML_model/hydra/
+/ML_model/config.json
+/ML_model/config_tree.txt
+/ML_model/model_config.json
