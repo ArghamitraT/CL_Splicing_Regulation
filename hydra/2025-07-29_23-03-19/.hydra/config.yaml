@@ -1,0 +1,88 @@
+wandb:
+  api_key: 6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66
+  dir: ./wandb/
+logger:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  name: ${embedder._name_}-${dataset.seq_len}-brkpnt
+  id: ${task._name_}-${.name}
+  project: INTRONS_CL
+  group: ${task._name_}
+  save_dir: ${wandb.dir}
+  log_model: true
+  notes: ''
+  settings:
+    init_timeout: 600
+embedder:
+  _name_: MTSplice
+  name_or_path: MTSplice
+  seq_len: 400
+  motif_path: ${oc.env:CONTRASTIVE_ROOT}/data/motifs/cisBP_mouse.meme
+  maxpooling: true
+  stride: 1
+  pad_motif: 4
+  num_of_response: 1
+dataset:
+  seq_len: 199
+  train_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/train_merged_filtered_min30Views.pkl
+  val_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/val_merged_filtered_min30Views.pkl
+  test_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/test_merged_filtered_min30Views.pkl
+  batch_size_per_device: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}  *
+    ${trainer.num_nodes}}}
+  num_workers: ${optimal_workers:}
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: null
+  cache_dir: ../data
+  n_augmentations: 2
+task:
+  _name_: introns_cl
+  metrics:
+  - accuracy
+  val_check_interval: 0.5
+  global_batch_size: 2
+trainer:
+  _target_: lightning.pytorch.Trainer
+  max_epochs: 2
+  callbacks: null
+  devices: 1
+  log_every_n_steps: 1
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  val_check_interval: 0.5
+  gradient_clip_val: 1.0
+  precision: 16-mixed
+  num_sanity_val_steps: 0
+  num_nodes: 1
+  accumulate_grad_batches: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}
+    * ${dataset.batch_size_per_device} * ${trainer.num_nodes}}}
+callbacks:
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    dirpath: checkpoints/
+    filename: ${task._name_}/${embedder._name_}/${dataset.seq_len}/best-checkpoint
+    save_top_k: 1
+    save_last: true
+    verbose: true
+    monitor: val_loss
+    mode: min
+  learning_rate_monitor:
+    _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+tokenizer:
+  _target_: src.tokenizers.onehot_tokenizer.FastOneHotPreprocessor
+  seq_len: 200
+  padding: right
+loss:
+  _target_: src.loss.supcon.SupConLoss
+  temperature: 0.5
+model:
+  name_or_path: simclr
+  hidden_dim: 512
+  projection_dim: 128
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.01
+  weight_decay: 0.0
+  betas:
+  - 0.9
+  - 0.999

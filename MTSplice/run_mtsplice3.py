@@ -4,47 +4,84 @@ import pandas as pd
 import pickle
 
 
-def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
-                             tissue_acceptor_intron, tissue_acceptor_exon,
-                             tissue_donor_exon, tissue_donor_intron):
-    # Acceptors: region around exon start (3' splice site)
-    acceptor_intron = len_3p  # region before the exon (3' intron)
-    # Donor: region around exon end (5' splice site)
-    donor_intron = len_5p     # region after the exon (5' intron)
+# def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
+#                              tissue_acceptor_intron, tissue_acceptor_exon,
+#                              tissue_donor_exon, tissue_donor_intron):
+#     # Acceptors: region around exon start (3' splice site)
+#     acceptor_intron = len_3p  # region before the exon (3' intron)
+#     # Donor: region around exon end (5' splice site)
+#     donor_intron = len_5p     # region after the exon (5' intron)
 
-    # Get acceptor window
-    acceptor_start = len_5p + 0 - tissue_acceptor_intron
-    acceptor_end = len_5p + tissue_acceptor_exon
+#     # Get acceptor window
+#     acceptor_start = len_5p + 0 - tissue_acceptor_intron
+#     acceptor_end = len_5p + tissue_acceptor_exon
 
-    # Pad acceptor if needed
-    seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
-    if acceptor_start < 0:
-        seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
-    if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
-        seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
+#     # Pad acceptor if needed
+#     seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
+#     if acceptor_start < 0:
+#         seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
+#     if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
+#         seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
 
-    # Get donor window
-    donor_end = len_5p + len_exon + tissue_donor_intron
-    donor_start = len_5p + len_exon - tissue_donor_exon
+#     # Get donor window
+#     donor_end = len_5p + len_exon + tissue_donor_intron
+#     donor_start = len_5p + len_exon - tissue_donor_exon
 
-    seq_donor = full_seq[donor_start:donor_end]
-    if donor_end > len(full_seq):
-        seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
-    if donor_start < 0:
-        seq_donor = "N" * abs(donor_start) + seq_donor
-    if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
-        seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
+#     seq_donor = full_seq[donor_start:donor_end]
+#     if donor_end > len(full_seq):
+#         seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
+#     if donor_start < 0:
+#         seq_donor = "N" * abs(donor_start) + seq_donor
+#     if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
+#         seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
 
-    return {
-        'acceptor': seq_acceptor,
-        'donor': seq_donor
-    }
+#     return {
+#         'acceptor': seq_acceptor,
+#         'donor': seq_donor
+#     }
 
+
+def get_windows_with_padding(seq, overhang, tissue_acceptor_intron=300, tissue_acceptor_exon=100,
+                             tissue_donor_exon=100, tissue_donor_intron=300):
+            """
+            Split seq for tissue specific predictions
+            Args:
+            seq: seqeunce to split
+            overhang: (intron_length acceptor side, intron_length donor side) of
+                        the input sequence
+            """
+
+            (acceptor_intron, donor_intron) = overhang
+
+            assert acceptor_intron <= len(seq), "Input sequence acceptor intron" \
+                " length cannot be longer than the input sequence"
+            assert donor_intron <= len(seq), "Input sequence donor intron length" \
+                " cannot be longer than the input sequence"
+
+            # need to pad N if seq not enough long
+            diff_acceptor = acceptor_intron - tissue_acceptor_intron
+            if diff_acceptor < 0:
+                seq = "N" * abs(diff_acceptor) + seq
+            elif diff_acceptor > 0:
+                seq = seq[diff_acceptor:]
+
+            diff_donor = donor_intron - tissue_donor_intron
+            if diff_donor < 0:
+                seq = seq + "N" * abs(diff_donor)
+            elif diff_donor > 0:
+                seq = seq[:-diff_donor]
+
+            return {
+                'acceptor': seq[:tissue_acceptor_intron
+                                + tissue_acceptor_exon],
+                'donor': seq[-tissue_donor_exon
+                            - tissue_donor_intron:]
+            }
 
 
 # Retina index
-retina_index = [0]
-file = '/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl'
+split_name = "variable"
+file = f'/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_{split_name}_Retina___Eye_psi_MERGED.pkl'
 # Replace with your actual file path
 with open(file, "rb") as f:
     data = pickle.load(f)
@@ -71,11 +108,15 @@ for exon_id, info in data.items():
     len_3p = len(intron_3p)
 
     
+    # out = get_windows_with_padding(
+    #     full_seq, len_5p, len_exon, len_3p,
+    #     tissue_acceptor_intron=300, tissue_acceptor_exon=100,
+    #     tissue_donor_exon=100, tissue_donor_intron=300
+    # )
     out = get_windows_with_padding(
-        full_seq, len_5p, len_exon, len_3p,
-        tissue_acceptor_intron=300, tissue_acceptor_exon=100,
-        tissue_donor_exon=100, tissue_donor_intron=300
-    )
+        full_seq, overhang=(len_3p, len_5p), tissue_acceptor_intron=300, tissue_acceptor_exon=100,
+                             tissue_donor_exon=100, tissue_donor_intron=300)
+    
     acceptor_seqs.append(out['acceptor'])
     donor_seqs.append(out['donor'])
     exon_ids.append(exon_id)  
@@ -91,7 +132,7 @@ from scipy.stats import spearmanr
 
 ########################## psi splicing ##########################
 
-retina_pred = result[:, 10]    # First column = Retina - Eye logit(delta)
+retina_pred = result[:, 0]    # First column = Retina - Eye logit(delta)
 
 # Build predictions DataFrame
 predictions = pd.DataFrame({
@@ -100,7 +141,7 @@ predictions = pd.DataFrame({
 })
 
 
-ground_truth = pd.read_csv("/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons_with_logit_mean_psi.csv")
+ground_truth = pd.read_csv(f"/home/atalukder/Contrastive_Learning/data/ASCOT/{split_name}_cassette_exons_with_logit_mean_psi.csv")
 
 tissue = "Retina - Eye"
 
@@ -130,7 +171,7 @@ print(df.head())
 
 ########################## differential psi splicing ##########################
 
-ground_truth = pd.read_csv("/home/atalukder/Contrastive_Learning/data/ASCOT/variable_cassette_exons_with_logit_mean_psi.csv")
+ground_truth = pd.read_csv(f"/home/atalukder/Contrastive_Learning/data/ASCOT/{split_name}_cassette_exons_with_logit_mean_psi.csv")
 
 tissue = "Retina - Eye"
 

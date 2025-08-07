@@ -36,7 +36,7 @@ import pickle
 # # with open(pickle_file_path, 'rb') as f:
 # #     msa_results_list_TOKEN = pickle.load(f)
 
-pickle_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data_unfiltered/test_ExonSeq.pkl'
+pickle_file_path = '/mnt/home/at3836/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/train_3primeIntron_filtered_min30views.pkl'
 # pickle_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/test_5primeIntron_filtered.pkl'
 with open(pickle_file_path, 'rb') as f:
     msa_results_list_unTOKEN = pickle.load(f)
