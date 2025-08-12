@@ -9,12 +9,12 @@ trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
 def create_job_dir(dir="", fold_name = ""):
     if dir:
         job_path = os.path.join(dir, fold_name)
-        os.mkdir(job_path)
+        os.makedirs(job_path, exist_ok=True)
 
     else:
         job_path = os.path.join(os.getcwd(), fold_name)
         if not os.path.exists(job_path):
-            os.mkdir(job_path)
+            os.makedirs(job_path, exist_ok=True)
 
     return job_path
 
@@ -78,9 +78,9 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     f"#SBATCH --time={hour}:45:00              #Set the wall clock limit \n" + \
     f"#SBATCH --mem={memory}G              \n" + \
     f"#SBATCH --cpus-per-task={nthred}                   \n" + \
-    "#SBATCH --mail-type=END,FAIL    \n" + \
+    "#SBATCH --mail-type=BEGIN,END,FAIL    \n" + \
     f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
+    "#SBATCH --mail-user=${SLURM_MAIL_USER}                    \n" + \
     f"{prg_file_path}"
 
     with open (slurm_file_path, "w") as f:
@@ -97,10 +97,10 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 
 server_name = 'NYGC'
-server_path = '/gpfs/commons/home/atalukder/'
+server_path = '/gpfs/commons/home/nkeung/'
 main_data_dir = server_path+"Contrastive_Learning/files/results"
 job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
-code_dir = server_path+"Contrastive_Learning/code/ML_model"
+code_dir = server_path+"CL_Splicing_Regulation/ML_model"
 
 
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)
@@ -113,10 +113,10 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon2augOne'
+slurm_file_name = 'Test-CLSupcon2augOne'
 loss_name = "supcon"
 gpu_num = 1
-hour=4
+hour=1
 memory=100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
@@ -124,7 +124,7 @@ val_check_interval = 0.5
 global_batch_size = 8192
 embedder="resnet"
 tokenizer="custom_tokenizer"
-max_epochs = 30
+max_epochs = 2
 maxpooling = True
 optimizer = "sgd"
 TRAIN_FILE="train_3primeIntron_filtered.pkl"
@@ -134,15 +134,15 @@ TEST_FILE="test_3primeIntron_filtered.pkl"
 # VAL_FILE="val_ExonSeq_filtered.pkl"
 # TEST_FILE="test_ExonSeq_filtered.pkl"
 readme_comment = (
-    "supcon, 2 augmentation trial, one mode, 3p intron"
+    "Test Run: SupCon, 2 augmentation trial, one mode, 3p intron"
 )
-wandb_logger_NOTES="supcon one mode two aug" ## do NOT use any special character or new line
+wandb_logger_NOTES="test run SupCon one mode two aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
-train_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
-val_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
-test_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
+train_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
+val_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
+test_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
 
 
 name = slurm_file_name

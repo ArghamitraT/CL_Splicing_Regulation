@@ -8,7 +8,7 @@ MAIN_DIR="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intr
 
 
 # === Just specify file names ===
-TRAIN_FILE="train_3primeIntron_filtered.pkl"
+TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 VAL_FILE="val_3primeIntron_filtered.pkl"
 TEST_FILE="test_3primeIntron_filtered.pkl"
 

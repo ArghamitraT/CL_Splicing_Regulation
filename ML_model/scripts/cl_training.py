@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def find_contrastive_root(start: Path = Path(__file__)) -> Path:
     for parent in start.resolve().parents:
-        if parent.name == "CL_Splicing_Regulation":
+        if parent.name == "Contrastive_Learning":
             return parent
     raise RuntimeError("Could not find 'CL_Splicing_Regulation' directory.")
 
