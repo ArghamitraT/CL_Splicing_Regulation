@@ -23,7 +23,11 @@ export TEST_DATA_FILE="${MAIN_DIR}/${TEST_FILE}"
 
 # export CUDA_VISIBLE_DEVICES=1
 
+<<<<<<< HEAD
 NOTES="empire ai terminal test run"
+=======
+NOTES="termianl test run"
+>>>>>>> f079f4b (Modify script for run on NYGC)
 
 python -m scripts.cl_training \
         task=introns_cl \
