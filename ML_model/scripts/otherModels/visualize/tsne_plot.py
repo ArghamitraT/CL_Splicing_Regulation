@@ -1,4 +1,4 @@
-# import torch
+import torch
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import seaborn as sns
@@ -9,7 +9,8 @@ def plot_2view_tsne(encoder, view0, view1, save_path):
         z0 = encoder.embed(view0)
         z1 = encoder.embed(view1)
 
-    embeddings = torch.cat([z0, z1], dim=0).cpu().numpy()
+    print(z0['human'].shape)
+    embeddings = torch.cat([z0['human'], z1['human']], dim=0).cpu().numpy()
     emb_2d = TSNE(n_components=2, perplexity=30).fit_transform(embeddings)
 
     z0_2d, z1_2d = emb_2d[:len(z0)], emb_2d[len(z0):]
@@ -24,4 +25,5 @@ def plot_2view_tsne(encoder, view0, view1, save_path):
     plt.title("t-SNE: Anchor-Positive Pairs")
     plt.tight_layout()
     plt.savefig(save_path)
+    print(f"Saving t-SNE plot to {save_path}")
     plt.close()

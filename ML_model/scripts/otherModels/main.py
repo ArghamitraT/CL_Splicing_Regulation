@@ -1,7 +1,7 @@
 
-# from visualize.tsne_plot import plot_2view_tsne, plot_2view_tsne_numpy
+from visualize.tsne_plot import plot_2view_tsne
 
-embedder_name = "borzoi"  # or "enformer"
+embedder_name = "enformer"  # or "enformer"
 
 if embedder_name == "borzoi":
     from embedder.borzoi_embedder import BorzoiEmbedder
