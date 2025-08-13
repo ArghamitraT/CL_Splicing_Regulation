@@ -10,3 +10,4 @@
 /ML_model/config.json
 /ML_model/config_tree.txt
 /ML_model/model_config.json
+checkpoints/
