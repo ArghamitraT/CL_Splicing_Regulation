@@ -100,7 +100,7 @@ server_name = 'NYGC'
 server_path = '/gpfs/commons/home/nkeung/'
 main_data_dir = server_path+"Contrastive_Learning/files/results"
 job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
-code_dir = server_path+"CL_Splicing_Regulation/ML_model"
+code_dir = server_path+"Contrastive_Learning/code/ML_model"
 
 
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)

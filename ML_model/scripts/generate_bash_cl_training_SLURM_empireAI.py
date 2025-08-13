@@ -103,7 +103,7 @@ server_name = 'EMPRAI'
 server_path = '/mnt/home/nlk2136/'
 main_data_dir = server_path+"Contrastive_Learning/files/results"
 job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
-code_dir = server_path+"CL_Splicing_Regulation/ML_model"
+code_dir = server_path+"Contrastive_Learning/code/ML_model"
 
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)
 data_dir   = create_job_dir(dir= data_dir_0, fold_name= "files")
@@ -115,7 +115,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'Test-EmpireAI-CLSupcon2augAll_mtsplice'
+slurm_file_name = 'Test-EmpireAI-CLSupcon2augOne'
 gpu_num = 1
 hour = 1
 memory = 100 # GB
@@ -123,8 +123,8 @@ nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
 global_batch_size = 8196
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
+embedder = "resnet"
+tokenizer = "custom_tokenizer"
 loss_name = "supcon"
 max_epochs = 2
 n_augmentations = 2
@@ -140,9 +140,9 @@ VAL_FILE="val_merged_filtered_min30Views.pkl"
 TEST_FILE="test_merged_filtered_min30Views.pkl"
 
 readme_comment = (
-     "Test Run: supcon, 2 augmentation trial, All mode, 3p intron, mtsplice, lastlayer 64"
+     "Test Run: supcon, 2 augmentation trial, One mode, 3p intron, resnet, lastlayer 64"
 )
-wandb_logger_NOTES="test run empireai supcon mtsplice one o one 2 aug last layer 64" ## do NOT use any special character or new line
+wandb_logger_NOTES="test run empireai supcon resnet one 2 aug last layer 64" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
