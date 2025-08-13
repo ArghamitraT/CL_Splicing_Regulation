@@ -3,12 +3,12 @@
 
 # === Set main data directory once ===
 
-MAIN_DIR="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
-# MAIN_DIR="/mnt/home/at3836/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
+# MAIN_DIR="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
+MAIN_DIR="/mnt/home/nlk2136/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
 
 
 # === Just specify file names ===
-TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
+TRAIN_FILE="train_3primeIntron_filtered.pkl"
 VAL_FILE="val_3primeIntron_filtered.pkl"
 TEST_FILE="test_3primeIntron_filtered.pkl"
 
@@ -23,7 +23,7 @@ export TEST_DATA_FILE="${MAIN_DIR}/${TEST_FILE}"
 
 # export CUDA_VISIBLE_DEVICES=1
 
-NOTES="first test run"
+NOTES="empire ai terminal test run"
 
 python -m scripts.cl_training \
         task=introns_cl \
