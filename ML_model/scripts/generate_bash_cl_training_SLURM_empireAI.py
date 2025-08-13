@@ -83,7 +83,7 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     f"#SBATCH --cpus-per-task={nthred}                   \n" + \
     "#SBATCH --mail-type=BEGIN,END,FAIL    \n" + \
     f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=${SLURM_MAIL_USER}                    \n" + \
+    "#SBATCH --mail-user=nkeung@nygenome.org                    \n" + \
     f"{prg_file_path}"
 
     with open (slurm_file_path, "w") as f:

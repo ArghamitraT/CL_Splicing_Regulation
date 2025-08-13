@@ -86,7 +86,7 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     f"#SBATCH --cpus-per-task={nthred}                   \n" + \
     "#SBATCH --mail-type=END,FAIL    \n" + \
     f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=at3836@columbia.edu                    \n" + \
+    "#SBATCH --mail-user=nkeung@nygenome.org                    \n" + \
     f"{prg_file_path}"
 
     with open (slurm_file_path, "w") as f:
@@ -103,7 +103,7 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 
 server_name = 'EMPRAI'
-server_path = '/mnt/home/at3836/'
+server_path = '/mnt/home/nlk2136/'
 main_data_dir = server_path+"Contrastive_Learning/files/results"
 job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
 code_dir = server_path+"Contrastive_Learning/code/ML_model"

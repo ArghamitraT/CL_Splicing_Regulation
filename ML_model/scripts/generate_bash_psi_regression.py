@@ -109,7 +109,7 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     f"#SBATCH --cpus-per-task={nthred}                   \n" + \
     "#SBATCH --mail-type=END,FAIL    \n" + \
     f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
+    "#SBATCH --mail-user=nkeung@nygenome.org                    \n" + \
     f"{prg_file_path}"
 
     with open (slurm_file_path, "w") as f:
@@ -126,9 +126,9 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 
 
-main_data_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/results"
-job_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/cluster_job_submission_files"
-code_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model"
+main_data_dir = "/gpfs/commons/home/nkeung/Contrastive_Learning/files/results"
+job_path = "/gpfs/commons/home/nkeung/Contrastive_Learning/files/cluster_job_submission_files"
+code_dir = "/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model"
 
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)
 data_dir   = create_job_dir(dir= data_dir_0, fold_name= "files")
