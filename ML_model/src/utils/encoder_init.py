@@ -3,12 +3,13 @@ from hydra.utils import instantiate
 from src.model.simclr import get_simclr_model
 # from src.model import psi_regression
 from src.model import psi_regression, psi_regression_bothIntronExon
-from src.model import MTSpliceBCE
+from src.model import MTSpliceBCE, MTSpliceWresnet_bothIntronExon
 
-import inspect
-import os
+
 
 ############# DEBUG Message ###############
+import inspect
+import os
 _warned_debug = False  # module-level flag
 def reset_debug_warning():
     global _warned_debug
@@ -24,21 +25,7 @@ def debug_warning(message):
 ############# DEBUG Message ###############
 
 def load_encoder(config, root_path, result_dir):
-    # model = get_simclr_model(config)
-    # encoder = model.encoder
-
-    # if config.aux_models.warm_start:
-    #     ckpt_path = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
-    #     print(f"🔁 Loading encoder checkpoint from: {ckpt_path}")
-        
-    #     ckpt = torch.load(ckpt_path)
-    #     state_dict = ckpt["state_dict"]
-    #     # REMOVE "model." prefix from all keys
-    #     cleaned_state_dict = {k.replace("model.encoder.", ""): v for k, v in state_dict.items()}
-    #     missing, unexpected = encoder.load_state_dict(cleaned_state_dict, strict=False)
-
-    #     print(f"✅ Encoder loaded with {len(missing)} missing and {len(unexpected)} unexpected keys.")
-    # return encoder
+    
     # # Get the SimCLR model using its own configß
     simclr_model = get_simclr_model(config)
 
@@ -78,12 +65,18 @@ def initialize_encoders_and_model(config, root_path):
     elif mode == "intronexon" or mode == "intronOnly":      
         encoder_5p = load_encoder(config, root_path, result_dirs["5p"])
         encoder_3p = load_encoder(config, root_path, result_dirs["3p"])
+        
         if mode == "intronOnly":
             encoder_exon = get_simclr_model(config).encoder  # randomly initialized
         else:
-            # reset_debug_warning()
-            # debug_warning("exon encdr wrmstarted")
             encoder_exon = load_encoder(config, root_path, "exprmnt_2025_06_08__21_34_21")
+        
+        if config.aux_models.mtsplice_BCE:
+            return MTSpliceWresnet_bothIntronExon.PSIRegressionModel(
+                encoder_5p, encoder_3p, encoder_exon, config)
+
+        return psi_regression_bothIntronExon.PSIRegressionModel(
+        encoder_5p, encoder_3p, encoder_exon, config)
     
     elif mode == "mtsplice":
         encoder = load_encoder(config, root_path, result_dirs["mtsplice_weights"])
@@ -96,13 +89,12 @@ def initialize_encoders_and_model(config, root_path):
     else:
         raise ValueError(f"❌ Unsupported aux_models.mode: {mode}")
 
-    # if config.aux_models.freeze_encoder:
-    #         for param in encoder_5p.parameters():
-    #             param.requires_grad = False
-    #         for param in encoder_3p.parameters():
-    #             param.requires_grad = False
-
     
-    return psi_regression_bothIntronExon.PSIRegressionModel(
-        encoder_5p, encoder_3p, encoder_exon, config
-    )
+    
+
+    # reset_debug_warning()
+    # debug_warning("modify the logic to use resnet with mtsplice finetune")
+        
+    # return MTSpliceWresnet_bothIntronExon.PSIRegressionModel(
+    #     encoder_5p, encoder_3p, encoder_exon, config
+    # )

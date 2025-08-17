@@ -9,43 +9,6 @@ from src.datasets.introns_alignment import ContrastiveIntronsDataset
 import time
 
 start = time.time()
-# def make_collate_fn(tokenizer, padding_strategy):
-#     def collate_fn(batch):
-#         from torch.utils.data import get_worker_info
-#         import os
-#         info = get_worker_info()
-#         # print(f"👷 Worker ID: {info.id if info else 'MAIN'}, PID: {os.getpid()}")
-
-#         batch = [item for item in batch if item is not None]
-#         if len(batch) == 0:
-#             raise ValueError("All items in batch were None")
-
-#         view1_sequences = [item[0] for item in batch]
-#         view2_sequences = [item[1] for item in batch]
-#         exon_ids = [item[2] for item in batch]
-        
-#         token_start = time.time()
-#         if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):  # 
-#             view1 = tokenizer(view1_sequences)
-#             view2 = tokenizer(view2_sequences)
-#             output = view1, view2
-#         elif callable(tokenizer):  # HuggingFace-style
-#             view1 = tokenizer(view1_sequences, return_tensors='pt', padding=padding_strategy).input_ids
-#             view2 = tokenizer(view2_sequences, return_tensors='pt', padding=padding_strategy).input_ids
-#             output = view1, view2, exon_ids
-#         else:
-#             output = view1_sequences, view2_sequences
-#         # print(f"👷 Worker {info.id if info else 'MAIN'}: Collate time = {time.time() - start:.2f}s")
-#         # token_time = time.time() - token_start
-#         # total_time = time.time() - start
-#         # print(f"🧬 Tokenization took {token_time:.4f}s | 👷 Collate total time: {total_time:.4f}s")
-
-#         return output
-
-
-#     return collate_fn
-
-
 
 def make_collate_fn(tokenizer, padding_strategy, embedder_name):
     def collate_fn(batch):
@@ -121,6 +84,7 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         self.padding_strategy = config.tokenizer.padding
         self.embedder = config.embedder
         self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder.name_or_path)
+        self.fixed_species = config.dataset.fixed_species
 
     def prepare_data(self):
         # Data preparation steps if needed, such as data checks or downloads.
@@ -131,19 +95,22 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         self.train_set = ContrastiveIntronsDataset(
             data_file=self.train_file,
             n_augmentations=self.n_augmentations,
-            embedder=self.embedder
+            embedder=self.embedder,
+            fixed_species=self.fixed_species
         )
 
         self.val_set = ContrastiveIntronsDataset(
             data_file=self.val_file,
             n_augmentations=self.n_augmentations,
-            embedder=self.embedder
-            )
+            embedder=self.embedder,
+            fixed_species=self.fixed_species
+        )
 
         self.test_set = ContrastiveIntronsDataset(
             data_file=self.test_file,
             n_augmentations=self.n_augmentations,
-            embedder=self.embedder
+            embedder=self.embedder,
+            fixed_species=self.fixed_species
              )
     
         

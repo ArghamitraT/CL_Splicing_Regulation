@@ -86,16 +86,7 @@ class MTSpliceBCE(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        # x, y, _ = batch
-        # # y_pred = self(x)
-        # y_pred = self(x).squeeze()
-
-        # loss = self.loss_fn(y_pred, y)
-
-        # self.log("val_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
-        # for metric_fn in self.metric_fns:
-        #     self.log(f"val_{metric_fn.__class__.__name__}", metric_fn(y_pred, y), on_epoch=True, prog_bar=True, sync_dist=True)
-        # return loss
+        
         x, y, exon_ids = batch
         y_pred = self(x).squeeze()
         
@@ -112,14 +103,6 @@ class MTSpliceBCE(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        # x, y, exon_ids = batch
-        # y_pred = self(x).squeeze()
-        # loss = self.loss_fn(y_pred, y)
-
-        # for metric_fn in self.metric_fns:
-        #     self.log(f"test_{metric_fn.__class__.__name__}", metric_fn(y_pred, y), on_epoch=True, prog_bar=True, sync_dist=True)
-
-        # self.log("test_loss", loss, on_epoch=True, prog_bar=True, sync_dist=True)
         x, y, exon_ids = batch
         y_pred = self(x).squeeze()
         

@@ -1,8 +1,30 @@
+import inspect
+import os
 import torch
 import torch.nn as nn
 from src.embedder.base import BaseEmbedder # Assuming this exists
 from src.embedder.mtsplice.splinetransformer import SplineWeight1D  # Assuming this is the correct import path
 
+
+############# DEBUG Message ###############
+import inspect
+import os
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
+
+
+        
 class ResidualBlock(nn.Module):
     def __init__(self, channels):
         super().__init__()
@@ -48,6 +70,7 @@ class MTSpliceBranch(nn.Module):
 
 
 class MTSpliceEncoder(BaseEmbedder):
+    # (AT) seq_len=400 in the origianal paper but becaus we are trying with intron only so 200
     def __init__(self, seq_len=400, in_channels=4, hidden_dim=64, embed_dim=32, out_dim=56, dropout=0.5, spline_kwargs={}, **kwargs):
         super().__init__(name_or_path="MTSplice", bp_per_token=kwargs.get('bp_per_token', None))
 

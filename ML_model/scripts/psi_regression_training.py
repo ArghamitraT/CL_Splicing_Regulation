@@ -80,7 +80,20 @@ def main(config: OmegaConf):
     data_module = PSIRegressionDataModule(config)
     data_module.prepare_data()
     data_module.setup()
-    print()
+
+    # EVAL-ONLY: load checkpoint and run test
+    mode = str(getattr(config.aux_models, "train_mode", "train")).lower()
+    ckpt_path = getattr(config.aux_models, "eval_weights", None)
+    if mode == "eval":
+        
+        config.aux_models.warm_start = False
+        model = initialize_encoders_and_model(config, root_path)
+        print(f"[Eval] Loading checkpoint: {ckpt_path}")
+        ckpt_path = f"{root_path}/files/results/{ckpt_path}/weights/checkpoints/{config.task._name_}/{config.embedder._name_}/201/best-checkpoint.ckpt"
+        trainer = create_trainer(config)   
+        trainer.test(model=model, ckpt_path=ckpt_path, datamodule=data_module)
+        return
+
 
     model = initialize_encoders_and_model(config, root_path)
 

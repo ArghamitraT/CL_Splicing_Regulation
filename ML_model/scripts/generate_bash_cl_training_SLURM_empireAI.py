@@ -39,11 +39,13 @@ def create_prg_file(prg_file_path):
             trainer.max_epochs={max_epochs}\\
             tokenizer={tokenizer} \\
             tokenizer.seq_len={tokenizer_seq_len} \\
+            embedder.seq_len={tokenizer_seq_len}\
             embedder={embedder} \\
             loss={loss_name} \\
             embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
             dataset.n_augmentations={n_augmentations} \\
+            dataset.fixed_species={fixed_species} \\
             dataset.train_data_file={train_file} \\
             dataset.val_data_file={val_file} \\
             dataset.test_data_file={test_file} \\
@@ -115,19 +117,20 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon2augAll_mtsplice'
+slurm_file_name = 'CLSupcon10fixedSpecies'
 gpu_num = 1
 hour = 3
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
-global_batch_size = 8196
+global_batch_size = 2048
 embedder = "mtsplice"
 tokenizer = "onehot_tokenizer"
 loss_name = "supcon"
-max_epochs = 40
-n_augmentations = 2
+max_epochs = 20
+n_augmentations = 10
+fixed_species = True
 maxpooling = True
 optimizer = "sgd"
 tokenizer_seq_len = 400
@@ -140,9 +143,9 @@ VAL_FILE="val_merged_filtered_min30Views.pkl"
 TEST_FILE="test_merged_filtered_min30Views.pkl"
 
 readme_comment = (
-     "supcon, 2 augmentation trial, All mode, 3p intron, mtsplice, lastlayer 64"
+     "supcon, 10 aug, fixed species"
 )
-wandb_logger_NOTES="supcon mtsplice one o one 2 aug last layer 64" ## do NOT use any special character or new line
+wandb_logger_NOTES="supcon mtsplice 10 aug fixed species" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

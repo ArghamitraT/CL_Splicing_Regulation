@@ -5,23 +5,26 @@ import random
 import pickle
 from torch.utils.data import Dataset
 
+
+############# DEBUG Message ###############
 import inspect
 import os
-
 _warned_debug = False  # module-level flag
-
-def debug_warning():
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
     global _warned_debug
     if not _warned_debug:
         frame = inspect.currentframe().f_back
         filename = os.path.basename(frame.f_code.co_filename)
         lineno = frame.f_lineno
-        # print(f"\033[1;31m⚠️ DEBUG MODE ENABLED in {filename}:{lineno} — Using fixed species views! REMEMBER TO REVERT!\033[0m")
-        print(f"\033[1;31m⚠️ DEBUG MODE ENABLED in {filename}:{lineno} — seed fixed! REMEMBER TO REVERT!\033[0m")
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
         _warned_debug = True
+############# DEBUG Message ###############
 
 class ContrastiveIntronsDataset(Dataset):
-    def __init__(self, data_file, n_augmentations=2, embedder=None):
+    def __init__(self, data_file, n_augmentations=2, embedder=None, fixed_species=0):
         # Load the merged data and exon names
         with open(data_file, 'rb') as file:
             self.data = pickle.load(file)
@@ -33,10 +36,54 @@ class ContrastiveIntronsDataset(Dataset):
         # Fixed lengths for MTSplice windowing
         self.len_5p = 200
         self.len_3p = 200
+
+        # reset_debug_warning()
+        # debug_warning("no exon, so acceptor intron is 400, generally 300.")
         self.tissue_acceptor_intron = 300
-        self.tissue_acceptor_exon = 100
         self.tissue_donor_intron = 300
+        self.tissue_acceptor_exon = 100
         self.tissue_donor_exon = 100
+
+        self.fixed_species = fixed_species
+
+        if fixed_species:
+            # --- NEW: choose a fixed species list once (same order for every sample) ---
+            from collections import Counter
+            from itertools import chain
+
+            # Build per-exon species sets
+            _species_sets = [set(self.data[ex].keys()) for ex in self.exon_names]
+            _common = set.intersection(*_species_sets) if _species_sets else set()
+
+            if isinstance(self.n_augmentations, str) and str(self.n_augmentations).lower() == "all":
+                # fall back to top-K using the most common species overall
+                counts = Counter(chain.from_iterable(self.data[ex].keys() for ex in self.exon_names))
+                self.fixed_species = [s for s, _ in counts.most_common(len(counts))]   # all, ordered by freq
+                self.n_augmentations = len(self.fixed_species)
+            else:
+                if len(_common) >= int(self.n_augmentations):
+                    self.fixed_species = sorted(list(_common))[:int(self.n_augmentations)]
+                    # self.fixed_species = random.sample(list(_common), int(self.n_augmentations))
+                else:
+                    counts = Counter(chain.from_iterable(self.data[ex].keys() for ex in self.exon_names))
+                    self.fixed_species = [s for s, _ in counts.most_common(int(self.n_augmentations))]
+                    # species_sorted = [s for s, _ in counts.most_common()]  # all species by freq
+                    # random.shuffle(species_sorted)                          # randomize once
+                    # self.fixed_species = species_sorted[:int(self.n_augmentations)]
+
+            # Keep only exons that contain all fixed species (uniform views)
+            before = len(self.exon_names)
+            self.exon_names = [ex for ex in self.exon_names
+                            if set(self.fixed_species).issubset(self.data[ex].keys())]
+            self.exon_name_to_id = {name: i for i, name in enumerate(self.exon_names)}
+            
+            # Build a list of indices whose exons have all fixed species
+            self._valid_idx = [i for i, ex in enumerate(self.exon_names)
+                    if set(self.fixed_species).issubset(self.data[ex].keys())]
+            print(f"[Dataset] Fixed species: {self.fixed_species} | kept {len(self._valid_idx)}/{before} exons")
+
+
+            # --- END NEW ---
 
         # Fixed seed
         # debug_warning() 
@@ -80,77 +127,99 @@ class ContrastiveIntronsDataset(Dataset):
                             - self.tissue_donor_intron:]
             }
 
+    def get_windows_with_padding_intronOnly(self, seq, overhang):
+            """
+            Split seq for tissue specific predictions
+            Args:
+            seq: seqeunce to split
+            overhang: (intron_length acceptor side, intron_length donor side) of
+                        the input sequence
+            """
+
+            (acceptor_intron, donor_intron) = overhang
+
+            assert acceptor_intron <= len(seq), "Input sequence acceptor intron" \
+                " length cannot be longer than the input sequence"
+            assert donor_intron <= len(seq), "Input sequence donor intron length" \
+                " cannot be longer than the input sequence"
+
+            # need to pad N if seq not enough long
+            diff_acceptor = acceptor_intron - self.tissue_acceptor_intron
+            if diff_acceptor < 0:
+                seq = "N" * abs(diff_acceptor) + seq
+            elif diff_acceptor > 0:
+                seq = seq[diff_acceptor:]
+
+            diff_donor = donor_intron - self.tissue_donor_intron
+            if diff_donor < 0:
+                seq = seq + "N" * abs(diff_donor)
+            elif diff_donor > 0:
+                seq = seq[:-diff_donor]
+
+            left_intron_len  = self.tissue_acceptor_intron
+            right_intron_len = self.tissue_donor_intron
+
+            # Slice intron-only windows (exclude exon completely)
+            acceptor_window = seq[:left_intron_len]                      # last bases before exon
+            donor_window    = seq[-right_intron_len:]                    # first bases after exon
+
+            return {
+                'acceptor': acceptor_window,
+                'donor': donor_window,
+            }
                         
     
     def __len__(self):
+
+        if self.fixed_species:
+            return len(self._valid_idx)
         return len(self.data)
+        
 
 
     def __getitem__(self, idx):
-
-        # def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
-        #                      tissue_acceptor_intron, tissue_acceptor_exon,
-        #                      tissue_donor_exon, tissue_donor_intron):
-        #     # Acceptors: region around exon start (3' splice site)
-        #     acceptor_intron = len_3p  # region before the exon (3' intron)
-        #     # Donor: region around exon end (5' splice site)
-        #     donor_intron = len_5p     # region after the exon (5' intron)
-           
-        #     """
-        #     self.len_5p = 200
-        # self.len_exon = 100
-        # self.len_3p = 200
-        # self.tissue_acceptor_intron = 300
-        # self.tissue_acceptor_exon = 100
-        # self.tissue_donor_intron = 300
-        # self.tissue_donor_exon = 100
-        #     """
-        #     # Get acceptor window
-        #     acceptor_start = len_5p + 0 - tissue_acceptor_intron
-        #     acceptor_end = len_5p + tissue_acceptor_exon
-
-        #     # Pad acceptor if needed
-        #     seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
-        #     if acceptor_start < 0:
-        #         seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
-        #     if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
-        #         seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
-
-        #     # Get donor window
-        #     donor_end = len_5p + len_exon + tissue_donor_intron
-        #     donor_start = len_5p + len_exon - tissue_donor_exon
-
-        #     seq_donor = full_seq[donor_start:donor_end]
-        #     if donor_end > len(full_seq):
-        #         seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
-        #     if donor_start < 0:
-        #         seq_donor = "N" * abs(donor_start) + seq_donor
-        #     if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
-        #         seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
-
-        #     return {
-        #         'acceptor': seq_acceptor,
-        #         'donor': seq_donor
-        #     }
-        
-        # def split_tissue_seq(self, seq, overhang):
-        
-
     
-        # Get the exon name and id
-        exon_name = self.exon_names[idx]
-        exon_id = self.exon_name_to_id[exon_name]
-        intronic_sequences = self.data[exon_name]
 
-        # Number of available augmentations
-        all_species = list(intronic_sequences.keys())
-        n_available = len(all_species)
-
-        # Decide how many augmentations to sample
-        if self.n_augmentations == "all" or self.n_augmentations > n_available:
-            species_sample = all_species  # take all available
+        # --- FIXED: use the same species for every sample ---
+        if hasattr(self, "fixed_species") and self.fixed_species:
+            real_i = self._valid_idx[idx]
+            exon_name = self.exon_names[real_i]
+            intronic_sequences = self.data[exon_name]
+            exon_id = self.exon_name_to_id[exon_name]
+            species_sample = self.fixed_species
+            # sanity (should never fail if you filtered in __init__)
+            missing = [sp for sp in species_sample if sp not in intronic_sequences]
+            if missing:
+                raise KeyError(f"Exon {exon_name} missing fixed species: {missing}")
         else:
-            species_sample = random.sample(all_species, self.n_augmentations)
+            exon_name = self.exon_names[idx]
+            exon_id = self.exon_name_to_id[exon_name]
+            intronic_sequences = self.data[exon_name]
+            exon_id = self.exon_name_to_id[exon_name]
+            # original fallback behavior
+            all_species = list(intronic_sequences.keys())
+            n_available = len(all_species)
+            if self.n_augmentations == "all" or self.n_augmentations > n_available:
+                species_sample = all_species
+            else:
+                species_sample = random.sample(all_species, self.n_augmentations)
+    # -----------------------------------------------
+        # Number of available augmentations
+        # all_species = list(intronic_sequences.keys())
+        # n_available = len(all_species)
+        # # Decide how many augmentations to sample
+        # if self.n_augmentations == "all" or self.n_augmentations > n_available:
+        #     species_sample = all_species  # take all available
+        # else:
+            
+        #     if self.fixed_species:
+        #         species_sample = self.fixed_species
+        #         missing = [sp for sp in species_sample if sp not in intronic_sequences]
+        #         if missing:
+        #             raise KeyError(f"Exon {exon_name} missing fixed species: {missing}")  # shouldn't happen after filtering
+
+        #     else:
+        #         species_sample = random.sample(all_species, self.n_augmentations)
             # debug_warning() 
             # species_sample = self.random_state.sample(all_species, self.n_augmentations)
 
@@ -170,15 +239,17 @@ class ContrastiveIntronsDataset(Dataset):
             # full_seq = intronic_sequences[sp]
 
             if self.embedder.name_or_path == "MTSplice":
-        
-                # windows = get_windows_with_padding(
-                #     full_seq,
-                #     self.len_5p, len_exon, self.len_3p,
-                #     self.tissue_acceptor_intron, self.tissue_acceptor_exon,
-                #     self.tissue_donor_exon, self.tissue_donor_intron
-                # )
+
+
+                # reset_debug_warning()
+                # debug_warning("get padding intronlyONLY")
+
                 windows = self.get_windows_with_padding(
                     full_seq, overhang = (self.len_3p, self.len_5p))
+                # windows = self.get_windows_with_padding_intronOnly(
+                #     full_seq, overhang = (self.len_3p, self.len_5p))
+                
+
                 # augmentations.append((windows['acceptor'], windows['donor']))
                 augmentations.append({'acceptor': windows['acceptor'], 'donor': windows['donor']})
 

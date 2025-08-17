@@ -1,0 +1,15 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=10
+- trainer.val_check_interval=0.5
+- embedder=resnet
+- tokenizer=custom_tokenizer
+- embedder.maxpooling=true
+- optimizer=sgd
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=false
+- aux_models.warm_start=true
+- aux_models.mtsplice_weights=exprmnt_2025_07_30__13_10_26
+- aux_models.mode=intronOnly
+- aux_models.mtsplice_BCE=1
+- logger.name=Psi_VE_mtspliceBCEResnet__20250811_173859
+- logger.notes=mtspliceBCEresnet variable
