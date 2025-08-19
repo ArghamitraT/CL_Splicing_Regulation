@@ -8,9 +8,9 @@ MAIN_DIR="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intr
 
 
 # === Just specify file names ===
-TRAIN_FILE="train_3primeIntron_filtered.pkl"
-VAL_FILE="val_3primeIntron_filtered.pkl"
-TEST_FILE="test_3primeIntron_filtered.pkl"
+TRAIN_FILE="train_merged_filtered_min30Views.pkl"
+VAL_FILE="val_merged_filtered_min30Views.pkl"
+TEST_FILE="test_merged_filtered_min30Views.pkl"
 
 # TRAIN_FILE="train_ExonSeq_filtered.pkl"
 # VAL_FILE="val_ExonSeq_filtered.pkl"
@@ -23,18 +23,18 @@ export TEST_DATA_FILE="${MAIN_DIR}/${TEST_FILE}"
 
 # export CUDA_VISIBLE_DEVICES=1
 
-NOTES="resnet101 supcon 2 aug sgd"
+NOTES="mtsplice supcon 2 aug sgd"
 
 python -m scripts.cl_training \
         task=introns_cl \
-        embedder="resnet101"\
+        embedder="mtsplice"\
         loss="supcon"\
-        tokenizer="custom_tokenizer"\
+        tokenizer="onehot_tokenizer"\
         task.global_batch_size=2048\
         trainer.max_epochs=2 \
         trainer.val_check_interval=1.0\
         optimizer="sgd" \
-        trainer.devices=3\
+        trainer.devices=1\
         logger.name="resnet101_supcon_sgd_2_$(date +%Y%m%d_%H%M%S)"\
         embedder.maxpooling=True\
         logger.notes="$NOTES"\

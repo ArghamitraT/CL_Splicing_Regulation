@@ -32,7 +32,6 @@ class ContrastiveIntronsDataset(Dataset):
 
         # Fixed lengths for MTSplice windowing
         self.len_5p = 200
-        self.len_exon = 100
         self.len_3p = 200
         self.tissue_acceptor_intron = 300
         self.tissue_acceptor_exon = 100
@@ -45,7 +44,43 @@ class ContrastiveIntronsDataset(Dataset):
         #  # will only print the first time
         # self.random_state = random.Random(self.seed)
 
-        
+    def get_windows_with_padding(self, seq, overhang):
+            """
+            Split seq for tissue specific predictions
+            Args:
+            seq: seqeunce to split
+            overhang: (intron_length acceptor side, intron_length donor side) of
+                        the input sequence
+            """
+
+            (acceptor_intron, donor_intron) = overhang
+
+            assert acceptor_intron <= len(seq), "Input sequence acceptor intron" \
+                " length cannot be longer than the input sequence"
+            assert donor_intron <= len(seq), "Input sequence donor intron length" \
+                " cannot be longer than the input sequence"
+
+            # need to pad N if seq not enough long
+            diff_acceptor = acceptor_intron - self.tissue_acceptor_intron
+            if diff_acceptor < 0:
+                seq = "N" * abs(diff_acceptor) + seq
+            elif diff_acceptor > 0:
+                seq = seq[diff_acceptor:]
+
+            diff_donor = donor_intron - self.tissue_donor_intron
+            if diff_donor < 0:
+                seq = seq + "N" * abs(diff_donor)
+            elif diff_donor > 0:
+                seq = seq[:-diff_donor]
+
+            return {
+                'acceptor': seq[:self.tissue_acceptor_intron
+                                + self.tissue_acceptor_exon],
+                'donor': seq[-self.tissue_donor_exon
+                            - self.tissue_donor_intron:]
+            }
+
+                        
     
     def __len__(self):
         return len(self.data)
@@ -53,41 +88,54 @@ class ContrastiveIntronsDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
-                             tissue_acceptor_intron, tissue_acceptor_exon,
-                             tissue_donor_exon, tissue_donor_intron):
-            # Acceptors: region around exon start (3' splice site)
-            acceptor_intron = len_3p  # region before the exon (3' intron)
-            # Donor: region around exon end (5' splice site)
-            donor_intron = len_5p     # region after the exon (5' intron)
+        # def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
+        #                      tissue_acceptor_intron, tissue_acceptor_exon,
+        #                      tissue_donor_exon, tissue_donor_intron):
+        #     # Acceptors: region around exon start (3' splice site)
+        #     acceptor_intron = len_3p  # region before the exon (3' intron)
+        #     # Donor: region around exon end (5' splice site)
+        #     donor_intron = len_5p     # region after the exon (5' intron)
+           
+        #     """
+        #     self.len_5p = 200
+        # self.len_exon = 100
+        # self.len_3p = 200
+        # self.tissue_acceptor_intron = 300
+        # self.tissue_acceptor_exon = 100
+        # self.tissue_donor_intron = 300
+        # self.tissue_donor_exon = 100
+        #     """
+        #     # Get acceptor window
+        #     acceptor_start = len_5p + 0 - tissue_acceptor_intron
+        #     acceptor_end = len_5p + tissue_acceptor_exon
 
-            # Get acceptor window
-            acceptor_start = len_5p + 0 - tissue_acceptor_intron
-            acceptor_end = len_5p + tissue_acceptor_exon
+        #     # Pad acceptor if needed
+        #     seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
+        #     if acceptor_start < 0:
+        #         seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
+        #     if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
+        #         seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
 
-            # Pad acceptor if needed
-            seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
-            if acceptor_start < 0:
-                seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
-            if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
-                seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
+        #     # Get donor window
+        #     donor_end = len_5p + len_exon + tissue_donor_intron
+        #     donor_start = len_5p + len_exon - tissue_donor_exon
 
-            # Get donor window
-            donor_end = len_5p + len_exon + tissue_donor_intron
-            donor_start = len_5p + len_exon - tissue_donor_exon
+        #     seq_donor = full_seq[donor_start:donor_end]
+        #     if donor_end > len(full_seq):
+        #         seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
+        #     if donor_start < 0:
+        #         seq_donor = "N" * abs(donor_start) + seq_donor
+        #     if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
+        #         seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
 
-            seq_donor = full_seq[donor_start:donor_end]
-            if donor_end > len(full_seq):
-                seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
-            if donor_start < 0:
-                seq_donor = "N" * abs(donor_start) + seq_donor
-            if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
-                seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
+        #     return {
+        #         'acceptor': seq_acceptor,
+        #         'donor': seq_donor
+        #     }
+        
+        # def split_tissue_seq(self, seq, overhang):
+        
 
-            return {
-                'acceptor': seq_acceptor,
-                'donor': seq_donor
-            }
     
         # Get the exon name and id
         exon_name = self.exon_names[idx]
@@ -111,16 +159,26 @@ class ContrastiveIntronsDataset(Dataset):
         augmentations = []
 
         for sp in species_sample:
-            full_seq = intronic_sequences[sp]
+            intron_5p = intronic_sequences[sp]['5p']
+            exon_seq = intronic_sequences[sp]['exon']
+            intron_3p = intronic_sequences[sp]['3p']
+
+            len_exon = len(exon_seq)
+            # full_seq = intron_5p + exon_seq + intron_3p
+            full_seq = intron_5p + exon_seq + intron_3p
+            
+            # full_seq = intronic_sequences[sp]
 
             if self.embedder.name_or_path == "MTSplice":
         
-                windows = get_windows_with_padding(
-                    full_seq,
-                    self.len_5p, self.len_exon, self.len_3p,
-                    self.tissue_acceptor_intron, self.tissue_acceptor_exon,
-                    self.tissue_donor_exon, self.tissue_donor_intron
-                )
+                # windows = get_windows_with_padding(
+                #     full_seq,
+                #     self.len_5p, len_exon, self.len_3p,
+                #     self.tissue_acceptor_intron, self.tissue_acceptor_exon,
+                #     self.tissue_donor_exon, self.tissue_donor_intron
+                # )
+                windows = self.get_windows_with_padding(
+                    full_seq, overhang = (self.len_3p, self.len_5p))
                 # augmentations.append((windows['acceptor'], windows['donor']))
                 augmentations.append({'acceptor': windows['acceptor'], 'donor': windows['donor']})
 
@@ -128,5 +186,4 @@ class ContrastiveIntronsDataset(Dataset):
                 augmentations.append(full_seq)
 
         return augmentations, exon_id
-
 
