@@ -1,25 +1,28 @@
 
 from visualize.tsne_plot import plot_2view_tsne
+import torch
 
-embedder_name = "enformer"  # or "enformer"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+embedder_name = "borzoi"  # or "enformer"
 
 if embedder_name == "borzoi":
-    from embedder.borzoi_embedder import BorzoiEmbedder
-    model_path = "/home/atalukder/Contrastive_Learning/models/borzoi/examples/saved_models/f3c0/train/model0_best.h5"
-    embedder = BorzoiEmbedder(model_path, seq_len=524288)
+    from borzoi_pytorch import Borzoi
+    embedder = Borzoi.from_pretrained('johahi/borzoi-replicate-0')
+    embedder.to(device)
+    embedder.eval()
 
     # 2 dummy sequences
     seqs = ["A" * 200]
-    embeddings = embedder.embed(seqs)
+    view0 = torch.randn(1, 4, 262144).to(device)    # Working lengths: 524288, 262144
+    with torch.no_grad():
+        embeddings = embedder(view0)
 
     print(embeddings.shape)
 
     # plot_2view_tsne_numpy(z0, z1, save_path="tsne_borzoi.png")
 
 elif embedder_name == "enformer":
-    import torch
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     from embedder.enformer_embedder import EnformerEmbedder
     encoder = EnformerEmbedder(device)
 
