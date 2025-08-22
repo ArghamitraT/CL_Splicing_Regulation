@@ -9,12 +9,13 @@ embedder_name = "borzoi"  # or "enformer"
 if embedder_name == "borzoi":
     from borzoi_pytorch import Borzoi
     embedder = Borzoi.from_pretrained('johahi/borzoi-replicate-0')
+    print(embedder.config)
     embedder.to(device)
     embedder.eval()
 
     # 2 dummy sequences
     seqs = ["A" * 200]
-    view0 = torch.randn(1, 4, 262144).to(device)    # Working lengths: 524288, 262144
+    view0 = torch.randn(1, 4, 200).to(device)    # Working lengths: greater than or equal to 196,608
     with torch.no_grad():
         embeddings = embedder(view0)
 

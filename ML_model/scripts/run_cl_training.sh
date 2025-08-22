@@ -23,13 +23,14 @@ export TEST_DATA_FILE="${MAIN_DIR}/${TEST_FILE}"
 
 # export CUDA_VISIBLE_DEVICES=1
 
-NOTES="mtsplice supcon 2 aug sgd"
+NOTES="borzoi test supcon 2 aug sgd"
 
 python -m scripts.cl_training \
         task=introns_cl \
-        embedder="mtsplice"\
+        embedder="borzoi"\
         loss="supcon"\
         tokenizer="onehot_tokenizer"\
+        tokenizer.seq_len=524288\
         task.global_batch_size=2048\
         trainer.max_epochs=2 \
         trainer.val_check_interval=1.0\

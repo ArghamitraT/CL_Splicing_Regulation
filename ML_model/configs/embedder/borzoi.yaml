@@ -1,0 +1,5 @@
+_name_: BorzoiEmbedder
+name_or_path: BorzoiEmbedder
+seq_len: 524288
+bp_per_token: 128
+maxpooling: true
