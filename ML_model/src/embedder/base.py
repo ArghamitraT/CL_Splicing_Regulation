@@ -47,6 +47,11 @@ class BaseEmbedder(nn.Module): #rename to BaseEmbedder
                 # Assume a common image input size if it's a Conv2d layer
                 input_shape = (3, 224, 224)  # RGB image of size 224x224
                 break
+            elif isinstance(module, nn.Conv1d):
+                # Borzoi requires one-hot embedding with padding
+                seq_len = getattr(self, "seq_len", None)
+                input_shape = (4, seq_len)
+                break
             elif isinstance(module, nn.Linear):
                 # Assume a 1D input size for a fully connected layer
                 input_shape = (module.in_features,)
@@ -63,7 +68,11 @@ class BaseEmbedder(nn.Module): #rename to BaseEmbedder
             DEVICE = next(self.backbone.parameters()).device
         else:
             DEVICE = self.backbone.device
-        random_input = torch.randint(low=0, high=2, size=(10, *input_shape)).to(DEVICE)
+        
+        if self.name_or_path in ["BorzoiEmbedder"]:
+            random_input = torch.randint(low=0, high=2, size=(10, *input_shape)).float().to(DEVICE)
+        else:
+            random_input = torch.randint(low=0, high=2, size=(10, *input_shape)).to(DEVICE)
         
         # Pass the tensor through the model with no gradients
         with torch.no_grad():
