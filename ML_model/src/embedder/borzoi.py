@@ -10,5 +10,4 @@ class BorzoiEmbedder(BaseEmbedder):
         self.seq_len = seq_len
     
     def forward(self, input_ids, **kwargs):
-        print(f"Before fwd: {input_ids.shape}")
-        self.backbone(input_ids, **kwargs)
+        return self.backbone(input_ids, **kwargs)
