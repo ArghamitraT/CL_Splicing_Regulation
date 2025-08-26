@@ -102,6 +102,8 @@ def main(config: OmegaConf):
     trainer = create_trainer(config)
     trainer.fit(model, data_module.train_dataloader(), data_module.val_dataloader())
     trainer.test(model, datamodule=data_module)
+
+    print('######END#######')
     
 
 if __name__ == "__main__":

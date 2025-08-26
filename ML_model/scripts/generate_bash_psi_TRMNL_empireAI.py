@@ -51,7 +51,6 @@ def create_prg_file(prg_file_path):
             aux_models.mtsplice_weights={mtsplice_weights} \\
             aux_models.mode={mtsplice_mode} \\
             aux_models.mtsplice_BCE={mtsplice_BCE} \\
-            dataset.test_files.intronexon={test_file} \\
             ++wandb.dir="'{wandb_dir}'"\\
             ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
@@ -108,7 +107,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'psi_trial'
+slurm_file_name = 'Psi_VE_mtspliceBCE_10AugFixedSpecies'
 gpu_num = 1
 hour = 1
 memory = 100 # GB
@@ -119,35 +118,35 @@ global_batch_size = 8196
 embedder = "mtsplice"
 tokenizer = "onehot_tokenizer"
 loss_name = "MTSpliceBCELoss"
-max_epochs = 2
+max_epochs = 10
 maxpooling = True
 optimizer = "sgd"
 tokenizer_seq_len = 400
 learning_rate =  1e-3
 freeze_encoder = False  # Set to false for fine-tuning
 warm_start = True
-mtsplice_weights = "exprmnt_2025_07_30__13_10_26"
-mtsplice_mode = "mtsplice"  
-mtsplice_BCE = 1  # if instead of regression, you
-train_mode = "eval"
+mtsplice_weights = "exprmnt_2025_08_17__01_58_25"
+mtsplice_mode = "mtsplice"  # how the data is taken in
+mtsplice_BCE = 1  # if instead of regression, we use mtsplice loss function (BCE)
+train_mode = "train"
 eval_weights = "exprmnt_2025_08_17__02_17_03"  # Set to the directory of the weights you want to evaluate
+run_num = 2
             
 # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 # VAL_FILE="val_3primeIntron_filtered.pkl"
 # TEST_FILE="test_3primeIntron_filtered.pkl"
 
-TEST_FILE="psi_test_Retina___Eye_psi_MERGED.pkl"
-
 readme_comment = (
-     "psi trial"
+     "psi with augmentation of 10, fixed species"
 )
-wandb_logger_NOTES="psi trial" ## do NOT use any special character or new line
+wandb_logger_NOTES="psi with augmentation of 10 fixed species" ## do NOT use any special character or new line
+
 
 """ Parameters: **CHANGE (AT)** """ 
 
 # train_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
 # val_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
-test_file = server_path+"Contrastive_Learning/data/final_data/ASCOT_finetuning//"+TEST_FILE
+# test_file = server_path+"Contrastive_Learning/data/final_data/ASCOT_finetuning//"+TEST_FILE
 
 
 name = slurm_file_name
@@ -160,11 +159,9 @@ def create_readme():
     readme.close()
 
 
-
-def gen_combination():
+create_readme()
+def gen_combination(i):
     
-    create_readme()
-
     kind = name
     # python_file_path = os.path.join(code_dir, name)
 
@@ -195,7 +192,9 @@ def gen_combination():
                     
 
 def main():
-    gen_combination()
+
+    for i in range(1, run_num+1):
+        gen_combination(i)
 
 if __name__ == "__main__":
     main()

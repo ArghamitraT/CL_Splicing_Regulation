@@ -1,11 +1,11 @@
 defaults:
   - _self_
-  - embedder: mtsplice
+  - embedder: resnet
   - dataset: introns
   - task: introns_cl
   - trainer: default_trainer
   - callbacks: default_callbacks
-  - tokenizer: onehot_tokenizer
+  - tokenizer: custom_tokenizer
   - loss: supcon
   - model: simclr
   - optimizer: adamw

@@ -4,6 +4,7 @@ import torch
 import random
 import pickle
 from torch.utils.data import Dataset
+from omegaconf import OmegaConf
 
 
 ############# DEBUG Message ###############
@@ -32,15 +33,19 @@ class ContrastiveIntronsDataset(Dataset):
         self.exon_name_to_id = {name: i for i, name in enumerate(self.exon_names)}
         self.n_augmentations = n_augmentations   # <-- store as an attribute
         self.embedder = embedder
-
+        self.embedder_name = embedder._name_ 
         # Fixed lengths for MTSplice windowing
         self.len_5p = 200
         self.len_3p = 200
 
         # reset_debug_warning()
         # debug_warning("no exon, so acceptor intron is 400, generally 300.")
+        # reset_debug_warning()
+        # debug_warning("get padding intronlyONLY, line253")
+        
         self.tissue_acceptor_intron = 300
         self.tissue_donor_intron = 300
+        
         self.tissue_acceptor_exon = 100
         self.tissue_donor_exon = 100
 
@@ -225,36 +230,48 @@ class ContrastiveIntronsDataset(Dataset):
 
         # # Retrieve the sequences for the sampled species
         # augmentations = [intronic_sequences[sp] for sp in species_sample]
-        augmentations = []
+        if self.embedder_name == "MTSplice":
+            augmentations = []
+            for sp in species_sample:
+                intron_5p = intronic_sequences[sp]['5p']
+                exon_seq = intronic_sequences[sp]['exon']
+                intron_3p = intronic_sequences[sp]['3p']
 
-        for sp in species_sample:
-            intron_5p = intronic_sequences[sp]['5p']
-            exon_seq = intronic_sequences[sp]['exon']
-            intron_3p = intronic_sequences[sp]['3p']
-
-            len_exon = len(exon_seq)
-            # full_seq = intron_5p + exon_seq + intron_3p
-            full_seq = intron_5p + exon_seq + intron_3p
-            
-            # full_seq = intronic_sequences[sp]
-
-            if self.embedder.name_or_path == "MTSplice":
-
-
-                # reset_debug_warning()
-                # debug_warning("get padding intronlyONLY")
-
-                windows = self.get_windows_with_padding(
-                    full_seq, overhang = (self.len_3p, self.len_5p))
-                # windows = self.get_windows_with_padding_intronOnly(
-                #     full_seq, overhang = (self.len_3p, self.len_5p))
+                len_exon = len(exon_seq)
+                # full_seq = intron_5p + exon_seq + intron_3p
+                full_seq = intron_5p + exon_seq + intron_3p
                 
+                # full_seq = intronic_sequences[sp]
 
-                # augmentations.append((windows['acceptor'], windows['donor']))
-                augmentations.append({'acceptor': windows['acceptor'], 'donor': windows['donor']})
+                if self.embedder.name_or_path == "MTSplice":
 
-            else:
-                augmentations.append(full_seq)
+
+                    # reset_debug_warning()
+                    # debug_warning("get padding intronlyONLY")
+
+                    windows = self.get_windows_with_padding(
+                        full_seq, overhang = (self.len_3p, self.len_5p))
+                    # windows = self.get_windows_with_padding_intronOnly(
+                    #     full_seq, overhang = (self.len_3p, self.len_5p))
+                    
+
+                    # augmentations.append((windows['acceptor'], windows['donor']))
+                    augmentations.append({'acceptor': windows['acceptor'], 'donor': windows['donor']})
+
+                else:
+                    augmentations.append(full_seq)
+        else:
+            exon_name = self.exon_names[idx]
+            exon_id = self.exon_name_to_id[exon_name]
+            intronic_sequences = self.data[exon_name]
+
+            # Number of available augmentations
+            all_species = list(intronic_sequences.keys())
+            n_available = len(all_species)
+
+            # Retrieve the sequences for the sampled species
+            augmentations = [intronic_sequences[sp] for sp in species_sample]
+
 
         return augmentations, exon_id
 

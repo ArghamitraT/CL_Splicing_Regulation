@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, random_split
 # from src.datasets.base import NucleotideSequencePairDataset
 from src.datasets.introns_alignment import ContrastiveIntronsDataset
 import time
+from omegaconf import OmegaConf
 
 start = time.time()
 
@@ -83,7 +84,13 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         self.tokenizer = hydra.utils.instantiate(config.tokenizer)
         self.padding_strategy = config.tokenizer.padding
         self.embedder = config.embedder
-        self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder.name_or_path)
+        self.embedder_name = (
+            OmegaConf.select(config, "embedder.name_or_path", default=None)
+            or OmegaConf.select(config, "embedder._name_", default=None)
+            or ""
+        )
+        # self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder.name_or_path)
+        self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder_name)
         self.fixed_species = config.dataset.fixed_species
 
     def prepare_data(self):

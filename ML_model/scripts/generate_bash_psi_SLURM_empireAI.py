@@ -23,13 +23,14 @@ def create_job_dir(dir="", fold_name = ""):
 
 ### it calls the .py file
 def create_prg_file(prg_file_path):
-   
-    
+    # NOTE: we will export RUN_IDX in the Slurm script loop.
+    # We suffix logger.name (and optionally hydra.run.dir) with _r$RUN_IDX
     header = f"""#!/bin/bash
     set -e
     cd $HOME
     source ~/.bashrc
     conda activate cl_splicing_regulation3
+    : "${{RUN_IDX:=1}}"   # default to 1 if not set
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.psi_regression_training \\
@@ -51,15 +52,13 @@ def create_prg_file(prg_file_path):
             aux_models.mtsplice_BCE={mtsplice_BCE} \\
             dataset.test_files.intronexon={test_file} \\
             ++wandb.dir="'{wandb_dir}'"\\
-            ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
-            ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
-            ++hydra.run.dir={hydra_dir}\\
+            ++logger.name="'{server_name}{slurm_file_name}{trimester}_r'$RUN_IDX"\\
+            ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}/run_'$RUN_IDX"\\
+            ++hydra.run.dir="{hydra_dir}/run_$RUN_IDX"\\
             ++logger.notes="{wandb_logger_NOTES}"
     """
-    
     with open(prg_file_path, "w") as f:
         f.write(header)
-    
     return prg_file_path
     
     
@@ -74,20 +73,39 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     show_name = '_'.join(job_name.split('_')[1:])
     show_name = f"{slurm_file_name}_{show_name}"
 
-    header = f"#!/bin/bash\n" + \
-    "##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION\n" + \
-    "##NECESSARY JOB SPECIFICATIONS\n" + \
-    f"#SBATCH --job-name={show_name}      #Set the job name to \"JobExample1\"\n" + \
-    "#SBATCH --partition=columbia     \n" + \
-    "#SBATCH --account=columbia     \n" + \
-    f"#SBATCH --gres=gpu:{gpu_num}     \n" + \
-    f"#SBATCH --time={hour}:45:00              #Set the wall clock limit \n" + \
-    f"#SBATCH --mem={memory}G              \n" + \
-    f"#SBATCH --cpus-per-task={nthred}                   \n" + \
-    "#SBATCH --mail-type=END,FAIL    \n" + \
-    f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=at3836@columbia.edu                    \n" + \
-    f"{prg_file_path}"
+    # Single submission; sequential runs inside the same allocation (same node)
+    header = (
+        "#!/bin/bash\n"
+        "##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION\n"
+        "##NECESSARY JOB SPECIFICATIONS\n"
+        f"#SBATCH --job-name={show_name}\n"
+        "#SBATCH --partition=columbia\n"
+        "#SBATCH --account=columbia\n"
+        f"#SBATCH --gres=gpu:{gpu_num}\n"
+        "#SBATCH --nodes=1\n"
+        "#SBATCH --ntasks=1\n"
+        f"#SBATCH --cpus-per-task={nthred}\n"
+        f"#SBATCH --time={hour}:30:00\n"
+        f"#SBATCH --mem={memory}G\n"
+        "#SBATCH --mail-type=END,FAIL\n"
+        f"#SBATCH --output={output_dir}/out_{job_name}.%j      # job-wide stdout/err\n"
+        "#SBATCH --mail-user=at3836@columbia.edu\n"
+        "\n"
+        f"RUNS={run_num}\n"
+        "echo \"SLURM_JOB_ID=$SLURM_JOB_ID\"\n"
+        "for i in $(seq 1 $RUNS); do\n"
+        "  export RUN_IDX=$i\n"
+        f"  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
+        # Option A: just bash the program script (sequential, same allocation)
+        f"  bash {prg_file_path} 2>&1 | tee {output_dir}/out_{job_name}_r${{i}}.${{SLURM_JOB_ID}}.txt\n"
+        "  status=${PIPESTATUS[0]}\n"
+        "  echo \"===== [$(date)] Finished RUN $i/$RUNS with status ${status} =====\"\n"
+        "  if [[ $status -ne 0 ]]; then\n"
+        "    echo \"Run $i failed (status $status). Exiting early.\" >&2\n"
+        "    exit $status\n"
+        "  fi\n"
+        "done\n"
+    )
 
     with open (slurm_file_path, "w") as f:
         f.write(header)
@@ -108,6 +126,7 @@ main_data_dir = server_path+"Contrastive_Learning/files/results"
 job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
 code_dir = server_path+"Contrastive_Learning/code/ML_model"
 
+# Single main experiment folder (shared by all runs in this job)
 data_dir_0   = create_job_dir(dir= main_data_dir, fold_name= "exprmnt"+trimester)
 data_dir   = create_job_dir(dir= data_dir_0, fold_name= "files")
 weight_dir = create_job_dir(dir= data_dir_0, fold_name="weights")
@@ -120,8 +139,8 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 """ Parameters: **CHANGE (AT)** """
 slurm_file_name = 'psi_trial'
 gpu_num = 1
-hour = 1
-memory = 100 # GB
+hour = 0
+memory = 50 # GB
 nthred = 8 # number of CPU
 task = "psi_regression_task" 
 val_check_interval = 1.0
@@ -134,27 +153,19 @@ maxpooling = True
 optimizer = "sgd"
 tokenizer_seq_len = 400
 learning_rate =  1e-3
-freeze_encoder = False  # Set to false for fine-tuning
+freeze_encoder = False
 warm_start = True
 mtsplice_weights = "exprmnt_2025_07_30__13_10_26"
-mtsplice_mode = "mtsplice"  
-mtsplice_BCE = 1  # if instead of regression, you
-            
-# TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
-# VAL_FILE="val_3primeIntron_filtered.pkl"
-# TEST_FILE="test_3primeIntron_filtered.pkl"
+mtsplice_mode = "mtsplice"
+mtsplice_BCE = 1
+run_num = 2   # <<--- number of sequential runs on ONE node
 
 TEST_FILE="psi_test_Retina___Eye_psi_MERGED.pkl"
 
-readme_comment = (
-     "psi trial"
-)
-wandb_logger_NOTES="psi trial" ## do NOT use any special character or new line
-
+readme_comment = "psi trial"
+wandb_logger_NOTES="psi trial"
 """ Parameters: **CHANGE (AT)** """ 
 
-# train_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
-# val_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
 test_file = server_path+"Contrastive_Learning/data/final_data/ASCOT_finetuning//"+TEST_FILE
 
 
@@ -170,30 +181,29 @@ def create_readme():
 
 
 def gen_combination():
-    
     create_readme()
 
     kind = name
-    # python_file_path = os.path.join(code_dir, name)
-
     hash_obj = random.getrandbits(25)
     
     prg_file_path = os.path.join(job_path, get_file_name(kind= f"prg_{kind}_{hash_obj}"))
     slurm_file_path = os.path.join(job_path, get_file_name(kind= f"slurm_{kind}_{hash_obj}"))
     
-    # create_prg_file(python_file_path=python_file_path, prg_file_path=prg_file_path, output_file_path=output_file_path, input_file_names=set, alpha_initial=alpha_val)
+    # Build the program script ONCE (it reads RUN_IDX from env each loop)
     create_prg_file(prg_file_path=prg_file_path) 
     
-    create_slurm_file(prg_file_path=prg_file_path, 
-                    job_name=get_file_name(kind=f"{kind}_{hash_obj}", ext=False), 
-                    slurm_file_path=slurm_file_path)
+    # Create slurm file that loops sequentially on same node
+    create_slurm_file(
+        prg_file_path=prg_file_path, 
+        job_name=get_file_name(kind=f"{kind}_{hash_obj}", ext=False), 
+        slurm_file_path=slurm_file_path
+    )
 
+    # Keep code snapshot in the same main folder
     os.system(f"cp -r {code_dir}/scripts {data_dir}")
     os.system(f"cp -r {code_dir}/configs {data_dir}")
     os.system(f"cp -r {code_dir}/src {data_dir}")
     
-    #os.system(f"cp {utility_file_path} {data_dir}")
-    # (AT)
     os.system(f"chmod u+x {prg_file_path}")
     os.system(f"chmod u+x {slurm_file_path}")
     os.system(f"sbatch {slurm_file_path}")
