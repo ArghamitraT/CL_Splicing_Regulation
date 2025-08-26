@@ -26,6 +26,12 @@ def create_prg_file(prg_file_path):
     source ~/.bashrc
     conda activate cl_splicing_regulation3
     : "${{RUN_IDX:=1}}"
+    : "${{NEW_WANDB_PROJECT:=0}}"    # 1 => one new W&B project for ALL runs in this job
+    PROJECT_NAME="{server_name}{slurm_file_name}{trimester}"   # no _run_ suffix
+    EXTRA_WANDB_PROJECT=""
+    if [ "$NEW_WANDB_PROJECT" = "1" ]; then
+      EXTRA_WANDB_PROJECT=++logger.project="$PROJECT_NAME"
+    fi
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.psi_regression_training \\
@@ -41,18 +47,24 @@ def create_prg_file(prg_file_path):
             optimizer={optimizer} \\
             optimizer.lr={learning_rate} \\
             aux_models.freeze_encoder={freeze_encoder} \\
+            aux_models.weights_fiveprime={weights_5p} \\
+            aux_models.weights_threeprime={weight_3p} \\
+            aux_models.weights_exon={weight_exon} \\
             aux_models.train_mode={train_mode} \\
             aux_models.eval_weights={eval_weights} \\
             aux_models.warm_start={warm_start} \\
             aux_models.mtsplice_weights={mtsplice_weights} \\
-            aux_models.mode={mtsplice_mode} \\
+            aux_models.mode={mode} \\
             aux_models.mtsplice_BCE={mtsplice_BCE} \\
+            dataset.test_files.intronexon={test_file} \\
             ++wandb.dir="'{wandb_dir}'"\\
+            $EXTRA_WANDB_PROJECT \\
             ++logger.name="'{server_name}{slurm_file_name}{trimester}_run_$RUN_IDX'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}/run_$RUN_IDX'"\\
             ++hydra.run.dir="{hydra_dir}/run_$RUN_IDX"\\
             ++logger.notes="{wandb_logger_NOTES}"
     """
+    # ++logger.project="'{server_name}{slurm_file_name}{trimester}_run_$RUN_IDX'" \\
     with open(prg_file_path, "w") as f:
         f.write(header)
     return prg_file_path
@@ -80,9 +92,8 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
     return file_name
 
 """ Parameters: **CHANGE (AT)** """
-
 running_platform = 'NYGC'
-slurm_file_name = 'Psi_serialTry'
+slurm_file_name = 'Psi_mtspliceIntron'
 gpu_num = 1
 hour = 1
 memory = 100 # GB
@@ -93,21 +104,29 @@ global_batch_size = 8196
 embedder = "mtsplice"
 tokenizer = "onehot_tokenizer"
 loss_name = "MTSpliceBCELoss"
-max_epochs = 3
+max_epochs = 2
 maxpooling = True
 optimizer = "sgd"
 tokenizer_seq_len = 400
 learning_rate =  1e-3
 freeze_encoder = False
 warm_start = True
-mtsplice_weights = "exprmnt_2025_08_16__20_42_52"
-mtsplice_mode = "mtsplice"
+mtsplice_weights = "exprmnt_2025_08_16__22_30_50"
+# weights_5p = "exprmnt_2025_06_01__21_15_08"
+# weight_3p = "exprmnt_2025_06_01__21_16_19"
+# weight_exon = "exprmnt_2025_06_08__21_34_21"
+weights_5p = "exprmnt_2025_08_23__21_20_33"
+weight_3p = "exprmnt_2025_07_08__20_39_38"
+weight_exon = "exprmnt_2025_06_08__21_34_21"
+mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
 mtsplice_BCE = 1
 train_mode = "train"
 eval_weights = "exprmnt_2025_08_17__02_17_03"
 run_num = 2
+TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl"
 readme_comment = "trial"
 wandb_logger_NOTES="trial"
+new_project_wandb = 1 # if you want to create a new project for serial run
 """ Parameters: **CHANGE (AT)** """ 
 
 if running_platform == 'NYGC':
@@ -129,7 +148,7 @@ hydra_dir    = create_job_dir(dir= data_dir, fold_name="hydra")
 checkpoint_dir = create_job_dir(dir= weight_dir, fold_name="checkpoints")
 wandb_dir    = create_job_dir(dir= data_dir, fold_name="wandb")
 
-
+test_file = server_path + "Contrastive_Learning/data/final_data/ASCOT_finetuning//" + TEST_FILE
 name = slurm_file_name
 
 def create_readme():
@@ -159,13 +178,37 @@ def gen_combination(i):
 
     # ★ Run sequentially in the same terminal session with per-run RUN_IDX
     #    and unique stdout per run:
-    os.system(f"RUN_IDX={i} bash {prg_file_path} 2>&1 | tee {output_dir}/out_{job_name}_r{i}.txt")
+    os.system(f"RUN_IDX={i} NEW_WANDB_PROJECT={new_project_wandb} bash {prg_file_path} 2>&1 | tee {output_dir}/out_{job_name}_r{i}.txt")
+
+import time
+
+def _fmt_secs(s: float) -> str:
+    # hh:mm:ss for readability (handles long runs too)
+    h, r = divmod(int(s), 3600)
+    m, s = divmod(r, 60)
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
 
 def main():
+    durations = []
+    t_all = time.perf_counter()
     for i in range(1, run_num + 1):
-        print(f"===== Starting RUN {i}/{run_num} at {time.strftime('%F %T')} =====")
+        wall_start = time.strftime('%F %T')
+        t0 = time.perf_counter()
+
+        print(f"===== Starting RUN {i}/{run_num} at {wall_start} =====")
         gen_combination(i)
-        print(f"===== Finished RUN {i}/{run_num} at {time.strftime('%F %T')} =====")
+
+        dt = time.perf_counter() - t0
+        wall_end = time.strftime('%F %T')
+        print(f"===== Finished RUN {i}/{run_num} at {wall_end} (elapsed { _fmt_secs(dt) }) =====")
+        durations.append(dt)
+
+    total = time.perf_counter() - t_all
+    if durations:
+        mean_dt = sum(durations) / len(durations)
+        med_dt = sorted(durations)[len(durations)//2]
+        print(f"Total time: { _fmt_secs(total) } | mean/run: { _fmt_secs(mean_dt) } | median/run: { _fmt_secs(med_dt) }")
 
 if __name__ == "__main__":
     main()

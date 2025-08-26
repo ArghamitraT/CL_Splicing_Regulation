@@ -49,8 +49,9 @@ def load_encoder(config, root_path, result_dir):
 def initialize_encoders_and_model(config, root_path):
     mode = config.aux_models.mode
     result_dirs = {
-        "5p": config.aux_models["weights_5p"],
-        "3p": config.aux_models["weights_3p"],
+        "5p": config.aux_models["weights_fiveprime"],
+        "3p": config.aux_models["weights_threeprime"],
+        "exon": config.aux_models["weights_exon"],
         "mtsplice_weights": config.aux_models["mtsplice_weights"]
     }
 
@@ -69,8 +70,8 @@ def initialize_encoders_and_model(config, root_path):
         if mode == "intronOnly":
             encoder_exon = get_simclr_model(config).encoder  # randomly initialized
         else:
-            encoder_exon = load_encoder(config, root_path, "exprmnt_2025_06_08__21_34_21")
-        
+            encoder_exon = load_encoder(config, root_path, result_dirs["exon"])
+
         if config.aux_models.mtsplice_BCE:
             return MTSpliceWresnet_bothIntronExon.PSIRegressionModel(
                 encoder_5p, encoder_3p, encoder_exon, config)

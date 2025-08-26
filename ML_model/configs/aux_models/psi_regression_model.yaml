@@ -1,8 +1,9 @@
 name_or_path: psi_regression
 mode: "intronOnly"  # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
 # mode: "3p"  # or "3p", "5p"
-weights_5p: "exprmnt_2025_06_01__21_15_08"
-weights_3p: "exprmnt_2025_06_01__21_16_19"
+weights_fiveprime: "exprmnt_2025_06_01__21_15_08"
+weights_threeprime: "exprmnt_2025_06_01__21_16_19"
+weights_exon: "exprmnt_2025_06_08__21_34_21"
 # 3p_weights: "exprmnt_2025_07_08__20_39_38"
 # 3p_weights: "exprmnt_2025_07_08__20_19_40"
 # 3p_weights: "exprmnt_2025_07_06__23_42_07"

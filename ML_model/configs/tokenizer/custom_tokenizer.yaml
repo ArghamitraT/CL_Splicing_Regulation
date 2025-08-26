@@ -1,4 +1,5 @@
 _target_: src.tokenizers.custom.CustomTokenizer
-model_max_length: 201
+seq_len: 400
+model_max_length: ${.seq_len}
 padding: "longest"
 

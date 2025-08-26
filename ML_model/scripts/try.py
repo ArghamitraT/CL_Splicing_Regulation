@@ -1,5 +1,7 @@
-import torch
-print(torch.cuda.is_available())
-print(torch.cuda.device_count())
-print(torch.version.cuda)
-print(torch.backends.cudnn.version())
+import pickle
+
+path = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl"
+with open(path, "rb") as f:
+    data = pickle.load(f)
+
+print()

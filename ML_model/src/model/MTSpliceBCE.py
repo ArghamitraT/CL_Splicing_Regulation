@@ -9,6 +9,35 @@ from scipy.special import logit
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from pathlib import Path
+
+
+def resolve_out_dir(ckpt_dir_str: str) -> Path:
+    """
+    If the checkpoint dir looks like:
+      .../Contrastive_Learning/files/results/exprmnt_YYYY_MM_DD__HH_MM_SS/weights/checkpoints
+    -> save to:
+      .../Contrastive_Learning/files/output_files
+    Else -> save to the checkpoint dir itself.
+    """
+    ckpt_dir = Path(ckpt_dir_str)
+    s = str(ckpt_dir)
+
+    looks_like_exprmnt = (
+        "/Contrastive_Learning/files/results/exprmnt_" in s
+        and ckpt_dir.name == "checkpoints"
+        and ckpt_dir.parent.name == "weights"
+    )
+    if looks_like_exprmnt:
+        # walk up to the "Contrastive_Learning" anchor, then use files/output_files
+        p = ckpt_dir
+        while p.name != "Contrastive_Learning" and p != p.parent:
+            p = p.parent
+        return p / "files" / "output_files"
+    else:
+        return ckpt_dir
+    
+
 
 class MTSpliceBCE(pl.LightningModule):
     def __init__(self, encoder, config, embed_dim=32, out_dim=56, dropout=0.5):
@@ -83,6 +112,20 @@ class MTSpliceBCE(pl.LightningModule):
             if self.config.aux_models.mtsplice_BCE:
                 break
             self.log(f"train_{metric_fn.__class__.__name__}", metric_fn(y_pred, y), on_epoch=True, prog_bar=True, sync_dist=True)
+
+        # DO NOT ERASE (AT)
+        # --- GPU memory logging every N batches ---
+        if batch_idx % 5 == 0 and torch.cuda.is_available():
+            torch.cuda.synchronize()
+            allocated = torch.cuda.memory_allocated(0) / (1024**3)
+            reserved  = torch.cuda.memory_reserved(0) / (1024**3)
+            peak_alloc = torch.cuda.max_memory_allocated(0) / (1024**3)
+            peak_reserved = torch.cuda.max_memory_reserved(0) / (1024**3)
+            print(f"[Batch {batch_idx}] "
+                f"Allocated: {allocated:.2f} GiB | "
+                f"Reserved: {reserved:.2f} GiB | "
+                f"PeakAlloc: {peak_alloc:.2f} GiB | "
+                f"PeakReserved: {peak_reserved:.2f} GiB")
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -101,6 +144,12 @@ class MTSpliceBCE(pl.LightningModule):
                 break
             self.log(f"val_{metric_fn.__class__.__name__}", metric_fn(y_pred, y), on_epoch=True, prog_bar=True, sync_dist=True)
         return loss
+    
+    
+    def on_test_epoch_start(self):
+        self.test_preds = []
+        self.test_targets = []
+        self.test_exon_ids = []
 
     def test_step(self, batch, batch_idx):
         x, y, exon_ids = batch
@@ -127,114 +176,151 @@ class MTSpliceBCE(pl.LightningModule):
 
         return loss
 
-    def on_test_epoch_start(self):
-        self.test_preds = []
-        self.test_targets = []
-        self.test_exon_ids = []
-
     def on_test_epoch_end(self):
+        from scipy.special import logit, expit
+        from scipy.stats import spearmanr
+        import numpy as np
+        import pandas as pd
+
+        # ---- Where to save
+        out_dir = resolve_out_dir(self.config.callbacks.model_checkpoint.dirpath)
+        out_dir.mkdir(parents=True, exist_ok=True)
 
         if self.config.aux_models.mtsplice_BCE:
+            # ==============================
+            # MTSplice-style: predict Δlogit per tissue, then PSI via expit(Δlogit + logit_mean_psi)
+            # ==============================
+            # Predictions
+            y_pred = torch.cat(self.test_preds, dim=0).cpu().numpy()     # shape: [N, M]
+            exon_ids = list(self.test_exon_ids)                           # length N
+            N, M = y_pred.shape
 
-            from scipy.special import logit, expit
-
-            # === Setup
-            tissue = "Retina - Eye"
-            tissue_index = 0  # position of Retina - Eye in the 56 tissues
-
-            # === Load prediction results
-            # Assume you have:
-            #   result: tensor of shape [N, 56]
-            #   exon_ids: list of length N
-            y_pred = torch.cat(self.test_preds, dim=0).numpy()         # shape: [N, 56]
-            exon_ids = self.test_exon_ids   
-            retina_pred = y_pred[:, tissue_index]  # shape: [N]
-
-            # Build prediction DataFrame
-            predictions = pd.DataFrame({
-                'exon_id': exon_ids,
-                tissue: retina_pred
-            })
+            # Ground truth
             split = self.config.dataset.test_files.intronexon.split('/')[-1].split('_')[1]
-            # === Load ground truth
-            # ground_truth = pd.read_csv(f"/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/{split}_cassette_exons_with_logit_mean_psi.csv")
-            ground_truth = pd.read_csv(f"/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/{split}_cassette_exons_with_logit_mean_psi.csv")
+            gt_path = f"{self.config.loss.csv_dir}/{split}_cassette_exons_with_logit_mean_psi.csv"
+            ground_truth = pd.read_csv(gt_path)
 
-            # === Merge prediction and ground truth
-            df = pd.merge(
-                ground_truth[['exon_id', 'logit_mean_psi', tissue]],
-                predictions[['exon_id', tissue]],
-                on='exon_id',
-                suffixes=('_true', '_logit_delta_pred')
-            )
+            # --- Infer tissue columns from ground truth header ---
+            cols = list(ground_truth.columns)
+            # Tissues appear between 'exon_boundary' and the first of {'chromosome','mean_psi','logit_mean_psi'}
+            start_idx = cols.index('exon_boundary') + 1 if 'exon_boundary' in cols else 0
+            if 'chromosome' in cols:
+                end_idx = cols.index('chromosome')
+            elif 'mean_psi' in cols:
+                end_idx = cols.index('mean_psi')
+            else:
+                end_idx = cols.index('logit_mean_psi')
+            tissue_cols = cols[start_idx:end_idx]
 
-            # === Compute final predicted PSI
-            df['final_predicted_psi'] = expit(df[f'{tissue}_logit_delta_pred'] + df['logit_mean_psi'])
+            # Ensure count matches model outputs
+            # Ensure count matches model outputs
+            if len(tissue_cols) != M:
+                # fall back to matching the first M tissue columns to predictions order
+                tissue_cols = tissue_cols[:M]
+                print(f"[warn] GT tissues ({len(tissue_cols)}) != pred dims ({M}); truncating to first {M} tissues.")
 
-            # === Compute Spearman correlation
-            valid = (df[f'{tissue}_true'] >= 0) & (df[f'{tissue}_true'] <= 100) & (~df[f'{tissue}_true'].isnull())
-            rho_psi, _ = spearmanr(df.loc[valid, f'{tissue}_true'], df.loc[valid, 'final_predicted_psi'])
-            self.log("test_spearman_logit", rho_psi, prog_bar=True, sync_dist=True)
-            print(f"\n🔬 Spearman ρ (PSI): {rho_psi:.4f}")
+            # Keep only the exons we predicted for
+            gt = ground_truth[['exon_id', 'logit_mean_psi'] + tissue_cols].copy()
 
-            # === Save to TSV
-            df.to_csv(
-                f"tsplice_final_predictions_{tissue.replace(' ', '_')}.tsv", sep="\t", index=False
-            )
-            print(df.head())
+            # Align by exon_id: keep predicted Δlogit in *_pred_delta columns
+            pred_delta_cols = [f"{t}_pred_delta" for t in tissue_cols]
+            pred_df = pd.DataFrame(y_pred, columns=pred_delta_cols)
+            pred_df.insert(0, 'exon_id', exon_ids)
 
-            ########################## differential psi splicing ##########################
+            merged = gt.merge(pred_df, on='exon_id')  # no suffix needed; cols are distinct
 
-            # ---- Merge on exon_id ----
-            df = pd.merge(
-                ground_truth[['exon_id', 'logit_mean_psi', tissue]],  # ground truth PSI
-                predictions[['exon_id', tissue]],   # predicted logit(delta)
-                on='exon_id',
-                suffixes=('_true', '_logit_delta_pred')
-            )
+            # Vectorized final PSI prediction for all tissues:
+            # final_psi_pct = 100 * expit(Δlogit_pred + logit_mean_psi)
+            logit_mean = merged['logit_mean_psi'].to_numpy()[:, None]          # (N, 1)
+            pred_delta_mat = merged[pred_delta_cols].to_numpy()                 # (N, M)
+            final_psi_pct = 100.0 * expit(pred_delta_mat + logit_mean)         # (N, M) in %
 
+            # Build predictions table with EXACT tissue column names (PSI in %)
+            pred_psi_df = pd.DataFrame(final_psi_pct, columns=tissue_cols)
+            pred_psi_df.insert(0, 'exon_id', merged['exon_id'].values)
 
-            # 1. Calculate ground-truth logit-delta for each exon
+            # ---- Per-tissue correlations (consistent masks) ----
             eps = 1e-6
-            df['Retina_frac_true'] = np.clip(df[f'{tissue}_true'] / 100, eps, 1 - eps)
-            df['truth_delta_psi'] = logit(df['Retina_frac_true']) - df['logit_mean_psi']
+            rows = []
+            for t in tissue_cols:
+                truth_psi_pct = merged[t]                         # GT PSI in %
+                pred_psi_pct_t = pred_psi_df[t]                   # predicted PSI in %
+                pred_delta_t = merged[f"{t}_pred_delta"]          # predicted Δlogit
 
-            # 2. Prepare valid mask (avoid -1 and NaN in both columns)
-            valid = (
-                (df[f'{tissue}_true'] >= 0) & (df[f'{tissue}_true'] <= 100) & (~df[f'{tissue}_true'].isnull()) &
-                (~df['logit_mean_psi'].isnull()) & (~df[f'{tissue}_logit_delta_pred'].isnull())
-            )
+                # One valid mask for both correlations
+                valid = (
+                    truth_psi_pct.between(0, 100) &
+                    truth_psi_pct.notna() &
+                    merged['logit_mean_psi'].notna() &
+                    pred_delta_t.notna() &
+                    pred_psi_pct_t.notna()
+                )
 
-            # 3. Compute Spearman correlation between truth_delta_psi and predicted logit-delta
-            rho_delta, _ = spearmanr(
-                df.loc[valid, 'truth_delta_psi'],
-                df.loc[valid, f'{tissue}_logit_delta_pred']
-            )
-            self.log("test_spearman_Deltalogit", rho_delta, prog_bar=True, sync_dist=True)
-            print(f"\n🔬 Spearman ρ (logit-delta): {rho_delta:.4f}")
+                # Spearman on PSI (% vs %)
+                if valid.any():
+                    rho_psi, _ = spearmanr(truth_psi_pct.loc[valid], pred_psi_pct_t.loc[valid])
+                else:
+                    rho_psi = np.nan
 
+                # Ground-truth Δlogit and Spearman on Δlogit
+                truth_frac = np.clip(truth_psi_pct / 100.0, eps, 1 - eps)
+                truth_delta = pd.Series(logit(truth_frac) - merged['logit_mean_psi'].to_numpy(), index=merged.index)
+
+                if valid.any():
+                    rho_delta, _ = spearmanr(truth_delta.loc[valid], pred_delta_t.loc[valid])
+                else:
+                    rho_delta = np.nan
+
+                rows.append({
+                    'tissue': t,
+                    'spearman_psi': float(rho_psi) if rho_psi == rho_psi else np.nan,
+                    'spearman_delta': float(rho_delta) if rho_delta == rho_delta else np.nan,
+                    'n_valid_psi': int(valid.sum()),
+                    'n_valid_delta': int(valid.sum()),
+                })
+
+
+            metrics_df = pd.DataFrame(rows).sort_values('tissue').reset_index(drop=True)
+
+            # ---- Print summary to stdout ----
+            print("\n=== Per-tissue Spearman correlations ===")
+            for _, r in metrics_df.iterrows():
+                print(f"{r['tissue']}: PSI={r['spearman_psi']:.4f} | Δlogit={r['spearman_delta']:.4f} "
+                    f"(nψ={r['n_valid_psi']}, nΔ={r['n_valid_delta']})")
+
+            # Optionally, log a macro-average
+            mean_psi = metrics_df['spearman_psi'].mean(skipna=True)
+            mean_delta = metrics_df['spearman_delta'].mean(skipna=True)
+            self.log("test_mean_spearman_psi", mean_psi, prog_bar=True, sync_dist=True)
+            self.log("test_mean_spearman_delta", mean_delta, prog_bar=True, sync_dist=True)
+
+            # ---- Save files ----
+            pred_out_path = out_dir / "tsplice_final_predictions_all_tissues.tsv"
+            pred_psi_df.to_csv(pred_out_path, sep="\t", index=False)
+
+            metrics_out_path = out_dir / "tsplice_spearman_by_tissue.tsv"
+            metrics_df.to_csv(metrics_out_path, sep="\t", index=False)
+
+            print(f"\nSaved predictions to: {pred_out_path}")
+            print(f"Saved per-tissue metrics to: {metrics_out_path}")
+            print(pred_psi_df.head())
 
         else:
+            # ==============================
+            # Simple regression path (no per-tissue outputs)
+            # ==============================
+            y_pred_all = torch.cat(self.test_preds).cpu().numpy()
+            y_true_all = torch.cat(self.test_targets).cpu().numpy()
 
-            y_pred_all = torch.cat(self.test_preds).numpy()
-            y_true_all = torch.cat(self.test_targets).numpy()
-
-            # rho, _ = spearmanr(y_true_all, y_pred_all)
-            # self.log("test_spearman", rho, prog_bar=True, sync_dist=True)
-            # print(f"\n🔬 Spearman ρ (test set): {rho:.4f}")
-
-            # Apply logit transformation with clamping to avoid log(0)
             eps = 1e-6
-            y_true_logit = logit(np.clip(y_true_all/100, eps, 1 - eps))
-            y_pred_logit = logit(np.clip(y_pred_all/100, eps, 1 - eps))
+            from scipy.special import logit
+            y_true_logit = logit(np.clip(y_true_all / 100.0, eps, 1 - eps))
+            y_pred_logit = logit(np.clip(y_pred_all / 100.0, eps, 1 - eps))
 
+            from scipy.stats import spearmanr
             rho, _ = spearmanr(y_true_logit, y_pred_logit)
             self.log("test_spearman_logit", rho, prog_bar=True, sync_dist=True)
             print(f"\n🔬 Spearman ρ (logit PSI, test set): {rho:.4f}")
-
-            import time
-            trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
-
 
             df = pd.DataFrame({
                 "index": np.arange(len(y_true_all)),
@@ -243,7 +329,165 @@ class MTSpliceBCE(pl.LightningModule):
                 "y_true_logit": y_true_logit,
                 "y_pred_logit": y_pred_logit,
             })
-            df.to_csv(f"/mnt/home/at3836/Contrastive_Learning/files/test_predictions_with_index_{trimester}.csv", index=False)
+
+            pred_out_path = out_dir / "psi_regression_test_predictions.tsv"
+            df.to_csv(pred_out_path, sep="\t", index=False)
+            print(f"Saved to: {pred_out_path}")
+            print(df.head())
+
+
+    # def on_test_epoch_end(self):
+    #     from scipy.special import logit, expit
+    #     from scipy.stats import spearmanr
+    #     import numpy as np
+    #     import pandas as pd
+
+    #     # ---- Where to save
+    #     out_dir = resolve_out_dir(self.config.callbacks.model_checkpoint.dirpath)
+    #     out_dir.mkdir(parents=True, exist_ok=True)
+
+    #     if self.config.aux_models.mtsplice_BCE:
+    #         # ==============================
+    #         # MTSplice-style: predict Δlogit per tissue, then PSI via expit(Δlogit + logit_mean_psi)
+    #         # ==============================
+    #         # Predictions
+    #         y_pred = torch.cat(self.test_preds, dim=0).cpu().numpy()     # shape: [N, M]
+    #         exon_ids = list(self.test_exon_ids)                           # length N
+    #         N, M = y_pred.shape
+
+    #         # Ground truth
+    #         split = self.config.dataset.test_files.intronexon.split('/')[-1].split('_')[1]
+    #         gt_path = f"{self.config.loss.csv_dir}/{split}_cassette_exons_with_logit_mean_psi.csv"
+    #         ground_truth = pd.read_csv(gt_path)
+
+    #         # --- Infer tissue columns from ground truth header ---
+    #         cols = list(ground_truth.columns)
+    #         # Tissues appear between 'exon_boundary' and the first of {'chromosome','mean_psi','logit_mean_psi'}
+    #         start_idx = cols.index('exon_boundary') + 1 if 'exon_boundary' in cols else 0
+    #         if 'chromosome' in cols:
+    #             end_idx = cols.index('chromosome')
+    #         elif 'mean_psi' in cols:
+    #             end_idx = cols.index('mean_psi')
+    #         else:
+    #             end_idx = cols.index('logit_mean_psi')
+    #         tissue_cols = cols[start_idx:end_idx]
+
+    #         # Ensure count matches model outputs
+    #         if len(tissue_cols) != M:
+    #             # fall back to matching the first M tissue columns to predictions order
+    #             tissue_cols = tissue_cols[:M]
+    #             print(f"[warn] GT tissues ({len(tissue_cols)}) != pred dims ({M}); truncating to first {M} tissues.")
+
+    #         # Keep only the exons we predicted for
+    #         gt = ground_truth[['exon_id', 'logit_mean_psi'] + tissue_cols].copy()
+
+    #         # Align by exon_id
+    #         pred_df = pd.DataFrame(y_pred, columns=tissue_cols)
+    #         pred_df.insert(0, 'exon_id', exon_ids)
+    #         merged = gt.merge(pred_df, on='exon_id', suffixes=('', '_pred_delta'))
+
+    #         # Vectorized final PSI prediction for all tissues:
+    #         # final_psi_frac = expit(Δlogit_pred + logit_mean_psi)
+    #         logit_mean = merged['logit_mean_psi'].to_numpy()[:, None]        # (N,1)
+    #         pred_delta_mat = merged[tissue_cols].to_numpy()                   # (N,M)
+    #         final_psi_frac = expit(pred_delta_mat + logit_mean)               # (N,M)
+
+    #         # Build predictions table with EXACT tissue column names
+    #         pred_psi_df = pd.DataFrame(final_psi_frac, columns=tissue_cols)
+    #         pred_psi_df.insert(0, 'exon_id', merged['exon_id'].values)
+
+    #         # ---- Per-tissue correlations ----
+    #         eps = 1e-6
+    #         rows = []
+    #         for t in tissue_cols:
+    #             # Truth PSI (%), valid mask
+    #             truth_psi = merged[t]
+    #             valid_psi = truth_psi.between(0, 100) & truth_psi.notna()
+
+    #             # Predicted final PSI (fraction 0..1)
+    #             pred_psi_t = pred_psi_df[t]
+
+    #             # Spearman(PSI)
+    #             if valid_psi.any():
+    #                 rho_psi, _ = spearmanr(truth_psi.loc[valid_psi], pred_psi_t.loc[valid_psi])
+    #             else:
+    #                 rho_psi = np.nan
+
+    #             # Δlogit truth vs predicted
+    #             truth_frac = np.clip(truth_psi / 100.0, eps, 1 - eps)
+    #             truth_delta = pd.Series(logit(truth_frac) - merged['logit_mean_psi'].to_numpy())
+
+    #             pred_delta_t = merged[t]  # this column currently holds predicted Δlogit for tissue t
+    #             valid_delta = truth_delta.notna() & pred_delta_t.notna() & valid_psi
+
+    #             if valid_delta.any():
+    #                 rho_delta, _ = spearmanr(truth_delta.loc[valid_delta], pred_delta_t.loc[valid_delta])
+    #             else:
+    #                 rho_delta = np.nan
+
+    #             rows.append({
+    #                 'tissue': t,
+    #                 'spearman_psi': float(rho_psi) if rho_psi == rho_psi else np.nan,
+    #                 'spearman_delta': float(rho_delta) if rho_delta == rho_delta else np.nan,
+    #                 'n_valid_psi': int(valid_psi.sum()),
+    #                 'n_valid_delta': int(valid_delta.sum()),
+    #             })
+
+    #         metrics_df = pd.DataFrame(rows).sort_values('tissue').reset_index(drop=True)
+
+    #         # ---- Print summary to stdout ----
+    #         print("\n=== Per-tissue Spearman correlations ===")
+    #         for _, r in metrics_df.iterrows():
+    #             print(f"{r['tissue']}: PSI={r['spearman_psi']:.4f} | Δlogit={r['spearman_delta']:.4f} "
+    #                 f"(nψ={r['n_valid_psi']}, nΔ={r['n_valid_delta']})")
+
+    #         # Optionally, log a macro-average
+    #         # mean_psi = metrics_df['spearman_psi'].mean(skipna=True)
+    #         # mean_delta = metrics_df['spearman_delta'].mean(skipna=True)
+    #         # self.log("test_mean_spearman_psi", mean_psi, prog_bar=True, sync_dist=True)
+    #         # self.log("test_mean_spearman_delta", mean_delta, prog_bar=True, sync_dist=True)
+
+    #         # ---- Save files ----
+    #         pred_out_path = out_dir / "tsplice_final_predictions_all_tissues.tsv"
+    #         pred_psi_df.to_csv(pred_out_path, sep="\t", index=False)
+
+    #         metrics_out_path = out_dir / "tsplice_spearman_by_tissue.tsv"
+    #         metrics_df.to_csv(metrics_out_path, sep="\t", index=False)
+
+    #         print(f"\nSaved predictions to: {pred_out_path}")
+    #         print(f"Saved per-tissue metrics to: {metrics_out_path}")
+    #         print(pred_psi_df.head())
+
+    #     else:
+    #         # ==============================
+    #         # Simple regression path (no per-tissue outputs)
+    #         # ==============================
+    #         y_pred_all = torch.cat(self.test_preds).cpu().numpy()
+    #         y_true_all = torch.cat(self.test_targets).cpu().numpy()
+
+    #         eps = 1e-6
+    #         from scipy.special import logit
+    #         y_true_logit = logit(np.clip(y_true_all / 100.0, eps, 1 - eps))
+    #         y_pred_logit = logit(np.clip(y_pred_all / 100.0, eps, 1 - eps))
+
+    #         from scipy.stats import spearmanr
+    #         rho, _ = spearmanr(y_true_logit, y_pred_logit)
+    #         self.log("test_spearman_logit", rho, prog_bar=True, sync_dist=True)
+    #         print(f"\n🔬 Spearman ρ (logit PSI, test set): {rho:.4f}")
+
+    #         df = pd.DataFrame({
+    #             "index": np.arange(len(y_true_all)),
+    #             "y_true": y_true_all,
+    #             "y_pred": y_pred_all,
+    #             "y_true_logit": y_true_logit,
+    #             "y_pred_logit": y_pred_logit,
+    #         })
+
+    #         pred_out_path = out_dir / "psi_regression_test_predictions.tsv"
+    #         df.to_csv(pred_out_path, sep="\t", index=False)
+    #         print(f"Saved to: {pred_out_path}")
+    #         print(df.head())
+
 
 
     def on_train_epoch_start(self):
