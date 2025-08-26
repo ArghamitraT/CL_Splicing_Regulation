@@ -157,7 +157,8 @@ class MTSpliceBCE(pl.LightningModule):
             })
             split = self.config.dataset.test_files.intronexon.split('/')[-1].split('_')[1]
             # === Load ground truth
-            ground_truth = pd.read_csv(f"/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/{split}_cassette_exons_with_logit_mean_psi.csv")
+            # ground_truth = pd.read_csv(f"/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/{split}_cassette_exons_with_logit_mean_psi.csv")
+            ground_truth = pd.read_csv(f"/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/{split}_cassette_exons_with_logit_mean_psi.csv")
 
             # === Merge prediction and ground truth
             df = pd.merge(
