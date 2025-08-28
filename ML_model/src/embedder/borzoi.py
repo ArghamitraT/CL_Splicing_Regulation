@@ -11,7 +11,9 @@ class BorzoiEmbedder(BaseEmbedder):
         self.seq_len = seq_len
     
     def forward(self, input_ids, **kwargs):
-        return self.backbone(input_ids, **kwargs)
+        z = self.backbone.get_embs_after_crop(input_ids.half(), **kwargs)
+        z = z.mean(dim=-1)
+        return z
     
     def get_last_embedding_dimension(self) -> int:
         """
@@ -34,8 +36,9 @@ class BorzoiEmbedder(BaseEmbedder):
         print(f"Test input: {random_input.shape}")
 
         with torch.no_grad():
-            output = self.backbone(random_input)
+            output = self.backbone.get_embs_after_crop(random_input)
 
+        output = output.mean(dim=-1)
         last_embedding_dimension = output.shape[-1]
         print(f"Found a last embedding dimension of {last_embedding_dimension}")
         return last_embedding_dimension

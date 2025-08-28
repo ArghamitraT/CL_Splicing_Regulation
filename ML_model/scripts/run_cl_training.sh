@@ -31,12 +31,12 @@ python -m scripts.cl_training \
         loss="supcon"\
         tokenizer="onehot_tokenizer"\
         tokenizer.seq_len=524288\
-        task.global_batch_size=2048\
+        task.global_batch_size=2\
         trainer.max_epochs=2 \
         trainer.val_check_interval=1.0\
         optimizer="sgd" \
         trainer.devices=1\
-        logger.name="resnet101_supcon_sgd_2_$(date +%Y%m%d_%H%M%S)"\
+        logger.name="borzoi_supcon_sgd_2_$(date +%Y%m%d_%H%M%S)"\
         embedder.maxpooling=True\
         logger.notes="$NOTES"\
         dataset.n_augmentations=2 \
