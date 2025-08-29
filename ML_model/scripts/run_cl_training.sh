@@ -30,7 +30,6 @@ python -m scripts.cl_training \
         embedder="borzoi"\
         loss="supcon"\
         tokenizer="onehot_tokenizer"\
-        tokenizer.seq_len=524288\
         task.global_batch_size=2\
         trainer.max_epochs=2 \
         trainer.val_check_interval=1.0\
