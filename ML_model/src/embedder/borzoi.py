@@ -12,12 +12,58 @@ class BorzoiEmbedder(BaseEmbedder):
         
         # Skip cropping layer for variable length
         self.backbone.crop = nn.Identity()
+        
+        # Interpolate to handle non-power of 2 length inputs
+        self.backbone.get_embs_after_crop = self.get_embs
         self.seq_len = seq_len
     
     def forward(self, input_ids, **kwargs):
-        z = self.backbone.get_embs_after_crop(input_ids.half(), **kwargs)
+        z = self.backbone(input_ids.half(), **kwargs)
         z = z.mean(dim=-1)
         return z
+    
+    def align_and_add(self, x, y):
+        """
+        Aligns tensor y to x along tensor length. Then adds
+        """
+        if x.shape[-1] != y.shape[-1]:
+            y = torch.nn.functional.interpolate(y, size=x.shape[-1], mode="nearest")
+        return x + y
+    
+    def get_embs(self, x):
+        """
+        Performs the forward pass of the model until right before the final conv layers, and includes a cropping layer.
+
+        Args:
+            x (torch.Tensor): Input DNA sequence tensor of shape (N, 4, L).
+
+        Returns:
+             torch.Tensor: Output of the model up to the cropping layer with shape (N, dim, crop_length)
+        """
+        x = self.backbone.conv_dna(x)
+        x_unet0 = self.backbone.res_tower(x)
+        x_unet1 = self.backbone.unet1(x_unet0)
+        x = self.backbone._max_pool(x_unet1)
+        x_unet1 = self.backbone.horizontal_conv1(x_unet1)
+        x_unet0 = self.backbone.horizontal_conv0(x_unet0)
+        x = self.backbone.transformer(x.permute(0,2,1))
+        x = x.permute(0,2,1)
+        x = self.backbone.upsampling_unet1(x)
+        
+        # Handle mismatching bin sizes (seq len not power of 2)
+        # x += x_unet1
+        x = self.align_and_add(x, x_unet1)
+
+        x = self.backbone.separable1(x)
+        x = self.backbone.upsampling_unet0(x)
+        
+        # Handle mismatching bin sizes (seq len not power of 2)
+        # x += x_unet0
+        x = self.align_and_add(x, x_unet0)
+
+        x = self.backbone.separable0(x)
+        x = self.backbone.crop(x.permute(0,2,1))
+        return x.permute(0,2,1)
     
     def get_last_embedding_dimension(self) -> int:
         """
@@ -40,7 +86,7 @@ class BorzoiEmbedder(BaseEmbedder):
         print(f"Test input: {random_input.shape}")
 
         with torch.no_grad():
-            output = self.backbone.get_embs_after_crop(random_input)
+            output = self.backbone(random_input)
 
         output = output.mean(dim=-1)
         last_embedding_dimension = output.shape[-1]
