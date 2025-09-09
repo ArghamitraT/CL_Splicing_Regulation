@@ -11,3 +11,4 @@
 /ML_model/config_tree.txt
 /ML_model/model_config.json
 checkpoints/
+/ML_model/scripts/figures/
