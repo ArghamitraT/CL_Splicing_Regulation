@@ -12,14 +12,15 @@
 set -e
 cd $HOME
 source ~/.bashrc
-conda activate CntrstvLrn_1
+conda activate cl_splicing_regulation3
 # conda activate phastcon
 # gunzip -d /gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/*.fa.gz
 # echo "unzipping completed!"
+
+python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_intronexon_seq3.py
+
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_ExonIntron_position3_5and3prime.py
-
-python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/merge_split_TrainingValTest_Data.py
-
+# python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/merge_split_TrainingValTest_Data.py
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_intronexon_seq.py
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/get_geneAnnotFile.py
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/read_phastcon.py

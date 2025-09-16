@@ -1,12 +1,19 @@
 import pickle
 
 # --- File paths ---
-split_name = "val"
-main_dir = "/mnt/home/at3836/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
-path_5p = main_dir + f"{split_name}_5primeIntron_filtered.pkl"
-path_3p = main_dir + f"{split_name}_3primeIntron_filtered.pkl"
-path_exon = main_dir + f"{split_name}_ExonSeq_filtered.pkl"
-output_path = main_dir + f"{split_name}_merged_filtered_min30Views.pkl"
+# split_name = "val"
+# main_dir = "/mnt/home/at3836/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+# path_5p = main_dir + f"{split_name}_5primeIntron_filtered.pkl"
+# path_3p = main_dir + f"{split_name}_3primeIntron_filtered.pkl"
+# path_exon = main_dir + f"{split_name}_ExonSeq_filtered.pkl"
+# output_path = main_dir + f"{split_name}_merged_filtered_min30Views.pkl"
+
+split_name = "train"
+main_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+path_5p = main_dir + f"{split_name}_ASCOT_5primeIntron_filtered.pkl"
+path_3p = main_dir + f"{split_name}_ASCOT_3primeIntron_filtered.pkl"
+path_exon = main_dir + f"{split_name}_ASCOT_ExonSeq_filtered.pkl"
+output_path = main_dir + f"{split_name}_ASCOT_merged_filtered_min30Views.pkl"
 
 
 # --- Load files ---

@@ -45,9 +45,10 @@ for e in test_examples:
 # === ✅ Main Processing Script ===
 
 # Input and output file paths
-input_file = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
+division = "variable"
+input_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons_multizOverlaps.csv'
 # input_file = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/dummy_exon_intron_positions_shrt.csv'
-output_file = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions_computedIntron.csv'
+output_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons_multizOverlaps_exon_intron_positions_computed.csv'
 os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
 # === Read CSV and drop original intron columns ===

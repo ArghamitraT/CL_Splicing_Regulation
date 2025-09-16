@@ -5,8 +5,10 @@ import random
 import pickle
 from torch.utils.data import Dataset
 from omegaconf import OmegaConf
-
-
+from .utility import (
+    get_windows_with_padding,
+    get_windows_with_padding_intronOnly,
+)
 ############# DEBUG Message ###############
 import inspect
 import os
@@ -39,9 +41,9 @@ class ContrastiveIntronsDataset(Dataset):
         self.len_3p = 200
 
         # reset_debug_warning()
-        # debug_warning("no exon, so acceptor intron is 400, generally 300.")
+        # debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")
         # reset_debug_warning()
-        # debug_warning("get padding intronlyONLY, line253")
+        # debug_warning("get padding intronlyONLY, line 151")
         
         self.tissue_acceptor_intron = 300
         self.tissue_donor_intron = 300
@@ -95,84 +97,7 @@ class ContrastiveIntronsDataset(Dataset):
         # self.seed = 42
         #  # will only print the first time
         # self.random_state = random.Random(self.seed)
-
-    def get_windows_with_padding(self, seq, overhang):
-            """
-            Split seq for tissue specific predictions
-            Args:
-            seq: seqeunce to split
-            overhang: (intron_length acceptor side, intron_length donor side) of
-                        the input sequence
-            """
-
-            (acceptor_intron, donor_intron) = overhang
-
-            assert acceptor_intron <= len(seq), "Input sequence acceptor intron" \
-                " length cannot be longer than the input sequence"
-            assert donor_intron <= len(seq), "Input sequence donor intron length" \
-                " cannot be longer than the input sequence"
-
-            # need to pad N if seq not enough long
-            diff_acceptor = acceptor_intron - self.tissue_acceptor_intron
-            if diff_acceptor < 0:
-                seq = "N" * abs(diff_acceptor) + seq
-            elif diff_acceptor > 0:
-                seq = seq[diff_acceptor:]
-
-            diff_donor = donor_intron - self.tissue_donor_intron
-            if diff_donor < 0:
-                seq = seq + "N" * abs(diff_donor)
-            elif diff_donor > 0:
-                seq = seq[:-diff_donor]
-
-            return {
-                'acceptor': seq[:self.tissue_acceptor_intron
-                                + self.tissue_acceptor_exon],
-                'donor': seq[-self.tissue_donor_exon
-                            - self.tissue_donor_intron:]
-            }
-
-    def get_windows_with_padding_intronOnly(self, seq, overhang):
-            """
-            Split seq for tissue specific predictions
-            Args:
-            seq: seqeunce to split
-            overhang: (intron_length acceptor side, intron_length donor side) of
-                        the input sequence
-            """
-
-            (acceptor_intron, donor_intron) = overhang
-
-            assert acceptor_intron <= len(seq), "Input sequence acceptor intron" \
-                " length cannot be longer than the input sequence"
-            assert donor_intron <= len(seq), "Input sequence donor intron length" \
-                " cannot be longer than the input sequence"
-
-            # need to pad N if seq not enough long
-            diff_acceptor = acceptor_intron - self.tissue_acceptor_intron
-            if diff_acceptor < 0:
-                seq = "N" * abs(diff_acceptor) + seq
-            elif diff_acceptor > 0:
-                seq = seq[diff_acceptor:]
-
-            diff_donor = donor_intron - self.tissue_donor_intron
-            if diff_donor < 0:
-                seq = seq + "N" * abs(diff_donor)
-            elif diff_donor > 0:
-                seq = seq[:-diff_donor]
-
-            left_intron_len  = self.tissue_acceptor_intron
-            right_intron_len = self.tissue_donor_intron
-
-            # Slice intron-only windows (exclude exon completely)
-            acceptor_window = seq[:left_intron_len]                      # last bases before exon
-            donor_window    = seq[-right_intron_len:]                    # first bases after exon
-
-            return {
-                'acceptor': acceptor_window,
-                'donor': donor_window,
-            }
-                        
+ 
     
     def __len__(self):
 
@@ -208,28 +133,7 @@ class ContrastiveIntronsDataset(Dataset):
                 species_sample = all_species
             else:
                 species_sample = random.sample(all_species, self.n_augmentations)
-    # -----------------------------------------------
-        # Number of available augmentations
-        # all_species = list(intronic_sequences.keys())
-        # n_available = len(all_species)
-        # # Decide how many augmentations to sample
-        # if self.n_augmentations == "all" or self.n_augmentations > n_available:
-        #     species_sample = all_species  # take all available
-        # else:
-            
-        #     if self.fixed_species:
-        #         species_sample = self.fixed_species
-        #         missing = [sp for sp in species_sample if sp not in intronic_sequences]
-        #         if missing:
-        #             raise KeyError(f"Exon {exon_name} missing fixed species: {missing}")  # shouldn't happen after filtering
 
-        #     else:
-        #         species_sample = random.sample(all_species, self.n_augmentations)
-            # debug_warning() 
-            # species_sample = self.random_state.sample(all_species, self.n_augmentations)
-
-        # # Retrieve the sequences for the sampled species
-        # augmentations = [intronic_sequences[sp] for sp in species_sample]
         if self.embedder_name == "MTSplice":
             augmentations = []
             for sp in species_sample:
@@ -244,13 +148,9 @@ class ContrastiveIntronsDataset(Dataset):
                 # full_seq = intronic_sequences[sp]
 
                 if self.embedder.name_or_path == "MTSplice":
-
-
-                    # reset_debug_warning()
-                    # debug_warning("get padding intronlyONLY")
-
-                    windows = self.get_windows_with_padding(
-                        full_seq, overhang = (self.len_3p, self.len_5p))
+                    
+                    windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
+                
                     # windows = self.get_windows_with_padding_intronOnly(
                     #     full_seq, overhang = (self.len_3p, self.len_5p))
                     

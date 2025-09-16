@@ -5,43 +5,26 @@ from transformers import AutoTokenizer
 import pickle
 import lightning.pytorch as pl
 
-
-def get_windows_with_padding(full_seq, len_5p, len_exon, len_3p,
-                             tissue_acceptor_intron, tissue_acceptor_exon,
-                             tissue_donor_exon, tissue_donor_intron):
-            # Acceptors: region around exon start (3' splice site)
-            acceptor_intron = len_3p  # region before the exon (3' intron)
-            # Donor: region around exon end (5' splice site)
-            donor_intron = len_5p     # region after the exon (5' intron)
-
-            # Get acceptor window
-            acceptor_start = len_5p + 0 - tissue_acceptor_intron
-            acceptor_end = len_5p + tissue_acceptor_exon
-
-            # Pad acceptor if needed
-            seq_acceptor = full_seq[max(0, acceptor_start):acceptor_end]
-            if acceptor_start < 0:
-                seq_acceptor = "N" * abs(acceptor_start) + seq_acceptor
-            if len(seq_acceptor) < tissue_acceptor_intron + tissue_acceptor_exon:
-                seq_acceptor = seq_acceptor + "N" * (tissue_acceptor_intron + tissue_acceptor_exon - len(seq_acceptor))
-
-            # Get donor window
-            donor_end = len_5p + len_exon + tissue_donor_intron
-            donor_start = len_5p + len_exon - tissue_donor_exon
-
-            seq_donor = full_seq[donor_start:donor_end]
-            if donor_end > len(full_seq):
-                seq_donor = seq_donor + "N" * (donor_end - len(full_seq))
-            if donor_start < 0:
-                seq_donor = "N" * abs(donor_start) + seq_donor
-            if len(seq_donor) < tissue_donor_exon + tissue_donor_intron:
-                seq_donor = seq_donor + "N" * (tissue_donor_exon + tissue_donor_intron - len(seq_donor))
-
-            return {
-                'acceptor': seq_acceptor,
-                'donor': seq_donor
-            }
-
+from .utility import (
+    get_windows_with_padding,
+    get_windows_with_padding_intronOnly,
+)
+############# DEBUG Message ###############
+import inspect
+import os
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
 
 class PSIRegressionDataset(Dataset):
     def __init__(self, data_file, tokenizer, max_length=201, mode="5p"):
@@ -69,9 +52,16 @@ class PSIRegressionDataset(Dataset):
         self.len_5p = 200
         self.len_exon = 100
         self.len_3p = 200
-        self.tissue_acceptor_intron = 300
+
+        reset_debug_warning()
+        debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")
+        reset_debug_warning()
+        debug_warning("get padding intronlyONLY, line 77")
+        
+        self.tissue_acceptor_intron = 400
+        self.tissue_donor_intron = 400
+        
         self.tissue_acceptor_exon = 100
-        self.tissue_donor_intron = 300
         self.tissue_donor_exon = 100
 
     def __len__(self):
@@ -85,12 +75,8 @@ class PSIRegressionDataset(Dataset):
         if self.mode == "mtsplice":
             full_seq =  entry["5p"] + self._process_exon(entry["exon"]) + entry["3p"]
 
-            windows = get_windows_with_padding(
-                full_seq,
-                self.len_5p, self.len_exon, self.len_3p,
-                self.tissue_acceptor_intron, self.tissue_acceptor_exon,
-                self.tissue_donor_exon, self.tissue_donor_intron
-            )
+            # windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
+            windows = get_windows_with_padding_intronOnly(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
 
             # Tokenize acceptor and donor
             seql = self._tokenize(windows['acceptor'])  # acceptor

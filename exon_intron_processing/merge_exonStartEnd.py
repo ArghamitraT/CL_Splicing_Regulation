@@ -1,8 +1,8 @@
 import pickle
 
-file_name = 'test_ExonSeq'
+file_name = 'variable'
 # Load the pickle file
-pickle_file_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/{file_name}_filtered.pkl'
+pickle_file_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/{file_name}_ASCOT_ExonSeq.pkl'
 
 with open(pickle_file_path, 'rb') as f:
     msa_results_list_unTOKEN = pickle.load(f)
@@ -32,7 +32,8 @@ for exon_id, exon_data in msa_results_list_unTOKEN.items():
             })
 
 # Save to new pickle file
-output_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/{file_name}_filtered1.pkl'
+output_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/{file_name}_ASCOT_ExonSeq_filtered.pkl'
+
 with open(output_path, 'wb') as f:
     pickle.dump(processed_sequences, f)
 
