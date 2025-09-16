@@ -1,0 +1,27 @@
+Pre-training: Pretraining is the contrastive learning part
+------------------------------------------------------------------
+
+* weighted_supcon loss: this is the loss function for ASCOT homolog data. the weighted part is the pairwise spearman correlation between exons. The correlation comes from the 
+psi value from the ASCOT dataset. the dataset is here: /Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/ASCOT_data
+
+* supcon: it is the supervised contrastive learning loss from this paper: https://arxiv.org/abs/2004.11362
+
+
+* possible embedders: interpretable.yaml  mtsplice.yaml  ntv2.yaml  resnet101.yaml  resnet.yaml  tisfm.yaml
+(list can be found in configs/embedder folder). mostly we use resnet.yaml and mtsplice.yaml
+
+* tokenizer: (list can be found in configs/tokenizer folder), mostly we use custom_tokenizer.yaml and onehot_tokenizer.yaml
+
+* loss: generally we use supcon. supcon with 2 species (dataset.n_augmentations = 2) is similar to nt xent losss
+
+* dataset.n_augmentations: how many homologs to use for contrastive learning. for example, if you have human, mouse, rat, and you set dataset.n_augmentations = 2, then for each human exon, you will randomly sample one of the two homologs (mouse or rat) to form a positive pair. if you set dataset.n_augmentations = 3, then you will use both mouse and rat as positives.
+
+* constraints:
+if embedder is mtsplice, then tokenizer = onehot_tokenizer, embedder.seq_len = 400
+if embedder is resnet, then tokenizer = custom_tokenizer, embedder.seq_len = 201
+
+
+fine-tuning: finetuning is the downstream specific training
+------------------------------------------------------------------
+MTSpliceBCELoss: it is the MTSplice binary cross entropy inspired loss from the paper.
+

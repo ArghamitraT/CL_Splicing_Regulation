@@ -118,7 +118,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon10_5p_resnet'
+slurm_file_name = 'CLSupcon10_ASCOT_MTSplice'
 gpu_num = 1
 hour = 5
 memory = 100 # GB
@@ -126,15 +126,15 @@ nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
 global_batch_size = 2048
-embedder = "resnet"
-tokenizer = "custom_tokenizer"
+embedder = "mtsplice"
+tokenizer = "onehot_tokenizer"
 loss_name = "supcon"
-max_epochs = 30
+max_epochs = 100
 n_augmentations = 10
 fixed_species = False
 maxpooling = True
 optimizer = "sgd"
-tokenizer_seq_len = 201
+tokenizer_seq_len = 400
 # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 # VAL_FILE="val_3primeIntron_filtered.pkl"
 # TEST_FILE="test_3primeIntron_filtered.pkl"
@@ -147,14 +147,19 @@ tokenizer_seq_len = 201
 # VAL_FILE="val_5primeIntron_filtered.pkl"
 # TEST_FILE="test_5primeIntron_filtered.pkl"
 
-TRAIN_FILE="train_ExonSeq_filtered.pkl"
-VAL_FILE="val_ExonSeq_filtered.pkl"
-TEST_FILE="test_ExonSeq_filtered.pkl"
+# TRAIN_FILE="train_ExonSeq_filtered.pkl"
+# VAL_FILE="val_ExonSeq_filtered.pkl"
+# TEST_FILE="test_ExonSeq_filtered.pkl"
+
+TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl"
+VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl"
+TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl"
+
 
 readme_comment = (
-     "supcon, 10 aug, exon, resnet embedder"
+     "ASCOT data, supcon, 10 aug, mtsplice embedder"
 )
-wandb_logger_NOTES="supcon resnet 10 aug exononly" ## do NOT use any special character or new line
+wandb_logger_NOTES="ASCOT data supcon mtsplice 10 aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
