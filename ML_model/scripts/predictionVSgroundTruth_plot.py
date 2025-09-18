@@ -137,7 +137,8 @@ def merge_delta_logit(gt_df: pd.DataFrame, pred_df: pd.DataFrame, tissue: str) -
     delta_true = compute_delta_logit(merged[f"{tissue}_gt"], merged["logit_mean_psi"])
 
     # Predicted Δlogit (already Δlogit values, not PSI)
-    delta_pred = merged[f"{tissue}_pred"].to_numpy()
+    # delta_pred = merged[f"{tissue}_pred"].to_numpy()
+    delta_pred = compute_delta_logit(merged[f"{tissue}_pred"], merged["logit_mean_psi"])
 
     # Drop NaNs
     mask = ~pd.isna(delta_true) & ~pd.isna(delta_pred)
@@ -233,4 +234,3 @@ plotter.plot_delta_logit(tissue, save_path=save_path_delta)
 # Plot multiple tissues (PSI or Δlogit)
 # plotter.plot_for_multiple_tissues(["Retina - Eye", "Liver"], value_type="PSI")
 # plotter.plot_for_multiple_tissues(["Retina - Eye", "Liver"], value_type="Δlogit")
-

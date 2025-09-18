@@ -53,13 +53,13 @@ class PSIRegressionDataset(Dataset):
         self.len_exon = 100
         self.len_3p = 200
 
-        reset_debug_warning()
-        debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")
-        reset_debug_warning()
-        debug_warning("get padding intronlyONLY, line 77")
+        # reset_debug_warning()
+        # debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")
+        # reset_debug_warning()
+        # debug_warning("get padding intronlyONLY, line 77")
         
-        self.tissue_acceptor_intron = 400
-        self.tissue_donor_intron = 400
+        self.tissue_acceptor_intron = 300
+        self.tissue_donor_intron = 300
         
         self.tissue_acceptor_exon = 100
         self.tissue_donor_exon = 100
@@ -75,8 +75,8 @@ class PSIRegressionDataset(Dataset):
         if self.mode == "mtsplice":
             full_seq =  entry["5p"] + self._process_exon(entry["exon"]) + entry["3p"]
 
-            # windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
-            windows = get_windows_with_padding_intronOnly(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
+            windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
+            # windows = get_windows_with_padding_intronOnly(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
 
             # Tokenize acceptor and donor
             seql = self._tokenize(windows['acceptor'])  # acceptor

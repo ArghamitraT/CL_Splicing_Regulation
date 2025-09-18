@@ -130,7 +130,15 @@ class PSIRegressionModel(pl.LightningModule):
         x, y, exon_ids = batch
         y_pred = self(x).squeeze()
         
-        if self.config.aux_models.mtsplice_BCE:
+        # if self.config.aux_models.mtsplice_BCE:
+        #     loss = self.loss_fn(y_pred, exon_ids, split='train')
+        # else:
+        #     loss = self.loss_fn(y_pred, y)
+        try:
+            loss_term = self.config.loss['_target_'].split('.')[-1]
+        except:
+            loss_term = None
+        if loss_term == 'MTSpliceBCELoss' or loss_term == 'multitissue_MSE':
             loss = self.loss_fn(y_pred, exon_ids, split='train')
         else:
             loss = self.loss_fn(y_pred, y)

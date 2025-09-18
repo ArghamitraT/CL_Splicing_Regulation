@@ -36,9 +36,10 @@ import pickle
 # # with open(pickle_file_path, 'rb') as f:
 # #     msa_results_list_TOKEN = pickle.load(f)
 
-pickle_file_path = '/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_MERGED.pkl'
+pickle_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl'
 # pickle_file_path = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/test_5primeIntron_filtered.pkl'
 with open(pickle_file_path, 'rb') as f:
     msa_results_list_unTOKEN = pickle.load(f)
 
-print()
+print(pickle_file_path)
+print(len(msa_results_list_unTOKEN))

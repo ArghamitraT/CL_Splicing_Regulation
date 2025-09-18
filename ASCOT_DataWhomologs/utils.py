@@ -142,6 +142,137 @@ def compute_spearman_corr(expr_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.
     return corr_df
 
 
+def _compute_mad_block(X_block: np.ndarray, X_all: np.ndarray) -> np.ndarray:
+    """
+    Compute mean absolute distance (MAD) between a block of exons and all exons.
+
+    Args:
+        X_block: (B × T) array for block of exons
+        X_all:   (N × T) array for all exons
+
+    Returns:
+        mad_block: (B × N) array of MAD values
+    """
+    diffs = np.abs(X_block[:, None, :] - X_all[None, :, :])/100
+    return np.nanmean(diffs, axis=2)
+
+def format_exon_ids(mad_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.DataFrame:
+    """
+    Format exon IDs by replacing '.' with '_'.
+    """
+    mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
+    mad_df.index.name = None
+    # mad_df.index.name = "exon_id"
+    return mad_df
+
+def compute_meanAbsoluteDistance(expr_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.DataFrame:
+    """
+    Compute full mean absolute distance (MAD) matrix (not memory efficient).
+
+    Args:
+        expr_matrix: DataFrame (N_exons × N_tissues)
+        exon_ids: Series of exon IDs (length N_exons)
+
+    Returns:
+        mad_df: DataFrame (N_exons × N_exons)
+    """
+    X = expr_matrix.to_numpy().astype(float)
+    mad_matrix = _compute_mad_block(X, X)
+    mad_df = format_exon_ids(mad_matrix, exon_ids)
+    return mad_df
+
+
+def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: pd.Series, block_size: int = 1000) -> pd.DataFrame:
+    """
+    Compute full mean absolute distance (MAD) matrix in memory-efficient blocks.
+
+    Args:
+        expr_matrix: DataFrame (N_exons × N_tissues)
+        exon_ids: Series of exon IDs (length N_exons)
+        block_size: Block size for memory efficiency
+
+    Returns:
+        mad_df: DataFrame (N_exons × N_exons)
+    """
+    X = expr_matrix.to_numpy().astype(float)
+    N, _ = X.shape
+    mad_matrix = np.empty((N, N), dtype=float)
+    mad_matrix.fill(np.nan)
+
+    for i_start in range(0, N, block_size):
+        i_end = min(i_start + block_size, N)
+        mad_matrix[i_start:i_end, :] = _compute_mad_block(X[i_start:i_end], X)
+
+    # mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
+    # mad_df.index.name = "exon_id"
+    mad_df = format_exon_ids(mad_matrix, exon_ids)
+    return mad_df
+
+
+
+# def compute_meanAbsoluteDistance(expr_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.DataFrame:
+#     """
+#     Compute mean absolute distance (MAD) between exons based on tissue profiles.
+
+#     Args:
+#         expr_matrix: DataFrame (N_exons × N_tissues)
+#         exon_ids: Series of exon IDs (length N_exons)
+
+#     Returns:
+#         mad_df: Mean absolute distance matrix (N_exons × N_exons)
+#     """
+#     # Convert to numpy for faster operations
+#     X = expr_matrix.to_numpy()
+
+#     # Expand dimensions to compute pairwise absolute differences
+#     # Shape: (N_exons, N_exons, N_tissues)
+#     diffs = np.abs(X[:, None, :] - X[None, :, :])
+
+#     # Take mean over tissues -> (N_exons × N_exons)
+#     mad_matrix = np.nanmean(diffs, axis=2)
+
+#     # Put back into DataFrame
+#     mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
+#     mad_df.index.name = "exon_id"
+
+#     return mad_df
+
+# def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: pd.Series, block_size: int = 1000) -> pd.DataFrame:
+#     """
+#     Compute mean absolute distance (MAD) between exons based on tissue profiles,
+#     ignoring NaNs, in memory-efficient blocks.
+
+#     Args:
+#         expr_matrix: DataFrame (N_exons × N_tissues)
+#         exon_ids: Series of exon IDs (length N_exons)
+#         block_size: Number of exons per block for memory efficiency
+
+#     Returns:
+#         mad_df: Mean absolute distance matrix (N_exons × N_exons)
+#     """
+#     X = expr_matrix.to_numpy().astype(float)   # (N_exons × N_tissues)
+#     N, T = X.shape
+
+#     mad_matrix = np.empty((N, N), dtype=float)
+#     mad_matrix.fill(np.nan)  # initialize with NaNs
+
+#     # Process block by block
+#     for i_start in range(0, N, block_size):
+#         i_end = min(i_start + block_size, N)
+#         X_block = X[i_start:i_end]  # shape (B, T)
+
+#         # Pairwise abs diff against all rows (B × N × T)
+#         diffs = np.abs(X_block[:, None, :] - X[None, :, :])
+
+#         # Compute mean along tissue axis ignoring NaNs
+#         mad_block = np.nanmean(diffs, axis=2)
+
+#         mad_matrix[i_start:i_end, :] = mad_block
+
+#     mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
+#     return mad_df
+
+
 def compress_corr_matrix(corr_df: pd.DataFrame):
     """
     Convert correlation matrix to long-form (pairs + corr).
@@ -164,7 +295,9 @@ def save_matrix(corr_df: pd.DataFrame, output_path: str):
     Save correlation matrix to CSV.
     """
     # corr_df.to_csv(output_path, index=True)
-    corr_df.to_pickle(output_path)
+    with open(output_path, 'wb') as f:
+        pickle.dump(corr_df, f)
+
 
 
 def load_spearmanCorrFile(file_path: str) -> pd.DataFrame:
@@ -276,243 +409,80 @@ def filter_exons_ASCOT(ascot_df: pd.DataFrame, high_corr_exonset: set) -> pd.Dat
     filtered_df = ascot_df[~ascot_df["exon_id"].isin(high_corr_exonset)].reset_index(drop=True)
     return filtered_df
     
-    
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pickle
+import time
 
 
-"""
-# MAF processing functions
+trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
+
+def load_pkl(file_path: str) -> pd.DataFrame:
+    """
+    Load pickled DataFrame.
+    """
+    with open(file_path, 'rb') as f:
+        return pickle.load(f)
+    # mad_df = pd.read_pickle(file_path)
+    return mad_df
 
 
-"""
-# import gzip
-# from Bio import AlignIO
-
-# # def find_maf_block_for_exon(maf_file, ref_species, chrom, start_pos, end_pos, strand):
-# #     """
-# #     Search MAF for block overlapping given exon coordinates in ref_species.
-# #     Returns the alignment block or None if not found.
-# #     """
-# #     with gzip.open(maf_file, "rt") as maf_file_handle:
-# #         alignments = AlignIO.parse(maf_file_handle, "maf")
-        
-# #         for block in alignments:
-# #             for record in block:
-# #                 if ref_species in record.id and chrom in record.id:
-# #                     record_start = record.annotations["start"]
-# #                     record_len = len(record.seq)
-# #                     record_strand = record.annotations["strand"]
-# #                     record_end = record_start + record_len if record_strand == 1 else record_start - record_len
-
-# #                     # overlap check
-# #                     if not (end_pos < record_start or start_pos > record_end):
-# #                         return block
-# #     return None
-
-# # def extract_species_coordinates(block, ref_species, start_pos, end_pos, strand, species_list=None):
-# #     """
-# #     Given an alignment block and exon coordinates, return start/end for species.
-
-# #     If species_list is None, returns ALL species in the block.
-# #     Otherwise, returns only the requested species (fills NA if missing).
-# #     """
-# #     results = {}
-# #     available_species = {rec.id.split(".")[0]: rec for rec in block}
-
-# #     if species_list is None:
-# #         # Extract all species in block
-# #         for sp, rec in available_species.items():
-# #             aln_start = rec.annotations["start"]
-# #             aln_len = len(rec.seq)
-# #             aln_strand = rec.annotations["strand"]
-# #             aln_end = aln_start + aln_len if aln_strand == 1 else aln_start - aln_len
-# #             results[f"{sp}_start"] = aln_start
-# #             results[f"{sp}_end"] = aln_end
-# #     else:
-# #         # Extract only requested species
-# #         for sp in species_list:
-# #             if sp in available_species:
-# #                 rec = available_species[sp]
-# #                 aln_start = rec.annotations["start"]
-# #                 aln_len = len(rec.seq)
-# #                 aln_strand = rec.annotations["strand"]
-# #                 aln_end = aln_start + aln_len if aln_strand == 1 else aln_start - aln_len
-# #                 results[f"{sp}_start"] = aln_start
-# #                 results[f"{sp}_end"] = aln_end
-# #             else:
-# #                 results[f"{sp}_start"] = "NA"
-# #                 results[f"{sp}_end"] = "NA"
-# #     return results
+def extract_mad_values(mad_df: pd.DataFrame) -> np.ndarray:
+    """
+    Extract upper-triangular (excluding diagonal) MAD values from matrix.
+    """
+    mad_values = mad_df.to_numpy()
+    # Take only upper triangle (i<j) to avoid duplicates and self-distances
+    vals = mad_values[np.triu_indices_from(mad_values, k=1)]
+    return vals[~np.isnan(vals)]
 
 
-
-# def _map_genomic_to_alignment_coords(ref_record, exon_start: int, exon_end: int) -> tuple[int | None, int | None]:
-#     """
-#     Maps genomic coordinates of an exon to alignment coordinates within a MAF block.
-
-#     Args:
-#         ref_record: The Bio.SeqRecord object for the reference species from the block.
-#         exon_start: The genomic start coordinate of the exon.
-#         exon_end: The genomic end coordinate of the exon.
-
-#     Returns:
-#         A tuple of (alignment_start, alignment_end) indices for slicing.
-#     """
-#     block_start = ref_record.annotations["start"]
-#     ref_seq = str(ref_record.seq)
-    
-#     align_start_idx, align_end_idx = None, None
-#     genomic_pos = block_start
-    
-#     for i, char in enumerate(ref_seq):
-#         if char == '-':
-#             continue # Gaps don't advance genomic position
-        
-#         # Check for the start of the exon
-#         if align_start_idx is None and genomic_pos >= exon_start:
-#             align_start_idx = i
-        
-#         # Check for the end of the exon
-#         if genomic_pos >= exon_end - 1:
-#             align_end_idx = i + 1
-#             break
-            
-#         genomic_pos += 1
-        
-#     return align_start_idx, align_end_idx
+def sample_values(values: np.ndarray, n: int = 1_000_000) -> np.ndarray:
+    """
+    Optionally sample values for memory efficiency.
+    """
+    if len(values) > n:
+        return np.random.choice(values, size=int(n), replace=False)
+    return values
 
 
-# def extract_species_alignments(
-#     block: AlignIO.MultipleSeqAlignment,
-#     align_start: int,
-#     align_end: int,
-#     ref_strand: int,
-#     exon_strand: str
-# ) -> dict[str, str]:
-#     """
-#     Extracts a slice from all sequences in a block and handles strand correction.
+def plot_histogram(division: str, values: np.ndarray, bins: int = 100) -> None:
+    """
+    Plot histogram of MAD values.
+    """
+    plt.hist(values, bins=bins, edgecolor="black")
+    plt.xlabel("Mean Absolute Distance")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of Pairwise Exon MADs")
+    plt.savefig(f"/gpfs/commons/home/atalukder/Contrastive_Learning/code/ASCOT_DataWhomologs/figures/{division}_mad_histogram{trimester}.png")
 
-#     Args:
-#         block: The MultipleSeqAlignment block.
-#         align_start: The starting index for slicing the alignment.
-#         align_end: The ending index for slicing the alignment.
-#         ref_strand: The strand of the reference sequence in the MAF block (1 or -1).
-#         exon_strand: The strand of the exon ('+' or '-').
-
-#     Returns:
-#         A dictionary mapping each species name to its aligned sequence for the exon.
-#     """
-#     alignments = {}
-    
-#     # Determine if a reverse complement is needed
-#     # This happens if the exon is on the '-' strand and the MAF block is on the '+' strand, or vice-versa.
-#     needs_reverse_complement = (exon_strand == '-') != (ref_strand == -1)
-
-#     for record in block:
-#         species = record.id.split('.')[0]
-#         # Slice the alignment to get the sequence corresponding to the exon
-#         sliced_seq = record.seq[align_start:align_end]
-        
-#         if needs_reverse_complement:
-#             # If strands are discordant, we must reverse complement the sequence
-#             alignments[species] = str(Seq(str(sliced_seq)).reverse_complement())
-#         else:
-#             alignments[species] = str(sliced_seq)
-            
-#     return alignments
-
-# # Assume the helper functions _map_genomic_to_alignment_coords and 
-# # extract_species_alignments from the previous response exist here.
-
-# def _process_single_maf(maf_path: str, exons_to_find: list[dict], ref_prefix: str):
-#     """
-#     Worker function to find exon overlaps within a single MAF file.
-
-#     This is a generator that yields results as it finds them.
-
-#     Args:
-#         maf_path (str): The full path to a gzipped MAF file.
-#         exons_to_find (list[dict]): A list of exon dictionaries to find in this file.
-#         ref_prefix (str): The reference species prefix (e.g., "hg38.chr1").
-
-#     Yields:
-#         tuple[Any, dict]: A tuple containing the original exon index and the
-#                           dictionary of species alignments.
-#     """
-#     try:
-#         with gzip.open(maf_path, "rt") as maf_handle:
-#             for block in AlignIO.parse(maf_handle, "maf"):
-#                 if not exons_to_find:
-#                     break  # Optimization: stop if all exons are found
-
-#                 ref_record = next((r for r in block if r.id.startswith(ref_prefix)), None)
-#                 if not ref_record:
-#                     continue
-
-#                 block_start = ref_record.annotations["start"]
-#                 block_end = block_start + ref_record.annotations["size"]
-#                 ref_strand = ref_record.annotations["strand"]
-
-#                 remaining_exons = []
-#                 for exon in exons_to_find:
-#                     # Check for overlap between exon and MAF block
-#                     if exon['start'] < block_end and block_start < exon['end']:
-#                         a_start, a_end = _map_genomic_to_alignment_coords(
-#                             ref_record, exon['start'], exon['end']
-#                         )
-#                         if a_start is not None and a_end is not None:
-#                             species_aligns = extract_species_alignments(
-#                                 block, a_start, a_end, ref_strand, exon['strand']
-#                             )
-#                             # Yield the original index and the extracted alignment data
-#                             yield exon['idx'], species_aligns
-#                     else:
-#                         remaining_exons.append(exon)
-                
-#                 exons_to_find = remaining_exons
-
-#     except FileNotFoundError:
-#         print(f"⚠️ Warning: MAF file not found at '{maf_path}'.")
-#     except Exception as e:
-#         print(f"An error occurred while processing '{maf_path}': {e}")
+    # plt.show()
 
 
-# def process_maf_for_exons(
-#     exons_df: pd.DataFrame,
-#     maf_file_template: str,
-#     ref_species: str
-# ) -> pd.Series:
-#     """
-#     Main controller function to find and extract alignments for exons in a DataFrame.
+def plot_kde(values: np.ndarray) -> None:
+    """
+    Plot KDE (smoothed distribution) of MAD values.
+    """
+    sns.kdeplot(values, fill=True)
+    plt.xlabel("Mean Absolute Distance")
+    plt.ylabel("Density")
+    plt.title("MAD Distribution (KDE)")
+    plt.savefig(f"/gpfs/commons/home/atalukder/Contrastive_Learning/code/ASCOT_DataWhomologs/figures/mad_kde{trimester}.png")
+    # plt.show()
 
-#     This function processes the dataframe chromosome by chromosome, opening each
-#     MAF file only once to find all corresponding exon alignments.
 
-#     Args:
-#         exons_df (pd.DataFrame): DataFrame with 'chromosome', 'start', 'end', and 'strand'.
-#         maf_file_template (str): Path template for gzipped MAF files.
-#         ref_species (str): Identifier for the reference species (e.g., "hg38").
+def summarize_distribution(values: np.ndarray) -> dict:
+    """
+    Compute summary statistics for MAD values.
+    """
+    return {
+        "mean": float(np.mean(values)),
+        "median": float(np.median(values)),
+        "5th_percentile": float(np.percentile(values, 5)),
+        "95th_percentile": float(np.percentile(values, 95)),
+        "min": float(np.min(values)),
+        "max": float(np.max(values)),
+    }
 
-#     Returns:
-#         pd.Series: A Series of alignment dictionaries, indexed to match the input DataFrame.
-#     """
-#     results = [None] * len(exons_df)
-
-#     # Group exons by chromosome to process one MAF file at a time
-#     for chrom, group in exons_df.groupby('chromosome'):
-#         print(f"🧬 Processing {len(group)} exons for chromosome: {chrom}")
-
-#         # (AT)
-#         chrom = "chr17"
-#         maf_path = maf_file_template+f"{chrom}.maf.gz"
-#         ref_prefix = f"{ref_species}.{chrom}"
-        
-#         # Prepare the list of exons for the worker function
-#         exons_to_find = [{'idx': idx, **row.to_dict()} for idx, row in group.iterrows()]
-
-#         # Call the worker to process the file and yield results
-#         for original_idx, species_aligns in _process_single_maf(maf_path, exons_to_find, ref_prefix):
-#             # Place the result in the correct position corresponding to the original DataFrame
-#             original_loc = exons_df.index.get_loc(original_idx)
-#             results[original_loc] = species_aligns
-            
-#     return pd.Series(results, index=exons_df.index)

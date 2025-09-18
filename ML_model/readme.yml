@@ -23,5 +23,10 @@ if embedder is resnet, then tokenizer = custom_tokenizer, embedder.seq_len = 201
 
 fine-tuning: finetuning is the downstream specific training
 ------------------------------------------------------------------
-MTSpliceBCELoss: it is the MTSplice binary cross entropy inspired loss from the paper.
+
+* MTSpliceBCELoss: it is the MTSplice binary cross entropy inspired loss from the paper.
+
+* loss: 
+
+
 

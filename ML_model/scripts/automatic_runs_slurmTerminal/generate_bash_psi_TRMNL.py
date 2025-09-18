@@ -93,7 +93,7 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 """ Parameters: **CHANGE (AT)** """
 running_platform = 'NYGC'
-slurm_file_name = 'Psi_trial'
+slurm_file_name = 'Psi_mseMultitissue'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
 gpu_num = 1
 hour = 1
 memory = 100 # GB
@@ -103,16 +103,16 @@ val_check_interval = 1.0
 global_batch_size = 8192
 embedder = "mtsplice"
 tokenizer = "onehot_tokenizer"
-loss_name = "MTSpliceBCELoss"
-max_epochs = 2
+loss_name =  "multitissue_MSE" # "MTSpliceBCELoss"
+max_epochs = 20
 maxpooling = True
 optimizer = "sgd"
 tokenizer_seq_len = 400
 learning_rate =  1e-3
 freeze_encoder = False
 warm_start = True
-# mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
-mtsplice_weights = "exprmnt_2025_08_16__22_30_50" #2 aug intron
+mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
+# mtsplice_weights = "exprmnt_2025_08_16__22_30_50" #2 aug intron
 # mtsplice_weights = "exprmnt_2025_08_16__20_42_52" #10 aug intronexon
 # mtsplice_weights = "exprmnt_2025_08_23__20_30_33" #10 aug intron
 # 2 aug
@@ -125,11 +125,11 @@ weight_3p = "exprmnt_2025_07_08__20_39_38"
 weight_exon = "exprmnt_2025_08_23__21_20_33"
 mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
 mtsplice_BCE = 1
-train_mode = "eval" # "train" for training, "eval" for evaluation only
-eval_weights = "exprmnt_2025_08_17__02_17_03"
+train_mode = "train" # "train" for training, "eval" for evaluation only
+eval_weights = "exprmnt_2025_08_26__17_46_02"
 run_num = 1
 TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl"
-readme_comment = "trial"
+readme_comment = "trial of new code modification"
 wandb_logger_NOTES="trial"
 new_project_wandb = 0 # if you want to create a new project for serial run
 """ Parameters: **CHANGE (AT)** """ 

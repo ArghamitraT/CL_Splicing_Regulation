@@ -14,9 +14,9 @@ def main(file_spCorr: str, file_ASCOT: str, output_file: str = "overlap_results.
 
     corr_df = load_spearmanCorrFile(file_spCorr)
     # corr_df = load_exon_metadata_from_ASCOT(file_spCorr)
-    # high_corr_exonset = high_corr_exons(corr_df, sp_threshold=0.9, exon_similarity_threshold=500)
+    high_corr_exonset = high_corr_exons(corr_df, sp_threshold=0.9, exon_similarity_threshold=500)
     # ascot_df = load_exon_metadata_from_ASCOT(file_ASCOT)
-    expected_high_corr_per_exon(corr_df, threshold=0.8)
+    # expected_high_corr_per_exon(corr_df, threshold=0.8)
     # filtered_df = filter_exons_ASCOT(ascot_df, high_corr_exonset)
     # save_csv(filtered_df, output_file)
 
@@ -25,9 +25,9 @@ def main(file_spCorr: str, file_ASCOT: str, output_file: str = "overlap_results.
 
 if __name__ == "__main__":
     
-    division = 'val'  # 'train', 'val', 'test'
+    division = 'train'  # 'train', 'val', 'test'
     file_ascot = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons.csv'
-    file_spCorr = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_ExonExon_spearmanCorr.pkl'
+    file_spCorr = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/ASCOT_data/{division}_ExonExon_spearmanCorr.pkl'
     output_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons_filtered.csv'
     # file_spCorr = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/dummy_ExonExon_spearmanCorr.csv'
     

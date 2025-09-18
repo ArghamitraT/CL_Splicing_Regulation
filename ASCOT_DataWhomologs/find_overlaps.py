@@ -41,7 +41,7 @@ def main(file1: str, file2: str, output_file: str = "overlap_results.csv"):
 if __name__ == "__main__":
     # file_multiz = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
     
-    file_name = "variable"
+    file_name = "dummy"
     file_multiz = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv'
     file_ascot = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{file_name}_cassette_exons.csv'
     output_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{file_name}_cassette_exons_multizOverlaps.csv'

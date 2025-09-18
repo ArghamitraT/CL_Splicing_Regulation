@@ -14,5 +14,5 @@ cd $HOME
 source ~/.bashrc
 conda activate cl_splicing_regulation3
 
-python /gpfs/commons/home/atalukder/Contrastive_Learning/code/ASCOT_DataWhomologs/exon_exon_spearmanCorr.py
+python /gpfs/commons/home/atalukder/Contrastive_Learning/code/ASCOT_DataWhomologs/exon_exon_meanAbsDist.py
 
