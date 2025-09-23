@@ -194,6 +194,23 @@ def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: 
     Returns:
         mad_df: DataFrame (N_exons × N_exons)
     """
+
+    # EDIT: 1. Identify and report rows that are entirely NaN
+    all_nan_mask = expr_matrix.isnull().all(axis=1)
+    if all_nan_mask.any():
+        problematic_exons = expr_matrix.index[all_nan_mask].tolist()
+        print(f"⚠️ Warning: Found {len(problematic_exons)} exon(s) with all NaN values. "
+              f"They will be excluded from the calculation and have NaN in the output.")
+        print(f"   Problematic exons: {problematic_exons}")
+
+        # EDIT: 2. Filter out the all-NaN rows before computation
+        expr_matrix_clean = expr_matrix.loc[~all_nan_mask]
+        exon_ids_clean = exon_ids.loc[expr_matrix_clean.index]
+    else:
+        expr_matrix_clean = expr_matrix
+        exon_ids_clean = exon_ids
+
+        
     X = expr_matrix.to_numpy().astype(float)
     N, _ = X.shape
     mad_matrix = np.empty((N, N), dtype=float)

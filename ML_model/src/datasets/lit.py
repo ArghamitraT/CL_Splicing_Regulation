@@ -23,9 +23,10 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
             raise ValueError("All items in batch were None")
 
         exon_ids = [item[1] for item in batch]
+        exon_names = [item[2] for item in batch]  # for debugging
         min_n_views = min(len(item[0]) for item in batch)
         # For each sample, take only the first min_n_views augmentations
-        exon_ids = [item[1] for item in batch]
+        # exon_ids = [item[1] for item in batch]
         view_lists = [[item[0][i] for item in batch] for i in range(min_n_views)]
         token_start = time.time()
         if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):  # 
@@ -42,7 +43,8 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
 
                     views.append((seql, seqr))  # keep view-wise grouping
                 
-                output = (*views, exon_ids)
+                # output = (*views, exon_ids)
+                output = (*views, exon_ids, exon_names)
 
                     # tokenized_views = [
                     # [ (tokenizer(view['acceptor']), tokenizer(view['donor'])) for view in view_list ]
@@ -50,15 +52,18 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
                     # output = (*tokenized_views, exon_ids)
             else:
                 tokenized_views = [tokenizer(view) for view in view_lists]
-                output = (*tokenized_views, exon_ids)
+                # output = (*tokenized_views, exon_ids)
+                output = (*tokenized_views, exon_ids, exon_names)
         elif callable(tokenizer):  # HuggingFace-style
             tokenized_views = [
                 tokenizer(view, return_tensors='pt', padding=padding_strategy).input_ids
                 for view in view_lists
             ]
-            output = (*tokenized_views, exon_ids)
+            # output = (*tokenized_views, exon_ids)
+            output = (*tokenized_views, exon_ids, exon_names)
         else:
-            output = (*view_lists, exon_ids)
+            # output = (*view_lists, exon_ids)
+            output = (*view_lists, exon_ids, exon_names)       
         
         # print(f"👷 Worker {info.id if info else 'MAIN'}: Collate time = {time.time() - start:.2f}s")
         # token_time = time.time() - token_start

@@ -80,7 +80,7 @@ class LitModel(pl.LightningModule):
         start = time.time()
 
         # Unpack all views and exon_names from batch
-        *views, exon_names = batch
+        *views, exon_ids, exon_names = batch
         # print(f"[Batch {batch_idx}] Number of views: {len(views)}")
 
 
@@ -95,10 +95,16 @@ class LitModel(pl.LightningModule):
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
-        if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+        loss_func_name = self.loss_fn.__class__.__name__
+        if 'SupConLoss' in loss_func_name:
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
-            exon_ids = torch.tensor(exon_names, device=features.device)
-            loss = self.loss_fn(features)
+            # exon_names = torch.tensor(exon_names, device=features.device)
+            if loss_func_name == 'weightedSupConLoss':
+                division = 'train'  # 'train', 'val', or 'test'
+                loss = self.loss_fn(features, exon_names, division)
+            else:
+                loss = self.loss_fn(features)
         else:
             if len(z_views) != 2:
                 raise ValueError(
@@ -142,7 +148,8 @@ class LitModel(pl.LightningModule):
         start = time.time()
 
         # Unpack all views and exon_names from batch
-        *views, exon_names = batch
+        # *views, exon_names = batch
+        *views, exon_ids, exon_names = batch
 
         # Forward pass for all views
         start_fwd = time.time()
@@ -154,10 +161,21 @@ class LitModel(pl.LightningModule):
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
-        if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+        #     features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
+        #     exon_ids = torch.tensor(exon_names, device=features.device)
+        #     loss = self.loss_fn(features)
+        # Loss computation and safety checks
+        loss_func_name = self.loss_fn.__class__.__name__
+        if 'SupConLoss' in loss_func_name:
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
-            exon_ids = torch.tensor(exon_names, device=features.device)
-            loss = self.loss_fn(features)
+            # exon_names = torch.tensor(exon_names, device=features.device)
+            if loss_func_name == 'weightedSupConLoss':
+                division = 'val'  # 'train', 'val', or 'test'
+                loss = self.loss_fn(features, exon_names, division)
+            else:
+                loss = self.loss_fn(features)
         else:
             if len(z_views) != 2:
                 raise ValueError(

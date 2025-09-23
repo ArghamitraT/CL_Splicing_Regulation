@@ -37,7 +37,7 @@ NOTES="try"
 python -m scripts.cl_training \
         task=introns_cl \
         embedder="mtsplice"\
-        loss="supcon"\
+        loss="weighted_supcon"\
         tokenizer="onehot_tokenizer"\
         task.global_batch_size=2048\
         trainer.max_epochs=2 \

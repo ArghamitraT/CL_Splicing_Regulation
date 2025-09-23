@@ -6,19 +6,21 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
+import pickle
 
 
-class SupConLoss(nn.Module):
+class weightedSupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
-    def __init__(self, temperature=0.07, contrast_mode='all',
-                 base_temperature=0.07):
-        super(SupConLoss, self).__init__()
+    def __init__(self, temperature=0.07, contrast_mode='one',
+                 base_temperature=0.07, correlation_dir=None):
+        super(weightedSupConLoss, self).__init__()
         self.temperature = temperature
         self.contrast_mode = contrast_mode
         self.base_temperature = base_temperature
+        self.correlation_dir = correlation_dir
 
-    def forward(self, features, labels=None, mask=None):
+    def forward(self, features, exon_name, division, labels=None, mask=None):
         """Compute loss for model. If both `labels` and `mask` are None,
         it degenerates to SimCLR unsupervised loss:
         https://arxiv.org/pdf/2002.05709.pdf
@@ -45,7 +47,7 @@ class SupConLoss(nn.Module):
         if labels is not None and mask is not None:
             raise ValueError('Cannot define both `labels` and `mask`')
         elif labels is None and mask is None:
-            mask = torch.eye(batch_size, dtype=torch.float32).to(device)
+            mask = torch.eye(batch_size, dtype=torch.float32).to(device) # identity matrix batch_size x batch_size
         elif labels is not None:
             labels = labels.contiguous().view(-1, 1)
             if labels.shape[0] != batch_size:
@@ -92,9 +94,44 @@ class SupConLoss(nn.Module):
         )
         mask = mask * logits_mask
 
-        # compute log_prob
+        # # compute log_prob
+        # exp_logits = torch.exp(logits) * logits_mask
+        # log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
+
+        ################################################################
+        # MODIFICATION FOR WEIGHTED LOSS STARTS HERE
+        ################################################################
+
+        corr_file_path = f"{self.correlation_dir}/ASCOT_data/{division}_ExonExon_meanAbsDist_ASCOTname.pkl"
+        with open(corr_file_path, "rb") as f:
+            self.correlation_df = pickle.load(f)
+
+        # 2. For the current batch, get the corresponding correlation weights
+        # Expand exon names to match the anchor and contrast dimensions
+        # e.g., if batch_size=4, anchor_count=2 -> ['e1','e2','e3','e4','e1','e2','e3','e4']
+        anchor_names = exon_name * anchor_count
+        contrast_names = exon_name * contrast_count
+
+        # Efficiently grab the sub-matrix of correlations using pandas
+        # This creates a matrix where W[i, j] is the correlation between
+        # anchor_name[i] and contrast_name[j].
+        correlation_submatrix = self.correlation_df.loc[anchor_names, contrast_names]
+        
+        # Convert to a PyTorch tensor and move to the correct device
+        weights = torch.from_numpy(correlation_submatrix.values).float().to(device)
+
+        # Compute log_prob with the weights applied to the denominator
         exp_logits = torch.exp(logits) * logits_mask
-        log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
+        
+        # 3. Apply the weights before summing to get the new denominator
+        weighted_sum_exp_logits = (weights * exp_logits).sum(1, keepdim=True)
+        
+        # Add a small epsilon for numerical stability to avoid log(0)
+        log_prob = logits - torch.log(weighted_sum_exp_logits + 1e-9)
+        
+        ################################################################
+        # MODIFICATION ENDS HERE
+        ################################################################
 
         # compute mean of log-likelihood over positive
         # modified to handle edge cases when there is no positive pair
@@ -110,5 +147,6 @@ class SupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size).mean()
+        print(f"🦀 weightedSupConLoss: {loss.item():.4f}")
 
         return loss
