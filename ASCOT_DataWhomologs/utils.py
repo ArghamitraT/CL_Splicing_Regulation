@@ -143,6 +143,7 @@ def compute_spearman_corr(expr_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.
 
 
 def _compute_mad_block(X_block: np.ndarray, X_all: np.ndarray) -> np.ndarray:
+    import warnings
     """
     Compute mean absolute distance (MAD) between a block of exons and all exons.
 
@@ -154,7 +155,36 @@ def _compute_mad_block(X_block: np.ndarray, X_all: np.ndarray) -> np.ndarray:
         mad_block: (B × N) array of MAD values
     """
     diffs = np.abs(X_block[:, None, :] - X_all[None, :, :])/100
+    val = np.nanmean(diffs, axis=2)
+    # diffs: shape (B, N, T)
+    valid_counts = np.sum(~np.isnan(diffs), axis=2)  # (B, N)
+    empty_mask = valid_counts == 0                   # True where nanmean warns/returns NaN
+
+    # 1) Total empty pairs (i,j)
+    total_empty_pairs = int(empty_mask.sum())
+
+    # 2) Rows (block exons) that have ≥1 empty pair
+    rows_with_any = int(empty_mask.any(axis=1).sum())
+
+    # 3) Columns (all exons) that have ≥1 empty pair
+    cols_with_any = int(empty_mask.any(axis=0).sum())
+
+    # 4) Rows/cols that are completely empty (every pair empty)
+    rows_all_empty = int(empty_mask.all(axis=1).sum())
+    cols_all_empty = int(empty_mask.all(axis=0).sum())
+
+    # # 5) Per-exon counts (how many partners are empty for each exon)
+    # empty_per_row = empty_mask.sum(axis=1)  # length B
+    # empty_per_col = empty_mask.sum(axis=0)  # length N
+
+    print(f"Total empty (i,j) pairs: {total_empty_pairs}")
+    print(f"Rows with ≥1 empty pair (block exons): {rows_with_any} / {diffs.shape[0]}")
+    print(f"Cols with ≥1 empty pair (all exons):   {cols_with_any} / {diffs.shape[1]}")
+    print(f"Rows completely empty: {rows_all_empty}")
+    print(f"Cols completely empty: {cols_all_empty}")
+    
     return np.nanmean(diffs, axis=2)
+    
 
 def format_exon_ids(mad_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.DataFrame:
     """
@@ -194,23 +224,7 @@ def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: 
     Returns:
         mad_df: DataFrame (N_exons × N_exons)
     """
-
-    # EDIT: 1. Identify and report rows that are entirely NaN
-    all_nan_mask = expr_matrix.isnull().all(axis=1)
-    if all_nan_mask.any():
-        problematic_exons = expr_matrix.index[all_nan_mask].tolist()
-        print(f"⚠️ Warning: Found {len(problematic_exons)} exon(s) with all NaN values. "
-              f"They will be excluded from the calculation and have NaN in the output.")
-        print(f"   Problematic exons: {problematic_exons}")
-
-        # EDIT: 2. Filter out the all-NaN rows before computation
-        expr_matrix_clean = expr_matrix.loc[~all_nan_mask]
-        exon_ids_clean = exon_ids.loc[expr_matrix_clean.index]
-    else:
-        expr_matrix_clean = expr_matrix
-        exon_ids_clean = exon_ids
-
-        
+   
     X = expr_matrix.to_numpy().astype(float)
     N, _ = X.shape
     mad_matrix = np.empty((N, N), dtype=float)
