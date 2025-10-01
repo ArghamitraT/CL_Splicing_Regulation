@@ -7,4 +7,12 @@ filename = "/gpfs/commons/groups/knowles_lab/Karin/Leaflet-analysis-WD/HUMAN_SPL
 adata = sc.read(filename)
 
 # Check basic info
-print(adata)
+# print(adata)
+
+# Searching Cell Ontology and Broad Class
+
+print(adata.obs["cell_ontology_class"].unique())
+# matches = adata.obs["old_index"].str.contains("TSP14_smartseq2_B134547_B20_D101532_B20_LI_proximal_Epithelial")
+# print(matches)
+
+# print(adata.obs["broad_cell_class"].unique())
