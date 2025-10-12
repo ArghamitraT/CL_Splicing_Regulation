@@ -92,8 +92,8 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
     return file_name
 
 """ Parameters: **CHANGE (AT)** """
-running_platform = 'NYGC'
-slurm_file_name = 'Psi_mseMultitissue'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
+running_platform = 'EMPRAI'  # 'NYGC' or 'EMPRAI'
+slurm_file_name = 'Psi_ASCOT_CL'  
 gpu_num = 1
 hour = 1
 memory = 100 # GB
@@ -103,7 +103,7 @@ val_check_interval = 1.0
 global_batch_size = 8192
 embedder = "mtsplice"
 tokenizer = "onehot_tokenizer"
-loss_name =  "multitissue_MSE" # "MTSpliceBCELoss"
+loss_name =  "MTSpliceBCELoss" # "multitissue_MSE" "MTSpliceBCELoss"
 max_epochs = 20
 maxpooling = True
 optimizer = "sgd"
@@ -111,7 +111,8 @@ tokenizer_seq_len = 400
 learning_rate =  1e-3
 freeze_encoder = False
 warm_start = True
-mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
+mtsplice_weights = "exprmnt_2025_09_23__00_38_41"
+# mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
 # mtsplice_weights = "exprmnt_2025_08_16__22_30_50" #2 aug intron
 # mtsplice_weights = "exprmnt_2025_08_16__20_42_52" #10 aug intronexon
 # mtsplice_weights = "exprmnt_2025_08_23__20_30_33" #10 aug intron
@@ -129,8 +130,8 @@ train_mode = "train" # "train" for training, "eval" for evaluation only
 eval_weights = "exprmnt_2025_08_26__17_46_02"
 run_num = 1
 TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl"
-readme_comment = "trial of new code modification"
-wandb_logger_NOTES="trial"
+readme_comment = "CL is trained on ASCOT dataset and weighted CL of 28k alternating exons"
+wandb_logger_NOTES="CL is trained on ASCOT dataset and weighted CL of overlapping alternating exons"
 new_project_wandb = 0 # if you want to create a new project for serial run
 """ Parameters: **CHANGE (AT)** """ 
 

@@ -183,7 +183,7 @@ hydra_dir    = create_job_dir(dir=data_dir, fold_name="hydra")
 checkpoint_dir = create_job_dir(dir=weight_dir, fold_name="checkpoints")
 wandb_dir    = create_job_dir(dir=data_dir, fold_name="wandb")
 
-test_file = server_path + "Contrastive_Learning/data/final_data/ASCOT_finetuning//" + TEST_FILE
+test_file = server_path + "Contrastive_Learning/data/final_data/ASCOT_finetuning/" + TEST_FILE
 name = slurm_file_name
 
 def create_readme():

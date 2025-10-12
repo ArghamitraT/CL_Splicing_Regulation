@@ -7,7 +7,7 @@
 # label_b: SOTA-Impl
 
 # Experiment A (your new model)
-exp_a: exprmnt_2025_08_26__17_50_05
+exp_a: exprmnt_2025_09_23__12_16_31
 label_a: MTspliceIntronExon10aug
 
 # Experiment B (optional: SOTA implementation)
@@ -15,7 +15,7 @@ label_a: MTspliceIntronExon10aug
 # label_b: SOTA-Impl
 
 tissue: Retina - Eye
-running_platform: NYGC
+running_platform: EMPRAI # NYGC
 
 
 # Baseline performance reported in the paper

@@ -159,7 +159,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Analyze many ML runs and test significance vs paper and/or another experiment.")
 
     # New: optional config file (YAML or JSON)
-    p.add_argument("--config", default='/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/scripts/mlrunstats/config.yaml', 
+    # '/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/scripts/mlrunstats/config.yaml'
+    p.add_argument("--config", default='/mnt/home/at3836/Contrastive_Learning/code/ML_model/scripts/mlrunstats/config.yaml', 
                    help="Path to YAML or JSON config (optional)")
 
     p.add_argument("--exp-a", help="Path to experiment A (folder containing run_* subfolders)")

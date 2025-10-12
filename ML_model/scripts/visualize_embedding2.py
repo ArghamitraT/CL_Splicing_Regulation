@@ -46,14 +46,21 @@ from src.datasets.lit import ContrastiveIntronsDataModule
 
 
 ######### parameters #############
-result_dir = "exprmnt_2025_07_06__23_36_50"
+result_dir = "exprmnt_2025_09_23__00_38_41"
 ######### parameters ##############
 # exprmnt_2025_05_04__11_29_05
 
 def get_best_checkpoint(config):
     # simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
-    return f"{str(CONTRASTIVE_ROOT)}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
+    return f"{str(CONTRASTIVE_ROOT)}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/{config.dataset.seq_len}/best-checkpoint.ckpt"
     # return str(CONTRASTIVE_ROOT / "files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt")
+
+
+def get_config_path():
+    # simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
+    return f"{str(CONTRASTIVE_ROOT)}/files/results/{result_dir}/files/configs/"
+    # return str(CONTRASTIVE_ROOT / "files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt")
+
 
 
 def load_pretrained_model(config, device):
@@ -66,18 +73,36 @@ def load_pretrained_model(config, device):
     model.eval()
     return model.model.encoder
 
+def get_tsne_embedding(z0, z1):
+
+    tsne = TSNE(n_components=2, perplexity=30)
+    z0_2d = tsne.fit_transform(z0.cpu().numpy())
+    z1_2d = tsne.fit_transform(z1.cpu().numpy())
+
+    return z0_2d, z1_2d
+
+
 def get_2view_embedding(config, device, view0, view1):
     model = load_pretrained_model(config, device)
     with torch.no_grad():
-        z0 = model(view0.to(device))
-        z1 = model(view1.to(device))
+        if config.embedder._name_ == "MTSplice":
+            z0 = model(view0[0].to(device), view0[1].to(device))
+            z1 = model(view1[0].to(device), view1[1].to(device))
+        else:
+            z0 = model(view0.to(device))
+            z1 = model(view1.to(device))
 
-    embeddings = torch.cat([z0, z1], dim=0).cpu().numpy()
-    tsne = TSNE(n_components=2, perplexity=30)
-    emb_2d = tsne.fit_transform(embeddings)
+    # embeddings = torch.cat([z0, z1], dim=0).cpu().numpy()
+    # tsne = TSNE(n_components=2, perplexity=30)
+    # emb_2d = tsne.fit_transform(embeddings)
 
-    z0_2d = emb_2d[:z0.shape[0]]
-    z1_2d = emb_2d[z0.shape[0]:]
+    # z0_2d = emb_2d[:z0.shape[0]]
+    # z1_2d = emb_2d[z0.shape[0]:]
+
+    # tsne = TSNE(n_components=2, perplexity=30)
+    # z0_2d = tsne.fit_transform(z0.cpu().numpy())
+    # z1_2d = tsne.fit_transform(z1.cpu().numpy())
+    z0_2d, z1_2d = get_tsne_embedding(z0, z1)
 
     plt.figure(figsize=(8, 8))
     for i in range(z0.shape[0]):
@@ -92,15 +117,22 @@ def get_2view_embedding(config, device, view0, view1):
 
     # plt.savefig(f'../figures/tsne{time.strftime("_%Y_%m_%d__%H_%M_%S")}.png')
 
-def all_pos_of_anchor(config, device, view0, train_loader, tokenizer):
+
+
+
+def all_pos_of_anchor(config, device, view0, train_loader, batch):
+    
     model = load_pretrained_model(config, device)
     # anchor_idx = random.randint(0, len(view0) - 1)
     anchor_idx = 10
-    dataset = train_loader.dataset.dataset
+    # dataset = train_loader.dataset.dataset
+    dataset = train_loader.dataset
     exon_name = dataset.exon_names[anchor_idx]
     all_views_dict = dataset.data[exon_name]
 
     augmentations = list(all_views_dict.values())
+    
+
     if callable(tokenizer) and not hasattr(tokenizer, "vocab_size"):
         aug_tensor = torch.stack([
             tokenizer([seq])[0] for seq in augmentations
@@ -163,27 +195,12 @@ def distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer):
     print(f"Distances to negatives (mean): {dist_to_neg.mean():.4f}")
 
 
-# from pathlib import Path
-
-
-# def find_contrastive_root(start_path: Path) -> Path:
-#     """Walk up to find the 'Contrastive_Learning' project root."""
-#     for parent in start_path.resolve().parents:
-#         if parent.name == "Contrastive_Learning":
-#             return parent
-#     raise RuntimeError("Could not find 'Contrastive_Learning' directory in path hierarchy.")
-
-# # Locate current file and set project root
-# current_file = Path(__file__).resolve()
-# CONTRASTIVE_ROOT = find_contrastive_root(current_file)
-# Register Hydra resolver
-# OmegaConf.register_new_resolver("contrastive_root", lambda: str(CONTRASTIVE_ROOT))
 
 # Define main directory for code files (e.g., for saving plots)
 main_dir = str(CONTRASTIVE_ROOT / "code" / "ML_model")
 
-# main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/code/ML_model/'
-@hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
+
+@hydra.main(version_base=None, config_path=get_config_path(), config_name="config.yaml")
 def main(config: OmegaConf):
     # Register Hydra resolvers
     # OmegaConf.register_new_resolver("contrastive_root", lambda: str(CONTRASTIVE_ROOT))
@@ -202,12 +219,14 @@ def main(config: OmegaConf):
     data_module.setup()
 
     train_loader = data_module.train_dataloader()
-    tokenizer = data_module.tokenizer
-    view0, view1 = next(iter(train_loader))
+    # tokenizer = data_module.tokenizer
+    # view0, view1, _, _ = next(iter(train_loader))
+    batch = next(iter(train_loader))
 
     # Choose one of the following:
-    get_2view_embedding(config, device, view0, view1)
-    # all_pos_of_anchor(config, device, view0, train_loader, tokenizer)
+    view0, view1 = batch[0], batch[1]
+    # get_2view_embedding(config, device, view0, view1)
+    all_pos_of_anchor(config, device, view0, train_loader, batch) # choses 1 exon and plots all its augmentations against other exons's anchor view
     # distance_to_pos_and_neg(config, device, view0, train_loader, tokenizer)
 
 if __name__ == "__main__":

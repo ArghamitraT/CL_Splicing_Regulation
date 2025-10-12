@@ -30,7 +30,13 @@ def create_prg_file(prg_file_path):
     cd $HOME
     source ~/.bashrc
     conda activate cl_splicing_regulation3
-    : "${{RUN_IDX:=1}}"   # default to 1 if not set
+    : "${{RUN_IDX:=1}}"
+    : "${{NEW_WANDB_PROJECT:=0}}"    # 1 => one new W&B project for ALL runs in this job
+    PROJECT_NAME="{server_name}{slurm_file_name}{trimester}"   # no _run_ suffix
+    EXTRA_WANDB_PROJECT=""
+    if [ "$NEW_WANDB_PROJECT" = "1" ]; then
+      EXTRA_WANDB_PROJECT=++logger.project="$PROJECT_NAME"
+    fi
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.psi_regression_training \\
@@ -48,12 +54,13 @@ def create_prg_file(prg_file_path):
             aux_models.freeze_encoder={freeze_encoder} \\
             aux_models.warm_start={warm_start} \\
             aux_models.mtsplice_weights={mtsplice_weights} \\
-            aux_models.mode={mtsplice_mode} \\
+            aux_models.mode={mode} \\
             aux_models.mtsplice_BCE={mtsplice_BCE} \\
             dataset.test_files.intronexon={test_file} \\
             ++wandb.dir="'{wandb_dir}'"\\
-            ++logger.name="'{server_name}{slurm_file_name}{trimester}_r'$RUN_IDX"\\
-            ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}/run_'$RUN_IDX"\\
+            $EXTRA_WANDB_PROJECT \\
+            ++logger.name="'{server_name}{slurm_file_name}{trimester}_run_$RUN_IDX'"\\
+            ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}/run_$RUN_IDX'"\\
             ++hydra.run.dir="{hydra_dir}/run_$RUN_IDX"\\
             ++logger.notes="{wandb_logger_NOTES}"
     """
@@ -92,11 +99,12 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
         "#SBATCH --mail-user=at3836@columbia.edu\n"
         "\n"
         f"RUNS={run_num}\n"
+        f"NEW_WANDB_PROJECT={new_project_wandb}\n"   # set once; all runs share one project if =1
         "echo \"SLURM_JOB_ID=$SLURM_JOB_ID\"\n"
         "for i in $(seq 1 $RUNS); do\n"
         "  export RUN_IDX=$i\n"
-        f"  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
-        # Option A: just bash the program script (sequential, same allocation)
+        "  export NEW_WANDB_PROJECT=$NEW_WANDB_PROJECT\n"
+        "  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
         f"  bash {prg_file_path} 2>&1 | tee {output_dir}/out_{job_name}_r${{i}}.${{SLURM_JOB_ID}}.txt\n"
         "  status=${PIPESTATUS[0]}\n"
         "  echo \"===== [$(date)] Finished RUN $i/$RUNS with status ${status} =====\"\n"
@@ -120,6 +128,55 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
     return file_name
 
 
+""" Parameters: **CHANGE (AT)** """
+slurm_file_name = 'Psi_mtsplice_ASCOT_CL'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
+gpu_num = 1
+hour = 15
+memory = 100 # GB
+nthred = 8 # number of CPU
+task = "psi_regression_task" 
+val_check_interval = 1.0
+global_batch_size = 8192
+embedder = "mtsplice"
+tokenizer = "onehot_tokenizer"
+loss_name = "MTSpliceBCELoss"
+max_epochs = 10
+maxpooling = True
+optimizer = "sgd"
+tokenizer_seq_len = 400
+learning_rate =  1e-3
+freeze_encoder = False
+warm_start = True
+
+mtsplice_weights = "exprmnt_2025_09_23__00_38_41" # ASCOT weighted CL, 10 aug
+
+# mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
+# mtsplice_weights = "exprmnt_2025_08_16__22_30_50" #2 aug intron
+# mtsplice_weights = "exprmnt_2025_08_16__20_42_52" #10 aug intronexon
+# mtsplice_weights = "exprmnt_2025_08_23__20_30_33" #10 aug intron
+
+
+# 2 aug
+# weights_5p = "exprmnt_2025_06_01__21_15_08"
+# weight_3p = "exprmnt_2025_06_01__21_16_19"
+# weight_exon = "exprmnt_2025_06_08__21_34_21"
+
+#10 aug
+weights_5p = "exprmnt_2025_08_23__21_20_33"
+weight_3p = "exprmnt_2025_07_08__20_39_38"
+weight_exon = "exprmnt_2025_08_23__21_20_33"
+
+mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
+mtsplice_BCE = 1
+train_mode = "train"
+eval_weights = "exprmnt_2025_08_17__02_17_03"
+run_num = 30
+TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl"
+readme_comment = "CL is trained on ASCOT dataset and weighted CL of 28k alternating exons, aug 10"
+wandb_logger_NOTES="CL is trained on ASCOT dataset and weighted CL of overlapping alternating exons"
+new_project_wandb = 1 # if you want to create a new project for serial run
+""" Parameters: **CHANGE (AT)** """ 
+
 server_name = 'EMPRAI'
 server_path = '/mnt/home/at3836/'
 main_data_dir = server_path+"Contrastive_Learning/files/results"
@@ -136,78 +193,41 @@ checkpoint_dir = create_job_dir(dir= weight_dir, fold_name="checkpoints")
 wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
-""" Parameters: **CHANGE (AT)** """
-slurm_file_name = 'psi_trial'
-gpu_num = 1
-hour = 0
-memory = 50 # GB
-nthred = 8 # number of CPU
-task = "psi_regression_task" 
-val_check_interval = 1.0
-global_batch_size = 8196
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
-loss_name = "MTSpliceBCELoss"
-max_epochs = 2
-maxpooling = True
-optimizer = "sgd"
-tokenizer_seq_len = 400
-learning_rate =  1e-3
-freeze_encoder = False
-warm_start = True
-mtsplice_weights = "exprmnt_2025_07_30__13_10_26"
-mtsplice_mode = "mtsplice"
-mtsplice_BCE = 1
-run_num = 2   # <<--- number of sequential runs on ONE node
-
-TEST_FILE="psi_test_Retina___Eye_psi_MERGED.pkl"
-
-readme_comment = "psi trial"
-wandb_logger_NOTES="psi trial"
-""" Parameters: **CHANGE (AT)** """ 
-
-test_file = server_path+"Contrastive_Learning/data/final_data/ASCOT_finetuning//"+TEST_FILE
-
-
+test_file = server_path+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"+TEST_FILE
 name = slurm_file_name
 
+
 def create_readme():
-    name = os.path.join(data_dir, "readme")
-    readme = open(name, "a")
-    comment = readme_comment
-    readme.write(comment)
-    readme.close()
+    p = os.path.join(data_dir, "readme")
+    with open(p, "a") as f:
+        f.write(readme_comment)
 
-
+create_readme()
 
 def gen_combination():
-    create_readme()
+    
 
     kind = name
     hash_obj = random.getrandbits(25)
-    
-    prg_file_path = os.path.join(job_path, get_file_name(kind= f"prg_{kind}_{hash_obj}"))
-    slurm_file_path = os.path.join(job_path, get_file_name(kind= f"slurm_{kind}_{hash_obj}"))
-    
-    # Build the program script ONCE (it reads RUN_IDX from env each loop)
-    create_prg_file(prg_file_path=prg_file_path) 
-    
-    # Create slurm file that loops sequentially on same node
-    create_slurm_file(
-        prg_file_path=prg_file_path, 
-        job_name=get_file_name(kind=f"{kind}_{hash_obj}", ext=False), 
-        slurm_file_path=slurm_file_path
-    )
 
-    # Keep code snapshot in the same main folder
+    prg_file_path   = os.path.join(job_path, get_file_name(kind=f"prg_{kind}_{hash_obj}"))
+    slurm_file_path = os.path.join(job_path, get_file_name(kind=f"slurm_{kind}_{hash_obj}"))
+
+    create_prg_file(prg_file_path=prg_file_path)
+
+    # snapshot code (optional)
     os.system(f"cp -r {code_dir}/scripts {data_dir}")
     os.system(f"cp -r {code_dir}/configs {data_dir}")
     os.system(f"cp -r {code_dir}/src {data_dir}")
-    
+
     os.system(f"chmod u+x {prg_file_path}")
+
+    # Build SLURM script that loops RUN_IDX=1..run_num
+    job_name = get_file_name(kind=f"{kind}_{hash_obj}", ext=False)
+    create_slurm_file(prg_file_path=prg_file_path, job_name=job_name, slurm_file_path=slurm_file_path)
+
     os.system(f"chmod u+x {slurm_file_path}")
     os.system(f"sbatch {slurm_file_path}")
-                    
 
 def main():
     gen_combination()

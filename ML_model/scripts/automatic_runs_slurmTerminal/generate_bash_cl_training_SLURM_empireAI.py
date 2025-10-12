@@ -118,7 +118,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon10_ASCOT_MTSplice'
+slurm_file_name = 'CL_ASCOT_MTSplice_weightedsupcon10'
 gpu_num = 1
 hour = 5
 memory = 100 # GB
@@ -128,7 +128,7 @@ val_check_interval = 1.0
 global_batch_size = 2048
 embedder = "mtsplice"
 tokenizer = "onehot_tokenizer"
-loss_name = "supcon"
+loss_name = "weighted_supcon"
 max_epochs = 100
 n_augmentations = 10
 fixed_species = False
@@ -157,9 +157,9 @@ TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl"
 
 
 readme_comment = (
-     "ASCOT data, supcon, 10 aug, mtsplice embedder"
+     "ASCOT data, supcon, 10 aug, mtsplice embedder, weighted loss"
 )
-wandb_logger_NOTES="ASCOT data supcon mtsplice 10 aug" ## do NOT use any special character or new line
+wandb_logger_NOTES="ASCOT data supcon mtsplice 10 aug weighted" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

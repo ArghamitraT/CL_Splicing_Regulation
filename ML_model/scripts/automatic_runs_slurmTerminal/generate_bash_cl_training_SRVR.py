@@ -79,7 +79,8 @@ def main():
 
 if __name__ == "__main__":
     """ Environment and parameters """
-    primary_dir = '/home/argha/'
+    # primary_dir = '/home/argha/'
+    primary_dir = '/mnt/home/at3836/'
     main_data_dir = primary_dir+"Contrastive_Learning/files/results"
     job_path = primary_dir+"Contrastive_Learning/files/cluster_job_submission_files"
     code_dir = primary_dir+"Contrastive_Learning/code/ML_model"

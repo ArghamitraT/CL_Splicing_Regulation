@@ -119,6 +119,7 @@ class weightedSupConLoss(nn.Module):
         
         # Convert to a PyTorch tensor and move to the correct device
         weights = torch.from_numpy(correlation_submatrix.values).float().to(device)
+        weights = torch.nan_to_num(weights, nan=0.0)
 
         # Compute log_prob with the weights applied to the denominator
         exp_logits = torch.exp(logits) * logits_mask
@@ -135,7 +136,7 @@ class weightedSupConLoss(nn.Module):
 
         # compute mean of log-likelihood over positive
         # modified to handle edge cases when there is no positive pair
-        # for an anchor point. 
+        # for an anchor point. S
         # Edge case e.g.:- 
         # features of shape: [4,1,...]
         # labels:            [0,1,1,2]
@@ -147,6 +148,6 @@ class weightedSupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size).mean()
-        print(f"🦀 weightedSupConLoss: {loss.item():.4f}")
+        # print(f"🦀 weightedSupConLoss: {loss.item():.4f}")
 
         return loss
