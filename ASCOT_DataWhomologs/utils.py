@@ -183,7 +183,7 @@ def _compute_mad_block(X_block: np.ndarray, X_all: np.ndarray) -> np.ndarray:
     print(f"Rows completely empty: {rows_all_empty}")
     print(f"Cols completely empty: {cols_all_empty}")
     
-    return np.nanmean(diffs, axis=2)
+    return val
     
 
 def format_exon_ids(mad_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.DataFrame:
@@ -208,8 +208,11 @@ def compute_meanAbsoluteDistance(expr_matrix: pd.DataFrame, exon_ids: pd.Series)
     """
     X = expr_matrix.to_numpy().astype(float)
     mad_matrix = _compute_mad_block(X, X)
+    if exon_ids is None:
+        return pd.DataFrame(mad_matrix)
     mad_df = format_exon_ids(mad_matrix, exon_ids)
     return mad_df
+
 
 
 def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: pd.Series, block_size: int = 1000) -> pd.DataFrame:
@@ -236,72 +239,10 @@ def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: 
 
     # mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
     # mad_df.index.name = "exon_id"
+    if exon_ids is None:
+        return pd.DataFrame(mad_matrix)
     mad_df = format_exon_ids(mad_matrix, exon_ids)
     return mad_df
-
-
-
-# def compute_meanAbsoluteDistance(expr_matrix: pd.DataFrame, exon_ids: pd.Series) -> pd.DataFrame:
-#     """
-#     Compute mean absolute distance (MAD) between exons based on tissue profiles.
-
-#     Args:
-#         expr_matrix: DataFrame (N_exons × N_tissues)
-#         exon_ids: Series of exon IDs (length N_exons)
-
-#     Returns:
-#         mad_df: Mean absolute distance matrix (N_exons × N_exons)
-#     """
-#     # Convert to numpy for faster operations
-#     X = expr_matrix.to_numpy()
-
-#     # Expand dimensions to compute pairwise absolute differences
-#     # Shape: (N_exons, N_exons, N_tissues)
-#     diffs = np.abs(X[:, None, :] - X[None, :, :])
-
-#     # Take mean over tissues -> (N_exons × N_exons)
-#     mad_matrix = np.nanmean(diffs, axis=2)
-
-#     # Put back into DataFrame
-#     mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
-#     mad_df.index.name = "exon_id"
-
-#     return mad_df
-
-# def compute_meanAbsoluteDistance_blockwise(expr_matrix: pd.DataFrame, exon_ids: pd.Series, block_size: int = 1000) -> pd.DataFrame:
-#     """
-#     Compute mean absolute distance (MAD) between exons based on tissue profiles,
-#     ignoring NaNs, in memory-efficient blocks.
-
-#     Args:
-#         expr_matrix: DataFrame (N_exons × N_tissues)
-#         exon_ids: Series of exon IDs (length N_exons)
-#         block_size: Number of exons per block for memory efficiency
-
-#     Returns:
-#         mad_df: Mean absolute distance matrix (N_exons × N_exons)
-#     """
-#     X = expr_matrix.to_numpy().astype(float)   # (N_exons × N_tissues)
-#     N, T = X.shape
-
-#     mad_matrix = np.empty((N, N), dtype=float)
-#     mad_matrix.fill(np.nan)  # initialize with NaNs
-
-#     # Process block by block
-#     for i_start in range(0, N, block_size):
-#         i_end = min(i_start + block_size, N)
-#         X_block = X[i_start:i_end]  # shape (B, T)
-
-#         # Pairwise abs diff against all rows (B × N × T)
-#         diffs = np.abs(X_block[:, None, :] - X[None, :, :])
-
-#         # Compute mean along tissue axis ignoring NaNs
-#         mad_block = np.nanmean(diffs, axis=2)
-
-#         mad_matrix[i_start:i_end, :] = mad_block
-
-#     mad_df = pd.DataFrame(mad_matrix, index=exon_ids, columns=exon_ids)
-#     return mad_df
 
 
 def compress_corr_matrix(corr_df: pd.DataFrame):

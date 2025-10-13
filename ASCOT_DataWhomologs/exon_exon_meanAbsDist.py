@@ -5,7 +5,7 @@ import time
 def main():
     start = time.time()
     # File paths
-    file_name = "train"  # "train", "val", "test", "variable"
+    file_name = "test"  # "train", "val", "test", "variable"
     file_ascot = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{file_name}_cassette_exons.csv'
     file_path = file_ascot
     output_path = f"/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{file_name}_ExonExon_meanAbsDist.pkl"
@@ -19,11 +19,6 @@ def main():
     expr_matrix = get_tissue_PSI_ASCOT(df)
 
     exon_ids = df["exon_id"]
-
-    # if file_name == 'train':
-    #     mad_df = compute_meanAbsoluteDistance_blockwise(expr_matrix, exon_ids)
-    # else:   
-    #     mad_df = compute_meanAbsoluteDistance(expr_matrix, exon_ids)
 
     mapping_df = load_csv(Multiz_overlap_file)  # the file you pasted
 
