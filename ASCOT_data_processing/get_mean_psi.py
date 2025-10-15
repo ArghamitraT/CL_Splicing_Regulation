@@ -3,7 +3,8 @@ import numpy as np
 from scipy.special import logit
 
 # Load CSV
-csv_path = "/home/atalukder/Contrastive_Learning/data/ASCOT/test_cassette_exons.csv"
+name = 'variable'  # Replace with your actual name
+csv_path = f"/home/atalukder/Contrastive_Learning/data/ASCOT/{name}_cassette_exons.csv"
 df = pd.read_csv(csv_path)
 test_file = 1
 # Identify tissue columns (after 'exon_boundary')
@@ -27,5 +28,5 @@ df['mean_psi'] = df[tissue_cols].mean(axis=1)
 eps = 1e-6
 df['logit_mean_psi'] = logit(np.clip(df['mean_psi'] / 100, eps, 1-eps))
 
-df.to_csv("/home/atalukder/Contrastive_Learning/data/ASCOT/test_cassette_exons_with_logit_mean_psi.csv", index=False)
+df.to_csv(f"/home/atalukder/Contrastive_Learning/data/ASCOT/{name}_cassette_exons_with_logit_mean_psi.csv", index=False)
 print(df[['exon_id', 'mean_psi', 'logit_mean_psi']].head())

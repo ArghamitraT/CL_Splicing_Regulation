@@ -80,7 +80,7 @@ def get_windows_with_padding(seq, overhang, tissue_acceptor_intron=300, tissue_a
 
 
 # Retina index
-split_name = "variable"
+split_name = "test"
 file = f'/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_{split_name}_Retina___Eye_psi_MERGED.pkl'
 # Replace with your actual file path
 with open(file, "rb") as f:
@@ -129,6 +129,126 @@ import pandas as pd
 import numpy as np
 from scipy.special import logit, expit
 from scipy.stats import spearmanr
+
+# --- 1. SETUP and DATA LOADING ---
+
+# Assume these variables are already defined in your environment:
+# result: np.array of shape (1181, 56) from your model
+# exon_ids: list or array of exon IDs corresponding to the rows of 'result'
+# split_name: e.g., 'validation' or 'test'
+
+# Load ground truth data
+ground_truth_path = f"/home/atalukder/Contrastive_Learning/data/ASCOT/{split_name}_cassette_exons_with_logit_mean_psi.csv"
+ground_truth = pd.read_csv(ground_truth_path)
+
+# --- 2. IDENTIFY TISSUE COLUMNS ---
+
+# Programmatically get the list of 56 tissue names from the ground_truth columns
+# Based on your screenshot, tissues start at column index 9 and end before the last 2 columns.
+cols = list(ground_truth.columns)
+# Find tissue columns
+start_idx = cols.index('exon_boundary') + 1 if 'exon_boundary' in cols else 0
+if 'chromosome' in cols:
+    end_idx = cols.index('chromosome')
+elif 'mean_psi' in cols:
+    end_idx = cols.index('mean_psi')
+else:
+    end_idx = cols.index('logit_mean_psi')
+tissue_names = cols[start_idx:end_idx]
+print(f"Found {len(tissue_names)} tissues to process.")
+
+# --- 3. PREPARE INITIAL PREDICTIONS DATAFRAME ---
+
+# Build a single predictions DataFrame with all 56 tissue predictions
+predictions = pd.DataFrame(result, columns=tissue_names)
+predictions['exon_id'] = exon_ids
+
+# --- 4. LOOP THROUGH TISSUES AND CALCULATE METRICS ---
+
+# Initialize containers to store results from all tissues
+all_psi_predictions = {'exon_id': exon_ids}
+all_delta_psi_predictions = {'exon_id': exon_ids}
+correlation_results = []
+
+# Small epsilon value to prevent logit(0) or logit(1)
+eps = 1e-6
+
+print("\nProcessing tissues...")
+for i, tissue in enumerate(tissue_names):
+    # Merge ground truth and predictions for the current tissue
+    df = pd.merge(
+        ground_truth[['exon_id', 'logit_mean_psi', tissue]],
+        predictions[['exon_id', tissue]],
+        on='exon_id',
+        suffixes=('_true', '_logit_delta_pred')
+    )
+
+    # --- PSI Splicing Calculation ---
+    df['final_predicted_psi'] = expit(df[f'{tissue}_logit_delta_pred'] + df['logit_mean_psi'])
+    
+    # Store the final PSI prediction for this tissue
+    all_psi_predictions[tissue] = df['final_predicted_psi']
+
+    # Spearman for PSI
+    valid_psi = (df[f'{tissue}_true'] >= 0) & (~df[f'{tissue}_true'].isnull())
+    if valid_psi.sum() > 1: # Spearman requires at least 2 data points
+        rho_psi, _ = spearmanr(df.loc[valid_psi, f'{tissue}_true']/100, df.loc[valid_psi, 'final_predicted_psi'])
+    else:
+        rho_psi = np.nan
+
+    # --- Differential PSI Splicing Calculation ---
+    
+    # Store the predicted logit delta
+    all_delta_psi_predictions[tissue] = df[f'{tissue}_logit_delta_pred']
+    
+    # Calculate ground-truth logit-delta for each exon
+    df['tissue_frac_true'] = np.clip(df[f'{tissue}_true'] / 100, eps, 1 - eps)
+    df['truth_delta_psi'] = logit(df['tissue_frac_true']) - df['logit_mean_psi']
+
+    # Spearman for logit-delta
+    valid_delta = valid_psi & (~df['logit_mean_psi'].isnull()) & (~df[f'{tissue}_logit_delta_pred'].isnull())
+    if valid_delta.sum() > 1:
+        rho_delta, _ = spearmanr(
+            df.loc[valid_delta, 'truth_delta_psi'],
+            df.loc[valid_delta, f'{tissue}_logit_delta_pred']
+        )
+    else:
+        rho_delta = np.nan
+        
+    # Store results for this tissue
+    correlation_results.append({
+        'tissue': tissue,
+        'spearman_rho_psi': rho_psi,
+        'spearman_rho_delta_psi': rho_delta
+    })
+    
+    # Print progress
+    print(f"  {i+1}/{len(tissue_names)}: {tissue} | ρ(PSI)={rho_psi:.4f}, ρ(ΔPSI)={rho_delta:.4f}")
+
+
+# --- 5. CONSOLIDATE AND SAVE ALL RESULTS ---
+
+# Create final DataFrames from the collected results
+psi_predictions_df = pd.DataFrame(all_psi_predictions)
+delta_psi_predictions_df = pd.DataFrame(all_delta_psi_predictions)
+correlations_df = pd.DataFrame(correlation_results)
+
+
+# Save the DataFrames to files
+psi_predictions_df.to_csv(f"{split_name}_all_tissues_predicted_psi.tsv", sep="\t", index=False)
+delta_psi_predictions_df.to_csv(f"{split_name}_all_tissues_predicted_logit_delta.tsv", sep="\t", index=False)
+correlations_df.to_csv(f"{split_name}_all_tissues_spearman_correlations.tsv", sep="\t", index=False)
+
+print("\n✅ All processing complete.")
+print("\n--- Summary of Spearman Correlations ---")
+print(correlations_df)
+print("\n--- Preview of Predicted PSI ---")
+print(psi_predictions_df.head())
+print("\n--- Preview of Predicted Logit Delta ---")
+print(delta_psi_predictions_df.head())
+print(f"\nResults saved to:\n- {split_name}_all_tissues_predicted_psi.tsv\n- {split_name}_all_tissues_predicted_logit_delta.tsv\n- {split_name}_all_tissues_spearman_correlations.tsv")
+
+"""
 
 ########################## psi splicing ##########################
 
@@ -201,3 +321,4 @@ rho_delta, _ = spearmanr(
     df.loc[valid, f'{tissue}_logit_delta_pred']
 )
 print(f"\n🔬 Spearman ρ (logit-delta): {rho_delta:.4f}")
+"""
