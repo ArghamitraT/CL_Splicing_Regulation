@@ -17,8 +17,22 @@ psi value from the ASCOT dataset. the dataset is here: /Contrastive_Learning/dat
 * dataset.n_augmentations: how many homologs to use for contrastive learning. for example, if you have human, mouse, rat, and you set dataset.n_augmentations = 2, then for each human exon, you will randomly sample one of the two homologs (mouse or rat) to form a positive pair. if you set dataset.n_augmentations = 3, then you will use both mouse and rat as positives.
 
 * constraints:
-if embedder is mtsplice, then tokenizer = onehot_tokenizer, embedder.seq_len = 400
-if embedder is resnet, then tokenizer = custom_tokenizer, embedder.seq_len = 201
+if embedder is mtsplice, then 
+  tokenizer = onehot_tokenizer, 
+  embedder.seq_len = 400
+  dataset needs to be *merged* pkl files, i.e.
+    TRAIN_FILE="..../ASCOT_data/train_*_merged_filtered_min30Views.pkl"
+    VAL_FILE="..../ASCOT_data/val_*_merged_filtered_min30Views.pkl"
+    TEST_FILE="..../ASCOT_data/test_*_merged_filtered_min30Views.pkl"
+
+  
+if embedder is resnet, 
+  then tokenizer = custom_tokenizer, 
+  embedder.seq_len = 201
+  dataset needs to be separate for 3prime, 5prime and exon pkl files, i.e.
+    TRAIN_FILE="..../ASCOT_data/train_*_3primeIntron_filtered.pkl"
+    VAL_FILE="..../ASCOT_data/val_*_3primeIntron_filtered.pkl"
+    TEST_FILE="..../ASCOT_data/test_*_3primeIntron_filtered.pkl"
 
 
 fine-tuning: finetuning is the downstream specific training

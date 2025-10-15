@@ -118,30 +118,31 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CL_ASCOT_MTSplice_weightedsupcon10'
+slurm_file_name = 'CL_alldata_mtsplice_weightedsupcon10'
 gpu_num = 1
-hour = 5
+hour = 7
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
 global_batch_size = 2048
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
 loss_name = "weighted_supcon"
 max_epochs = 100
 n_augmentations = 10
 fixed_species = False
 maxpooling = True
 optimizer = "sgd"
+# embedder = "resnet"
+# tokenizer = "custom_tokenizer"
+# tokenizer_seq_len = 201
+
+embedder = "mtsplice"
+tokenizer = "onehot_tokenizer"
 tokenizer_seq_len = 400
+
 # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 # VAL_FILE="val_3primeIntron_filtered.pkl"
 # TEST_FILE="test_3primeIntron_filtered.pkl"
-
-# TRAIN_FILE="train_merged_filtered_min30Views.pkl"
-# VAL_FILE="val_merged_filtered_min30Views.pkl"
-# TEST_FILE="test_merged_filtered_min30Views.pkl"
 
 # TRAIN_FILE="train_5primeIntron_filtered.pkl"
 # VAL_FILE="val_5primeIntron_filtered.pkl"
@@ -151,15 +152,31 @@ tokenizer_seq_len = 400
 # VAL_FILE="val_ExonSeq_filtered.pkl"
 # TEST_FILE="test_ExonSeq_filtered.pkl"
 
-TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl"
-VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl"
-TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl"
+TRAIN_FILE="train_merged_filtered_min30Views.pkl"
+VAL_FILE="val_merged_filtered_min30Views.pkl"
+TEST_FILE="test_merged_filtered_min30Views.pkl"
 
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl"
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_3primeIntron_filtered.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_3primeIntron_filtered.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_3primeIntron_filtered.pkl"
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_5primeIntron_filtered.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_5primeIntron_filtered.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_5primeIntron_filtered.pkl"
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_ExonSeq_filtered.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_ExonSeq_filtered.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_ExonSeq_filtered.pkl"
 
 readme_comment = (
-     "ASCOT data, supcon, 10 aug, mtsplice embedder, weighted loss"
+     "All data, supcon, 10 aug, mtsplice embedder, weighted loss"
 )
-wandb_logger_NOTES="ASCOT data supcon mtsplice 10 aug weighted" ## do NOT use any special character or new line
+wandb_logger_NOTES="all data supcon mtsplice ten aug weighted" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

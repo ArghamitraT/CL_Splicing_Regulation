@@ -101,7 +101,7 @@ class LitModel(pl.LightningModule):
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
             # exon_names = torch.tensor(exon_names, device=features.device)
             if loss_func_name == 'weightedSupConLoss':
-                division = 'train'  # 'train', 'val', or 'test'
+                division = 'train'
                 loss = self.loss_fn(features, exon_names, division)
             else:
                 loss = self.loss_fn(features)
@@ -172,7 +172,7 @@ class LitModel(pl.LightningModule):
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
             # exon_names = torch.tensor(exon_names, device=features.device)
             if loss_func_name == 'weightedSupConLoss':
-                division = 'val'  # 'train', 'val', or 'test'
+                division = 'val'
                 loss = self.loss_fn(features, exon_names, division)
             else:
                 loss = self.loss_fn(features)

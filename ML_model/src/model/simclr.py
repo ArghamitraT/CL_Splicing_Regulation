@@ -16,12 +16,6 @@ class SimCLRModule(nn.Module):
             hidden_dim=self.hidden_dim ,
             output_dim=self.projection_dim,
         )
-
-    # def forward(self, x):
-    #     features = self.encoder(x)
-    #     embedding = features.mean(dim=1)
-    #     z = self.projection_head(embedding)
-    #     return z
     
     def forward(self, seql, seqr=None):
         if self.encoder.__class__.__name__ == "MTSpliceEncoder":
