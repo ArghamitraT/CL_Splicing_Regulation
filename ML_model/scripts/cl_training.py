@@ -69,7 +69,7 @@ def get_optimal_num_workers():
     num_cpus = os.cpu_count()
     num_gpus = torch.cuda.device_count()
     return min(num_cpus // max(1, num_gpus), 8) #(AT) modified to run in empireAI
-    # return 1
+    # return 2
 
 
     # num_cpus = os.cpu_count()

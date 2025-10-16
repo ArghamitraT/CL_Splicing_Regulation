@@ -11,6 +11,13 @@ BASE_PATH = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/"
 ASCOT_PATH = os.path.join(BASE_PATH, "ASCOT")
 NEW_SPLIT_PATH = os.path.join(BASE_PATH, "final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data")
 
+def get_npnnanmean(expr_matrix: pd.DataFrame, psi_vector_all_ones: np.ndarray) -> float:
+    """
+    Computes the mean of a numpy array while ignoring NaN values.
+    Returns NaN if all values are NaN.
+    """
+    return np.nanmean(np.abs(expr_matrix.values - psi_vector_all_ones)/100, axis=1)
+
 
 def add_DScore(expr_matrix: pd.DataFrame, weight_matrix_df1: pd.DataFrame) -> None:
 
@@ -21,7 +28,8 @@ def add_DScore(expr_matrix: pd.DataFrame, weight_matrix_df1: pd.DataFrame) -> No
 
     # Step 2: Calculate the MAD for each exon against the "all ones" vector
     # This computes mean(|real_psi_values - 1|) for each exon.
-    mad_from_ones = np.nanmean(np.abs(expr_matrix.values - psi_vector_all_ones)/100, axis=1)
+    # mad_from_ones = np.nanmean(np.abs(expr_matrix.values - psi_vector_all_ones)/100, axis=1)
+    mad_from_ones = get_npnnanmean(expr_matrix, psi_vector_all_ones)
 
     # Step 3: Add the result as a new column to your weight matrix
     # The new Series needs to have the same index as your weight matrix.
@@ -65,10 +73,11 @@ def add_DScore_blockwise(
         print(f"  Processing exons {i_start} to {i_end}...")
 
         # Get the current block of expression values as a numpy array
-        expr_block_values = expr_matrix.iloc[i_start:i_end].values
+        # expr_block_values = expr_matrix.iloc[i_start:i_end].values
 
         # Calculate MAD for just this block
-        mad_from_ones_block = np.mean(np.abs(expr_block_values - psi_vector_all_ones), axis=1)
+        # mad_from_ones_block = np.mean(np.abs(expr_block_values - psi_vector_all_ones), axis=1)
+        mad_from_ones_block = get_npnnanmean(expr_matrix.iloc[i_start:i_end], psi_vector_all_ones)
 
         # Append the results of the block to our list
         d_scores_from_blocks.append(mad_from_ones_block)
