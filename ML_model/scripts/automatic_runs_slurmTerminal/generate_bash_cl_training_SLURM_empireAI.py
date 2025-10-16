@@ -120,7 +120,11 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 """ Parameters: **CHANGE (AT)** """
 slurm_file_name = 'CL_ASCOT_MTSplice_weightedsupcon10'
 gpu_num = 1
+<<<<<<< Updated upstream
 hour = 5
+=======
+hour = 12
+>>>>>>> Stashed changes
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
@@ -134,6 +138,16 @@ n_augmentations = 10
 fixed_species = False
 maxpooling = True
 optimizer = "sgd"
+<<<<<<< Updated upstream
+=======
+
+# embedder = "resnet"
+# tokenizer = "custom_tokenizer"
+# tokenizer_seq_len = 201
+
+embedder = "mtsplice"
+tokenizer = "onehot_tokenizer"
+>>>>>>> Stashed changes
 tokenizer_seq_len = 400
 # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 # VAL_FILE="val_3primeIntron_filtered.pkl"

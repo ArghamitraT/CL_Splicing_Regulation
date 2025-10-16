@@ -129,7 +129,7 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'Psi_mtsplice_ASCOT_CL'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
+slurm_file_name = 'Psi_resnet_allDataWeighted_CL'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
 gpu_num = 1
 hour = 15
 memory = 100 # GB
@@ -137,43 +137,56 @@ nthred = 8 # number of CPU
 task = "psi_regression_task" 
 val_check_interval = 1.0
 global_batch_size = 8192
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
-loss_name = "MTSpliceBCELoss"
 max_epochs = 10
 maxpooling = True
 optimizer = "sgd"
-tokenizer_seq_len = 400
 learning_rate =  1e-3
 freeze_encoder = False
 warm_start = True
+loss_name = "MTSpliceBCELoss"
+mtsplice_BCE = 1
 
-mtsplice_weights = "exprmnt_2025_09_23__00_38_41" # ASCOT weighted CL, 10 aug
+# embedder = "mtsplice"
+# tokenizer = "onehot_tokenizer"
+# tokenizer_seq_len = 400
+# mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
+
+embedder = "resnet"
+tokenizer = "custom_tokenizer"
+tokenizer_seq_len = 201
+mode =  "intronexon" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
+
+mtsplice_weights = "exprmnt_2025_10_15__00_49_37" # all data weighted CL, 10 aug
+# mtsplice_weights = "exprmnt_2025_09_23__00_38_41" # ASCOT weighted CL, 10 aug
 
 # mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
 # mtsplice_weights = "exprmnt_2025_08_16__22_30_50" #2 aug intron
 # mtsplice_weights = "exprmnt_2025_08_16__20_42_52" #10 aug intronexon
 # mtsplice_weights = "exprmnt_2025_08_23__20_30_33" #10 aug intron
 
+####### resnet weights for 5', 3' and exon ##########
+
+# 10 aug, all data weighted CL
+weights_5p = "exprmnt_2025_10_15__00_47_32"
+weight_3p = "exprmnt_2025_10_15__00_46_22"
+weight_exon = "exprmnt_2025_10_15__00_45_15"
 
 # 2 aug
 # weights_5p = "exprmnt_2025_06_01__21_15_08"
 # weight_3p = "exprmnt_2025_06_01__21_16_19"
 # weight_exon = "exprmnt_2025_06_08__21_34_21"
 
-#10 aug
-weights_5p = "exprmnt_2025_08_23__21_20_33"
-weight_3p = "exprmnt_2025_07_08__20_39_38"
-weight_exon = "exprmnt_2025_08_23__21_20_33"
+# 10 aug
+# weights_5p = "exprmnt_2025_08_23__21_14_26"
+# weight_3p = "exprmnt_2025_07_08__20_39_38"
+# weight_exon = "exprmnt_2025_08_23__21_20_33"
 
-mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
-mtsplice_BCE = 1
 train_mode = "train"
 eval_weights = "exprmnt_2025_08_17__02_17_03"
 run_num = 30
 TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl"
-readme_comment = "CL is trained on ASCOT dataset and weighted CL of 28k alternating exons, aug 10"
-wandb_logger_NOTES="CL is trained on ASCOT dataset and weighted CL of overlapping alternating exons"
+readme_comment = "CL is trained on all dataset and weighted CL resnet"
+wandb_logger_NOTES="CL is trained on all dataset and weighted CL resnet"
 new_project_wandb = 1 # if you want to create a new project for serial run
 """ Parameters: **CHANGE (AT)** """ 
 
