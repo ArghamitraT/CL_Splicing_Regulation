@@ -12,6 +12,23 @@ import pandas as pd
 from pathlib import Path
 
 
+############# DEBUG Message ###############
+import inspect
+import os
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️  DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
+
 def resolve_out_dir(ckpt_dir_str: str) -> Path:
     """
     If the checkpoint dir looks like:
@@ -36,13 +53,14 @@ def resolve_out_dir(ckpt_dir_str: str) -> Path:
         return p / "files" / "output_files"
     else:
         return ckpt_dir
-    
+
 
 class PSIRegressionModel(pl.LightningModule):
     def __init__(self, encoder_5p, encoder_3p, encoder_exon, config):
         super().__init__()
         # self.save_hyperparameters(ignore=['encoder'])
-
+        reset_debug_warning()
+        debug_warning("revert line 137")
         self.encoder_5p = encoder_5p
         self.encoder_3p = encoder_3p
         self.config = config
@@ -115,8 +133,9 @@ class PSIRegressionModel(pl.LightningModule):
             emb_5p = self.encoder_5p(x_5p)
             emb_3p = self.encoder_3p(x_3p)
             emb_exon = self.encoder_exon(x_exon)
-            features = torch.cat([emb_5p, emb_exon, emb_3p], dim=-1)
-
+            features = torch.cat([emb_5p.mean(dim=1), emb_exon.mean(dim=1), emb_3p.mean(dim=1)], dim=-1)
+            # features = torch.cat([emb_5p, emb_exon, emb_3p], dim=-1)
+    
         features = self.regressor(features)
         x = self.fc1(features)
         x = self.bn2(x)

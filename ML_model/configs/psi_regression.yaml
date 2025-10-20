@@ -1,11 +1,25 @@
+# defaults:
+#   - _self_
+#   - embedder: mtsplice
+#   - dataset: psi_dataset  # Custom dataset for PSI regression
+#   - task: psi_regression_task
+#   - trainer: default_trainer
+#   - callbacks: default_callbacks
+#   - tokenizer: onehot_tokenizer
+#   - loss: MTSpliceBCELoss # multitissue_MSE  # Custom loss for PSI regression
+#   - model: simclr
+#   - aux_models: psi_regression_model 
+#   - optimizer: sgd
+
+
 defaults:
   - _self_
-  - embedder: mtsplice
+  - embedder: ntv2
   - dataset: psi_dataset  # Custom dataset for PSI regression
   - task: psi_regression_task
   - trainer: default_trainer
   - callbacks: default_callbacks
-  - tokenizer: onehot_tokenizer
+  - tokenizer: hf_tokenizer
   - loss: MTSpliceBCELoss # multitissue_MSE  # Custom loss for PSI regression
   - model: simclr
   - aux_models: psi_regression_model 

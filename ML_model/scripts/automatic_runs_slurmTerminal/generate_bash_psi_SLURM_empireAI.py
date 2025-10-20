@@ -5,6 +5,25 @@ import os
 import time
 import random
 
+
+############# DEBUG Message ###############
+import inspect
+import os
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️  DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
+
+
 trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
 def create_job_dir(dir="", fold_name = ""):
     if dir:
@@ -45,15 +64,16 @@ def create_prg_file(prg_file_path):
             task.global_batch_size={global_batch_size}\\
             trainer.max_epochs={max_epochs}\\
             tokenizer={tokenizer} \\
-            tokenizer.seq_len={tokenizer_seq_len} \\
             embedder={embedder} \\
             loss={loss_name} \\
-            embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
             optimizer.lr={learning_rate} \\
             aux_models.freeze_encoder={freeze_encoder} \\
             aux_models.warm_start={warm_start} \\
             aux_models.mtsplice_weights={mtsplice_weights} \\
+            aux_models.weights_threeprime={weight_3p} \\
+            aux_models.weights_fiveprime={weight_5p} \\
+            aux_models.weights_exon={weight_exon} \\
             aux_models.mode={mode} \\
             aux_models.mtsplice_BCE={mtsplice_BCE} \\
             dataset.test_files.intronexon={test_file} \\
@@ -64,6 +84,11 @@ def create_prg_file(prg_file_path):
             ++hydra.run.dir="{hydra_dir}/run_$RUN_IDX"\\
             ++logger.notes="{wandb_logger_NOTES}"
     """
+
+    reset_debug_warning()
+    debug_warning("add those args later")
+    # embedder.maxpooling={maxpooling} \\
+    # tokenizer.seq_len={tokenizer_seq_len} \\
     with open(prg_file_path, "w") as f:
         f.write(header)
     return prg_file_path
@@ -129,26 +154,43 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'Psi_mtsplice_ASCOT_CL'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
+slurm_file_name = 'Psi_ntv2_cl'  # e.g., 'Contrastive', 'SimCLR', 'SupCon', 'MoCo'
 gpu_num = 1
 hour = 15
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "psi_regression_task" 
 val_check_interval = 1.0
-global_batch_size = 8192
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
-loss_name = "MTSpliceBCELoss"
+global_batch_size = 128
 max_epochs = 10
 maxpooling = True
-optimizer = "sgd"
-tokenizer_seq_len = 400
+optimizer = "adam"
 learning_rate =  1e-3
 freeze_encoder = False
 warm_start = True
+loss_name = "MTSpliceBCELoss"
+mtsplice_BCE = 1
 
-mtsplice_weights = "exprmnt_2025_09_23__00_38_41" # ASCOT weighted CL, 10 aug
+# embedder = "mtsplice"
+# tokenizer = "onehot_tokenizer"
+# tokenizer_seq_len = 400
+# mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
+
+# embedder = "resnet"
+# tokenizer = "custom_tokenizer"
+# tokenizer_seq_len = 201
+# mode =  "intronexon" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
+
+embedder = "ntv2"
+tokenizer = "hf_tokenizer"
+tokenizer_seq_len = 201
+mode =  "intronexon" 
+
+
+####### mtsplice weights ##########
+
+mtsplice_weights = "exprmnt_2025_10_15__00_49_37" # all data weighted CL, 10 aug
+# mtsplice_weights = "exprmnt_2025_09_23__00_38_41" # ASCOT weighted CL, 10 aug
 
 # mtsplice_weights = "exprmnt_2025_07_30__13_10_26" #2 aug intronexon
 # mtsplice_weights = "exprmnt_2025_08_16__22_30_50" #2 aug intron
@@ -156,24 +198,35 @@ mtsplice_weights = "exprmnt_2025_09_23__00_38_41" # ASCOT weighted CL, 10 aug
 # mtsplice_weights = "exprmnt_2025_08_23__20_30_33" #10 aug intron
 
 
+####### ntv2 weights for 5', 3' and exon ##########
+weight_3p = "exprmnt_2025_10_20__00_59_06"
+weight_5p = "exprmnt_2025_10_20__01_00_10"
+weight_exon = "exprmnt_2025_10_20__01_00_54"
+
+
+####### resnet weights for 5', 3' and exon ##########
+
+# 10 aug, all data weighted CL
+# weight_5p = "exprmnt_2025_10_15__00_47_32"
+# weight_3p = "exprmnt_2025_10_15__00_46_22"
+# weight_exon = "exprmnt_2025_10_15__00_45_15"
+
 # 2 aug
-# weights_5p = "exprmnt_2025_06_01__21_15_08"
+# weight_5p = "exprmnt_2025_06_01__21_15_08"
 # weight_3p = "exprmnt_2025_06_01__21_16_19"
 # weight_exon = "exprmnt_2025_06_08__21_34_21"
 
-#10 aug
-weights_5p = "exprmnt_2025_08_23__21_20_33"
-weight_3p = "exprmnt_2025_07_08__20_39_38"
-weight_exon = "exprmnt_2025_08_23__21_20_33"
+# 10 aug
+# weight_5p = "exprmnt_2025_08_23__21_14_26"
+# weight_3p = "exprmnt_2025_07_08__20_39_38"
+# weight_exon = "exprmnt_2025_08_23__21_20_33"
 
-mode =  "mtsplice" # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
-mtsplice_BCE = 1
 train_mode = "train"
 eval_weights = "exprmnt_2025_08_17__02_17_03"
-run_num = 30
+run_num = 10
 TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl"
-readme_comment = "CL is trained on ASCOT dataset and weighted CL of 28k alternating exons, aug 10"
-wandb_logger_NOTES="CL is trained on ASCOT dataset and weighted CL of overlapping alternating exons"
+readme_comment = "contrastive learning trained ntv2\n"
+wandb_logger_NOTES="contrastive learning trained ntv2"
 new_project_wandb = 1 # if you want to create a new project for serial run
 """ Parameters: **CHANGE (AT)** """ 
 
