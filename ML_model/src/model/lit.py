@@ -81,8 +81,10 @@ class LitModel(pl.LightningModule):
 
         # Unpack all views and exon_names from batch
         *views, exon_ids, exon_names = batch
+        # print(f"[Batch {batch_idx}] Number of views: {len(views)}")
 
-        # print(f"\n🧠 getitem took {time.time() - start:.2f}s") # DO NOT ERASE (AT)
+
+        # Forward pass for all views
         start_fwd = time.time()
       
         if self.config.embedder.name_or_path == 'MTSplice':
@@ -90,16 +92,16 @@ class LitModel(pl.LightningModule):
             z_views = [self.forward(seql, seqr) for (seql, seqr) in views]
         else:
             z_views = [self.forward(view) for view in views]
-
-        # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s") # DO NOT ERASE (AT)
-        start_fwd = time.time()
+        # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
         loss_func_name = self.loss_fn.__class__.__name__
         if 'SupConLoss' in loss_func_name:
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
+            # exon_names = torch.tensor(exon_names, device=features.device)
             if loss_func_name == 'weightedSupConLoss':
-                division = 'train'  # 'train', 'val', or 'test'
+                division = 'train'
                 loss = self.loss_fn(features, exon_names, division)
             else:
                 loss = self.loss_fn(features)
@@ -120,9 +122,8 @@ class LitModel(pl.LightningModule):
             sync_dist=True,
             batch_size=z_views[0].shape[0]
         )
-        # print(f"🧠 loss_log took {time.time() - start_fwd:.2f}s") # DO NOT ERASE (AT)
-        # step_time = time.time() - start
-        # print(f"⏱️ batch {batch_idx} took {step_time:.2f}s") # DO NOT ERASE (AT)
+        step_time = time.time() - start
+        # print(f"⏱️ Batch {batch_idx}: {step_time:.2f}s")
 
         # DO NOT ERASE (AT)
         # --- GPU memory logging every N batches ---
@@ -171,7 +172,7 @@ class LitModel(pl.LightningModule):
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
             # exon_names = torch.tensor(exon_names, device=features.device)
             if loss_func_name == 'weightedSupConLoss':
-                division = 'val'  # 'train', 'val', or 'test'
+                division = 'val'
                 loss = self.loss_fn(features, exon_names, division)
             else:
                 loss = self.loss_fn(features)

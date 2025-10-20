@@ -5,6 +5,25 @@ import os
 import time
 import random
 
+
+############# DEBUG Message ###############
+import inspect
+import os
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️  DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
+
+
 trimester = time.strftime("_%Y_%m_%d__%H_%M_%S")
 def create_job_dir(dir="", fold_name = ""):
     if dir:
@@ -38,10 +57,8 @@ def create_prg_file(prg_file_path):
             task.global_batch_size={global_batch_size}\\
             trainer.max_epochs={max_epochs}\\
             tokenizer={tokenizer} \\
-            embedder.seq_len={tokenizer_seq_len}\
             embedder={embedder} \\
             loss={loss_name} \\
-            embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
             dataset.n_augmentations={n_augmentations} \\
             dataset.fixed_species={fixed_species} \\
@@ -54,6 +71,10 @@ def create_prg_file(prg_file_path):
             ++hydra.run.dir={hydra_dir}\\
             ++logger.notes="{wandb_logger_NOTES}"
     """
+    reset_debug_warning()
+    debug_warning("add those args later")
+    # embedder.maxpooling={maxpooling} \\
+    # embedder.seq_len={tokenizer_seq_len}\
 
     # tokenizer.seq_len={tokenizer_seq_len} \\
     
@@ -118,62 +139,70 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CL_ASCOT_MTSplice_weightedsupcon10'
+slurm_file_name = 'CL_ntv2_exon'
 gpu_num = 1
-<<<<<<< Updated upstream
-hour = 5
-=======
-hour = 12
->>>>>>> Stashed changes
+hour = 8
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 1.0
-global_batch_size = 2048
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
-loss_name = "weighted_supcon"
-max_epochs = 100
-n_augmentations = 10
+global_batch_size = 256
+loss_name = "supcon"
+max_epochs = 20
+n_augmentations = 2
 fixed_species = False
 maxpooling = True
 optimizer = "sgd"
-<<<<<<< Updated upstream
-=======
+
+embedder = "ntv2"
+tokenizer = "hf_tokenizer"
+tokenizer_seq_len = 201
 
 # embedder = "resnet"
 # tokenizer = "custom_tokenizer"
 # tokenizer_seq_len = 201
 
-embedder = "mtsplice"
-tokenizer = "onehot_tokenizer"
->>>>>>> Stashed changes
-tokenizer_seq_len = 400
+# embedder = "mtsplice"
+# tokenizer = "onehot_tokenizer"
+# tokenizer_seq_len = 400
+
 # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl"
 # VAL_FILE="val_3primeIntron_filtered.pkl"
 # TEST_FILE="test_3primeIntron_filtered.pkl"
-
-# TRAIN_FILE="train_merged_filtered_min30Views.pkl"
-# VAL_FILE="val_merged_filtered_min30Views.pkl"
-# TEST_FILE="test_merged_filtered_min30Views.pkl"
 
 # TRAIN_FILE="train_5primeIntron_filtered.pkl"
 # VAL_FILE="val_5primeIntron_filtered.pkl"
 # TEST_FILE="test_5primeIntron_filtered.pkl"
 
-# TRAIN_FILE="train_ExonSeq_filtered.pkl"
-# VAL_FILE="val_ExonSeq_filtered.pkl"
-# TEST_FILE="test_ExonSeq_filtered.pkl"
+TRAIN_FILE="train_ExonSeq_filtered.pkl"
+VAL_FILE="val_ExonSeq_filtered.pkl"
+TEST_FILE="test_ExonSeq_filtered.pkl"
 
-TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl"
-VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl"
-TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl"
+# TRAIN_FILE="train_merged_filtered_min30Views.pkl"
+# VAL_FILE="val_merged_filtered_min30Views.pkl"
+# TEST_FILE="test_merged_filtered_min30Views.pkl"
 
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl"
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_3primeIntron_filtered.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_3primeIntron_filtered.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_3primeIntron_filtered.pkl"
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_5primeIntron_filtered.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_5primeIntron_filtered.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_5primeIntron_filtered.pkl"
+
+# TRAIN_FILE="ASCOT_data/train_ASCOT_ExonSeq_filtered.pkl"
+# VAL_FILE="ASCOT_data/val_ASCOT_ExonSeq_filtered.pkl"
+# TEST_FILE="ASCOT_data/test_ASCOT_ExonSeq_filtered.pkl"
 
 readme_comment = (
-     "ASCOT data, supcon, 10 aug, mtsplice embedder, weighted loss"
+     "all data, exon, ntv2, supcon, 2 aug"
 )
-wandb_logger_NOTES="ASCOT data supcon mtsplice 10 aug weighted" ## do NOT use any special character or new line
+wandb_logger_NOTES="all data exon ntv2 2 aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 

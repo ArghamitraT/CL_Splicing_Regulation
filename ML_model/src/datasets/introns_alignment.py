@@ -106,6 +106,96 @@ class ContrastiveIntronsDataset(Dataset):
         return len(self.data)
         
 
+    # import random
+    # reset_debug_warning()
+    # debug_warning("getitem")
+
+    # import random
+
+    # def __getitem__(self, idx):
+
+    #     # ==========================================================================
+    #     # --- DEBUG BLOCK: Force selection from a fixed list of 4 exons ---
+    #     debug_exon_names = [
+    #         'ENST00000275517.8_4_6', 
+    #         'ENST00000423302.7_7_21', 
+    #         'ENST00000003084.11_1_27', 
+    #         'ENST00000003302.8_5_25'
+    #     ]
+        
+    #     # Use the index to cycle through the four names.
+    #     # idx=0 -> name 1, idx=1 -> name 2, ..., idx=4 -> name 1 again
+    #     exon_name = debug_exon_names[idx % len(debug_exon_names)]
+        
+    #     # --- End of DEBUG BLOCK ---
+    #     # ==========================================================================
+
+    
+
+    #     # --- FIXED: use the same species for every sample ---
+    #     if hasattr(self, "fixed_species") and self.fixed_species:
+    #         real_i = self._valid_idx[idx]
+    #         exon_name = self.exon_names[real_i]
+    #         intronic_sequences = self.data[exon_name]
+    #         exon_id = self.exon_name_to_id[exon_name]
+    #         species_sample = self.fixed_species
+    #         # sanity (should never fail if you filtered in __init__)
+    #         missing = [sp for sp in species_sample if sp not in intronic_sequences]
+    #         if missing:
+    #             raise KeyError(f"Exon {exon_name} missing fixed species: {missing}")
+    #     else:
+    #         # Now the rest of the code will use the correct exon_name from the debug block
+    #         exon_id = self.exon_name_to_id[exon_name]
+    #         intronic_sequences = self.data[exon_name]
+    #         all_species = list(intronic_sequences.keys())
+    #         n_available = len(all_species)
+    #         if self.n_augmentations == "all" or self.n_augmentations > n_available:
+    #             species_sample = all_species
+    #         else:
+    #             species_sample = random.sample(all_species, self.n_augmentations)
+
+    #     if self.embedder_name == "MTSplice":
+    #         augmentations = []
+    #         for sp in species_sample:
+    #             intron_5p = intronic_sequences[sp]['5p']
+    #             exon_seq = intronic_sequences[sp]['exon']
+    #             intron_3p = intronic_sequences[sp]['3p']
+
+    #             len_exon = len(exon_seq)
+    #             # full_seq = intron_5p + exon_seq + intron_3p
+    #             full_seq = intron_5p + exon_seq + intron_3p
+                
+    #             # full_seq = intronic_sequences[sp]
+
+    #             if self.embedder.name_or_path == "MTSplice":
+                    
+    #                 windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
+                
+    #                 # windows = self.get_windows_with_padding_intronOnly(
+    #                 #     full_seq, overhang = (self.len_3p, self.len_5p))
+                    
+
+    #                 # augmentations.append((windows['acceptor'], windows['donor']))
+    #                 augmentations.append({'acceptor': windows['acceptor'], 'donor': windows['donor']})
+
+    #             else:
+    #                 augmentations.append(full_seq)
+    #     else:
+    #         exon_name = self.exon_names[idx]
+    #         exon_id = self.exon_name_to_id[exon_name]
+    #         intronic_sequences = self.data[exon_name]
+
+    #         # Number of available augmentations
+    #         all_species = list(intronic_sequences.keys())
+    #         n_available = len(all_species)
+
+    #         # Retrieve the sequences for the sampled species
+    #         augmentations = [intronic_sequences[sp] for sp in species_sample]
+
+
+    #     return augmentations, exon_id, exon_name  # return exon_name for debugging
+
+    
 
     def __getitem__(self, idx):
     
