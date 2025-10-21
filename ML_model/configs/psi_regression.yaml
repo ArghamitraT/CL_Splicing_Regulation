@@ -44,6 +44,6 @@ logger:
   group: ${task._name_}
   notes: ""
   save_dir: ${wandb.dir}  
-  log_model: true
+  log_model: false
   settings:
     init_timeout: 600

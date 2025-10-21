@@ -199,7 +199,7 @@ def create_slurm_header_cl(cfg, paths):
 def create_prg_header_psi(cfg, paths):
     # NOTE: we will export RUN_IDX in the Slurm script loop.
     # We suffix logger.name (and optionally hydra.run.dir) with _r$RUN_IDX
-    test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"+cfg["TEST_FILE"]
+    test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"+cfg["PSI_TEST_FILE"]
     
     header = f"""#!/bin/bash
     set -e
@@ -222,7 +222,7 @@ def create_prg_header_psi(cfg, paths):
             trainer.max_epochs={cfg["max_epochs"]}\\
             tokenizer={cfg["tokenizer"]} \\
             embedder={cfg["embedder"]} \\
-            loss={cfg["loss_name"]} \\
+            loss={cfg["psi_loss_name"]} \\
             optimizer={cfg["optimizer"]} \\
             optimizer.lr={cfg["learning_rate"]} \\
             aux_models.freeze_encoder={cfg["freeze_encoder"]} \\

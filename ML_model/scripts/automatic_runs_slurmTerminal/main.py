@@ -16,13 +16,14 @@ def get_experiment_config():
     cfg = dict(
         which_part = "pretraining", # "pretraining" or "finetuning"
         slurm_file_name = 'Psi_newruntry',
+        
         ##### --- machine configuration
         gpu_num = 1,
         hour = 1,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
-         ##### --- embedder specific
+        ##### --- embedder specific
         embedder = "ntv2",
         tokenizer = "hf_tokenizer",
         tokenizer_seq_len = 201,
@@ -56,7 +57,6 @@ def get_experiment_config():
         # VAL_FILE="val_merged_filtered_min30Views.pkl",    
         # TEST_FILE="test_merged_filtered_min30Views.pkl",
 
-
         # TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl",
         # VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl",
         # TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl",
@@ -77,8 +77,8 @@ def get_experiment_config():
         ##### --- psi specific parameters --- #####
         freeze_encoder = False,
         warm_start = True,
-        # loss_name = "MTSpliceBCELoss",
-        # TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
+        psi_loss_name = "MTSpliceBCELoss",
+        PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
         mode = "intronexon",
         train_mode = "train",
