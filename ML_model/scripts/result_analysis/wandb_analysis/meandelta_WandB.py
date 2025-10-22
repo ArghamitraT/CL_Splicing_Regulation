@@ -15,7 +15,9 @@ api = wandb.Api()
 # folder_name = "EMPRAIPsi_mtsplice_ASCOT_CL_2025_09_23__16_11_33"
 # folder_name = "NYGCPsi_mtspliceOriginal_2025_08_26__17_44_28"
 # folder_name = "EMPRAIPsi_mtsplice_allDataWeighted_CL_2025_10_15__18_14_13"
-folder_name = "EMPRAIPsi_resnet_allDataWeighted_CL_2025_10_15__18_23_11"
+# folder_name = "EMPRAIPsi_resnet_allDataWeighted_CL_2025_10_15__18_23_11"
+# folder_name = "EMPRAIPsi_ntv2_2025_10_19__16_56_25"
+folder_name = "EMPRAIPsi_ntv2_cl_2025_10_20__15_11_51"
 
 project = f"at3836-columbia-university/{folder_name}"
 runs = api.runs(project)
