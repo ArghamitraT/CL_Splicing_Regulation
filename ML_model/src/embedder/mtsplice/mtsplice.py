@@ -28,45 +28,77 @@ def debug_warning(message):
 class ResidualBlock(nn.Module):
     def __init__(self, channels):
         super().__init__()
-        self.block = nn.Sequential(
-            nn.Conv1d(channels, channels, kernel_size=1, padding='same'),
-            nn.BatchNorm1d(channels),
+        # self.block = nn.Sequential(
+        #     nn.Conv1d(channels, channels, kernel_size=3, padding='same'),
+        #     nn.BatchNorm1d(channels, eps=1e-3, momentum=0.01),
+        #     nn.ReLU(inplace=True)
+        # )
+        self.conv1d_block = nn.Conv1d(channels, channels, kernel_size=3, padding='same')
+        self.bn_block = nn.Sequential(
+            nn.BatchNorm1d(channels, eps=1e-3, momentum=0.01),
             nn.ReLU(inplace=True)
         )
 
-    def forward(self, x):
-        return x + self.block(x)
+    def forward(self, bnPrevious_output, convBlockPrevious_output):
+        # return x + self.block(x)
+        convBlock_output = self.conv1d_block(bnPrevious_output)
+        residual_connection = convBlock_output+convBlockPrevious_output
+        bn_output = self.bn_block(residual_connection)
+        return bn_output, convBlock_output
 
 
 class MTSpliceBranch(nn.Module):
-    def __init__(self, seq_len, in_channels=4, hidden_channels=64, num_blocks=9, spline_kwargs={}):
+    def __init__(self, seq_len, in_channels=4, hidden_channels=64, num_blocks=8, spline_kwargs={}):
         super().__init__()
-        layers = [
-            nn.Conv1d(in_channels, hidden_channels, kernel_size=1, padding='same'),
-            nn.BatchNorm1d(hidden_channels)
-        ]
-        for _ in range(num_blocks):
-            layers.append(ResidualBlock(hidden_channels))
-        self.resnet = nn.Sequential(*layers)
+        # layers = [
+        #     nn.Conv1d(in_channels, hidden_channels, kernel_size=11, padding='same'),
+        #     nn.BatchNorm1d(hidden_channels, eps=1e-3, momentum=0.01)
+        # ]
+        # for _ in range(num_blocks):
+        #     layers.append(ResidualBlock(hidden_channels))
+        # self.resnet = nn.Sequential(*layers)
 
-        # Replace placeholder with the real SplineWeight1D layer
+        # First conv + BN to initialize
+        self.initial_conv = nn.Conv1d(in_channels, hidden_channels, kernel_size=11, padding="same")
+        self.initial_bn = nn.BatchNorm1d(hidden_channels, eps=1e-3, momentum=0.01)
+        self.initial_relu = nn.ReLU(inplace=True)
+
+        # Stack of residual blocks
+        self.blocks = nn.ModuleList([ResidualBlock(hidden_channels) for _ in range(num_blocks)])
+
+        # Final spline layer
         self.spline = SplineWeight1D(
             input_steps=seq_len,
             input_filters=hidden_channels,
             **spline_kwargs
         )
 
+
     def forward(self, x):
         # Input x: (B, Length, Channels), e.g., (B, 400, 4)
         # x = x.permute(0, 2, 1)  # (B, C, L) for Conv1d
-        x  = x.float()
-        x = self.resnet(x)      # (B, hidden_C, L)
+        # x  = x.float()
+        # x = self.resnet(x)      # (B, hidden_C, L)
         
-        # Permute for Spline layer, apply it, and permute back
-        x = x.permute(0, 2, 1)  # (B, L, hidden_C) for spline
+        # # Permute for Spline layer, apply it, and permute back
+        # x = x.permute(0, 2, 1)  # (B, L, hidden_C) for spline
+        # x = self.spline(x)
+        # x = x.permute(0, 2, 1)  # (B, hidden_C, L) for main encoder
+
+        # Initial conv
+        conv_out = self.initial_conv(x)
+        bn_out = self.initial_relu(self.initial_bn(conv_out))
+
+        # Residual blocks (chain style)
+        for block in self.blocks:
+            bn_out, conv_out = block(bn_out, conv_out)
+
+        # Spline weighting (same as TF)
+        x =  bn_out.permute(0, 2, 1)  # (B, L, hidden_C) for spline
         x = self.spline(x)
         x = x.permute(0, 2, 1)  # (B, hidden_C, L) for main encoder
         return x
+      
 
 
 class MTSpliceEncoder(BaseEmbedder):
@@ -79,11 +111,11 @@ class MTSpliceEncoder(BaseEmbedder):
         self.branch_r = MTSpliceBranch(seq_len, in_channels, hidden_dim, spline_kwargs=spline_kwargs)
 
         self.global_pool = nn.AdaptiveAvgPool1d(1)
-        self.bn1 = nn.BatchNorm1d(hidden_dim) # *2 because we concatenate hidden_dim from both branches
-        self.fc1 = nn.Linear(hidden_dim, embed_dim)
-        self.bn2 = nn.BatchNorm1d(embed_dim)
-        self.dropout = nn.Dropout(dropout)
-        self.fc2 = nn.Linear(embed_dim, out_dim)
+        self.bn1 = nn.BatchNorm1d(hidden_dim, eps=1e-3, momentum=0.01) # *2 because we concatenate hidden_dim from both branches
+        # self.fc1 = nn.Linear(hidden_dim, embed_dim)
+        # self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
+        # self.dropout = nn.Dropout(dropout)
+        # self.fc2 = nn.Linear(embed_dim, out_dim)
 
     def forward(self, seql, seqr, **kwargs):
         x_l = self.branch_l(seql)  # Output shape: (B, hidden_dim, 400)

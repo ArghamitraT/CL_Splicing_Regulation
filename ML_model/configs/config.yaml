@@ -8,7 +8,7 @@ defaults:
   - tokenizer: onehot_tokenizer
   - loss: weighted_supcon
   - model: simclr
-  - optimizer: adamw
+  - optimizer: adam
 
 hydra:
   run:

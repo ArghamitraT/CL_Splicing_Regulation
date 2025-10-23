@@ -14,33 +14,40 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        which_part = "pretraining", # "pretraining" or "finetuning"
-        slurm_file_name = 'Psi_newruntry',
+        slurm_file_name = 'CL_MTSplNew_CnfdntSpcs',
+        task = "introns_cl", # "psi_regression_task" or "introns_cl"
+        maxpooling = True,
+        global_batch_size = 2048 ,
+        max_epochs = 25,
+        optimizer = "adam",
+        learning_rate =  1e-3,
+        readme_comment = "CL, new corrected mtsplice model, fixed species\n",
+        wandb_logger_NOTES = "CL new corrected mtsplice model fixed species",
+        new_project_wandb = 0,
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 1,
+        hour = 3,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
         ##### --- embedder specific
-        embedder = "ntv2",
-        tokenizer = "hf_tokenizer",
-        tokenizer_seq_len = 201,
+        # embedder = "ntv2",
+        # tokenizer = "hf_tokenizer",
+        # tokenizer_seq_len = 201,
         # embedder = "resnet",
         # tokenizer = "custom_tokenizer",
         # tokenizer_seq_len = 201,
-        # embedder = "mtsplice",
-        # tokenizer = "onehot_tokenizer",
-        # tokenizer_seq_len = 400,
+        embedder = "mtsplice",
+        tokenizer = "onehot_tokenizer",
+        tokenizer_seq_len = 400,
         
         
         ##### --- CL specific parameters
-        task = "introns_cl",
         loss_name = "supcon",
-        fixed_species = False,
-        maxpooling = True,
-        n_augmentations = 2,
+        fixed_species = True,
+        n_augmentations = 7,
+
         # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl",
         # VAL_FILE="val_3primeIntron_filtered.pkl",
         # TEST_FILE="test_3primeIntron_filtered.pkl",
@@ -49,13 +56,13 @@ def get_experiment_config():
         # VAL_FILE="val_5primeIntron_filtered.pkl",
         # TEST_FILE="test_5primeIntron_filtered.pkl",
 
-        TRAIN_FILE="train_ExonSeq_filtered.pkl",
-        VAL_FILE="val_ExonSeq_filtered.pkl",
-        TEST_FILE="test_ExonSeq_filtered.pkl",
+        # TRAIN_FILE="train_ExonSeq_filtered.pkl",
+        # VAL_FILE="val_ExonSeq_filtered.pkl",
+        # TEST_FILE="test_ExonSeq_filtered.pkl",
 
-        # TRAIN_FILE="train_merged_filtered_min30Views.pkl",
-        # VAL_FILE="val_merged_filtered_min30Views.pkl",    
-        # TEST_FILE="test_merged_filtered_min30Views.pkl",
+        TRAIN_FILE="train_merged_filtered_min30Views.pkl",
+        VAL_FILE="val_merged_filtered_min30Views.pkl",    
+        TEST_FILE="test_merged_filtered_min30Views.pkl",
 
         # TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl",
         # VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl",
@@ -76,19 +83,15 @@ def get_experiment_config():
 
         ##### --- psi specific parameters --- #####
         freeze_encoder = False,
-        warm_start = True,
+        warm_start = False,
         psi_loss_name = "MTSpliceBCELoss",
         PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
-        mode = "intronexon",
+        mode = "mtsplice", # mode: or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
         train_mode = "train",
         eval_weights = "exprmnt_2025_08_17__02_17_03",
-        run_num = 10,
+        run_num = 5,
         val_check_interval = 1.0,
-        global_batch_size = 256,
-        max_epochs = 20,
-        optimizer = "sgd",
-        learning_rate =  1e-3,
         
         ##### --- pretrained weights ---
         ####### mtsplice weights ##########
@@ -124,10 +127,6 @@ def get_experiment_config():
         # weight_3p = "exprmnt_2025_07_08__20_39_38",
         # weight_exon = "exprmnt_2025_08_23__21_20_33",
         ##### --- psi specific parameters --- #####
-
-        readme_comment = "new trial\n",
-        wandb_logger_NOTES = "new trial",
-        new_project_wandb = 1,
     )
     return cfg
 

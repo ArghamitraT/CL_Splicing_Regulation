@@ -33,6 +33,7 @@ from src.utils.encoder_init import initialize_encoders_and_model
 
 import importlib
 
+
 def load_model_class(config):
     module_name = f"src.model.{config.aux_models.model_script}"
     module = importlib.import_module(module_name)
@@ -45,6 +46,23 @@ def get_optimal_num_workers():
     return min(num_cpus // max(1, num_gpus), 16)
 
 
+def count_parameters(model):
+    print(model)
+    print("\n" + "="*80)
+    print(f"{'Layer':40s} {'Param #':>15s}")
+    print("="*80)
+    
+    total_params = 0
+    for name, param in model.named_parameters():
+        num_params = param.numel()
+        print(f"{name:40s} {num_params:15,}")
+        total_params += num_params
+    
+    print("="*80)
+    print(f"{'Total parameters:':40s} {total_params:15,}")
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"{'Trainable parameters:':40s} {trainable_params:15,}")
+    print(f"{'Non-trainable parameters:':40s} {total_params - trainable_params:15,}")
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="psi_regression.yaml")
@@ -96,6 +114,12 @@ def main(config: OmegaConf):
 
 
     model = initialize_encoders_and_model(config, root_path)
+    model = model.float()
+
+    # (AT)
+    print("##### MODEL #######")
+    count_parameters(model)
+    print("##### MODEL #######")
 
 
     # Traingi

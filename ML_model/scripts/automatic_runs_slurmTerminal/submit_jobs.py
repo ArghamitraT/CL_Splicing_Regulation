@@ -135,6 +135,8 @@ def create_prg_header_cl(cfg, paths):
             loss={cfg["loss_name"]} \\
             optimizer={cfg["optimizer"]} \\
             dataset.n_augmentations={cfg["n_augmentations"]} \\
+            embedder.maxpooling={cfg["maxpooling"]} \\
+            embedder.seq_len={cfg["tokenizer_seq_len"]}\\
             dataset.fixed_species={cfg["fixed_species"]} \\
             dataset.train_data_file={train_file} \\
             dataset.val_data_file={val_file} \\
@@ -145,11 +147,9 @@ def create_prg_header_cl(cfg, paths):
             ++hydra.run.dir={paths["hydra_dir"]}\\
             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
     """
-    reset_debug_warning()
-    debug_warning("add those args later")
-    # embedder.maxpooling={maxpooling} \\
-    # embedder.seq_len={tokenizer_seq_len}\
-
+    # reset_debug_warning()
+    # debug_warning("add those args later")
+   
     # tokenizer.seq_len={tokenizer_seq_len} \\
     return header
 
@@ -231,6 +231,8 @@ def create_prg_header_psi(cfg, paths):
             aux_models.weights_threeprime={cfg["weight_3p"]} \\
             aux_models.weights_fiveprime={cfg["weight_5p"]} \\
             aux_models.weights_exon={cfg["weight_exon"]} \\
+            embedder.maxpooling={cfg["maxpooling"]} \\
+            tokenizer.seq_len={cfg["tokenizer_seq_len"]} \\
             aux_models.mode={cfg["mode"]} \\
             aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
             dataset.test_files.intronexon={test_file} \\
@@ -242,10 +244,9 @@ def create_prg_header_psi(cfg, paths):
             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
     """
 
-    reset_debug_warning()
-    debug_warning("add those args later")
-    # embedder.maxpooling={maxpooling} \\
-    # tokenizer.seq_len={tokenizer_seq_len} \\
+    # reset_debug_warning()
+    # debug_warning("add those args later")
+    #
 
     return header
 
@@ -382,11 +383,11 @@ def submit_job(cfg, paths):
     job_name = get_file_name(f"{kind}_{hash_obj}", ext=False)
     cfg["job_name"] = job_name
 
-    which_part = cfg["which_part"]
-    if which_part == "pretraining":
+    task = cfg["task"] # "psi_regression_task" or "introns_cl"
+    if task == "introns_cl":
         prg_header =  create_prg_header_cl(cfg, paths)
         slurm_header =  create_slurm_header_cl(cfg, paths)
-    elif which_part == "finetuning":
+    elif task == "psi_regression_task":
         prg_header =  create_prg_header_psi(cfg, paths)
         slurm_header =  create_slurm_header_psi(cfg, paths)
 

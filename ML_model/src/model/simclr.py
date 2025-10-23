@@ -20,7 +20,7 @@ class SimCLRModule(nn.Module):
     def forward(self, seql, seqr=None):
         if self.encoder.__class__.__name__ == "MTSpliceEncoder":
             # seql and seqr already have shape: (B, 4, L)
-            embedding = self.encoder(seql, seqr)
+            embedding = self.encoder(seql.float(), seqr.float())
         else:
             # For other encoders, seql is the full input
             embedding = self.encoder(seql)

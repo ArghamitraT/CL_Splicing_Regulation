@@ -187,7 +187,7 @@ class MTSpliceBCE(pl.LightningModule):
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
         
         self.fc1 = nn.Linear(encoder_output_dim, embed_dim)
-        self.bn2 = nn.BatchNorm1d(embed_dim)
+        self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
         self.dropout = nn.Dropout(dropout)
         self.fc2 = nn.Linear(embed_dim, out_dim)
 
@@ -204,7 +204,7 @@ class MTSpliceBCE(pl.LightningModule):
     def forward(self, x):
         
         seql, seqr = x
-        features = self.encoder(seql, seqr)
+        features = self.encoder(seql.float(), seqr.float())
         x = self.fc1(features)
         x = self.bn2(x)
         x = self.dropout(x)
