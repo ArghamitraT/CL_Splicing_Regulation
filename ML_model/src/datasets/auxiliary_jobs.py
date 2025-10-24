@@ -48,10 +48,13 @@ class PSIRegressionDataset(Dataset):
         self.mode = mode
         self.entries = list(self.data.items())  # Convert dictionary to list format
 
+        reset_debug_warning()
+        debug_warning(".")
+
         # Fixed lengths for MTSplice windowing
-        self.len_5p = 200
+        self.len_5p = 300
         self.len_exon = 100
-        self.len_3p = 200
+        self.len_3p = 300
 
         # reset_debug_warning()
         # debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")

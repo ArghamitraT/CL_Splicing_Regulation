@@ -14,20 +14,20 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'CL_MTSplNew_CnfdntSpcs_WtSupCon',  # name of the slurm file
-        task = "introns_cl", # "psi_regression_task" or "introns_cl"
+        slurm_file_name = 'Psi_MTSpliceNewmodel_300bpIntron',
+        task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        global_batch_size = 4096,
-        max_epochs = 25,
+        global_batch_size = 2048 ,
+        max_epochs = 10,
         optimizer = "adam",
         learning_rate =  1e-3,
-        readme_comment = "CL, new corrected mtsplice model, fixed species, weighted supcon loss\n",
-        wandb_logger_NOTES = "CL new corrected mtsplice model fixed species weighted supcon loss",
-        new_project_wandb = 0,
+        readme_comment = "new corrected mtsplice model, intron ofset 300 bp like MTsplice\n",
+        wandb_logger_NOTES = "new corrected mtsplice model intron ofset 300 bp like MTsplice",
+        new_project_wandb = 1,
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 5,
+        hour = 3,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -42,9 +42,8 @@ def get_experiment_config():
         tokenizer = "onehot_tokenizer",
         tokenizer_seq_len = 400,
         
-        
         ##### --- CL specific parameters
-        loss_name = "weighted_supcon",
+        loss_name = "supcon",
         fixed_species = True,
         n_augmentations = 7,
 
@@ -90,12 +89,12 @@ def get_experiment_config():
         mode = "mtsplice", # mode: or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
         train_mode = "train",
         eval_weights = "exprmnt_2025_08_17__02_17_03",
-        run_num = 5,
+        run_num = 20,
         val_check_interval = 1.0,
         
         ##### --- pretrained weights ---
         ####### mtsplice weights ##########
-        mtsplice_weights = "exprmnt_2025_10_15__00_49_37", # all data weighted CL, 10 aug
+        mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # all data weighted CL, 10 aug
         # mtsplice_weights = "exprmnt_2025_09_23__00_38_41", # ASCOT weighted CL, 10 aug
 
         # mtsplice_weights = "exprmnt_2025_07_30__13_10_26", #2 aug intronexon
