@@ -18,8 +18,8 @@ start_totalcode = time.time()
 
 # === Input arguments ===
 
-division = 'test'
-csv_file_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons_multizOverlaps_exon_intron_positions_computed.csv'
+division = 'train'
+csv_file_path = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/exon_intron_positions_5and3prime/alignment_file_{division}.csv'
 # species_url_csv = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls_hg38.csv'
 species_url_csv = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/species_refSeq_urls.csv'
 refseq_main_folder = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/'
@@ -94,8 +94,8 @@ for species in refseq_files:
     def extract(row):
 
         # (AT)
-        # exon = row['Exon_Name']
-        exon = row['ascot_exon_id']
+        exon = row['Exon_Name']
+        # exon = row['ascot_exon_id']
         chrom = row['Chromosome']
         strand = row['Strand']
 
@@ -131,9 +131,9 @@ for species in refseq_files:
 
 # === Save outputs ===
 base = division
-intron_3p_out = os.path.join(output_path, f"{base}_ASCOT_3primeIntronSeq.pkl")
-intron_5p_out = os.path.join(output_path, f"{base}_ASCOT_5primeIntronSeq.pkl")
-exon_out = os.path.join(output_path, f"{base}_ASCOT_ExonSeq.pkl")
+intron_3p_out = os.path.join(output_path, f"{base}_5primeIntron_filtered.pkl")
+intron_5p_out = os.path.join(output_path, f"{base}_3primeIntron_filtered.pkl")
+exon_out = os.path.join(output_path, f"{base}_ExonSeq_filtered_nonJoint.pkl")
 
 with open(intron_3p_out, 'wb') as f:
     pickle.dump(intron_3prime_dict, f)
@@ -143,6 +143,11 @@ with open(intron_5p_out, 'wb') as f:
 
 with open(exon_out, 'wb') as f:
     pickle.dump(exon_parts_dict, f)
+
+print(f"3' intron exons: {len(intron_3prime_dict)}")
+print(f"5' intron exons: {len(intron_5prime_dict)}")
+print(f"Exon segment exons: {len(exon_parts_dict)}")
+
 
 print(f"\n✅ 3′ intron saved to: {intron_3p_out}")
 print(f"✅ 5′ intron saved to: {intron_5p_out}")

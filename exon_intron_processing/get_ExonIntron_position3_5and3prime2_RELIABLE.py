@@ -7,15 +7,15 @@ def get_5prime_and_3prime_coords(exon_start, exon_end, strand):
     Given exon coordinates and strand, return (5′_start, 5′_end, 3′_start, 3′_end).
     """
     if strand == '+':
-        intron_5p_start = exon_start - 200 if exon_start > 200 else None
-        intron_5p_end = exon_start - 1 if exon_start > 200 else None
+        intron_5p_start = exon_start - 300 if exon_start > 300 else None
+        intron_5p_end = exon_start - 1 if exon_start > 300 else None
         intron_3p_start = exon_end + 1
-        intron_3p_end = exon_end + 200
-    elif strand == '-' and exon_end > 200:
+        intron_3p_end = exon_end + 300
+    elif strand == '-' and exon_end > 300:
         intron_5p_start = exon_end + 1
-        intron_5p_end = exon_end + 200
-        intron_3p_start = exon_start - 200 if exon_start > 200 else None
-        intron_3p_end = exon_start - 1 if exon_start > 200 else None
+        intron_5p_end = exon_end + 300
+        intron_3p_start = exon_start - 300 if exon_start > 300 else None
+        intron_3p_end = exon_start - 1 if exon_start > 300 else None
     else:
         intron_5p_start = intron_5p_end = intron_3p_start = intron_3p_end = None
 
@@ -45,10 +45,9 @@ for e in test_examples:
 # === ✅ Main Processing Script ===
 
 # Input and output file paths
-division = "variable"
-input_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons_multizOverlaps.csv'
+input_file = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
 # input_file = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/dummy_exon_intron_positions_shrt.csv'
-output_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{division}_cassette_exons_multizOverlaps_exon_intron_positions_computed.csv'
+output_file = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions_computedIntron300bpOffset.csv'
 os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
 # === Read CSV and drop original intron columns ===

@@ -2,7 +2,7 @@
 ##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION
 ##NECESSARY JOB SPECIFICATIONS
 #SBATCH --job-name=Simulation      #Set the job name too "JobExample1"
-#SBATCH --time=5:00:00              #Set the wall clock limit to 1hr and 30min,takes 100min/EM iteration **CHANGE (AT)**
+#SBATCH --time=8:00:00              #Set the wall clock limit to 1hr and 30min,takes 100min/EM iteration **CHANGE (AT)**
 #SBATCH --mem=100G              
 #SBATCH --cpus-per-task=2                   
 #SBATCH --mail-type=END,FAIL    
@@ -18,6 +18,8 @@ conda activate cl_splicing_regulation3
 # echo "unzipping completed!"
 
 python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_intronexon_seq3.py
+
+# python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_ExonIntron_position3_5and3prime2_RELIABLE.py
 
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_ExonIntron_position3_5and3prime.py
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/merge_split_TrainingValTest_Data.py

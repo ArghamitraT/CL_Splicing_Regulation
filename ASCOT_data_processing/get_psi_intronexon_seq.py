@@ -8,20 +8,21 @@ import pickle
 script_path = os.path.abspath(__file__)
 base_dir = script_path.split("Contrastive_Learning")[0] + "Contrastive_Learning"
 
-csv_file_path = os.path.join(base_dir, "data/ASCOT/test_cassette_exons.csv")
+csv_file_path = os.path.join(base_dir, "data/ASCOT/train_cassette_exons.csv")
 refseq_path = os.path.join(base_dir, "data/multiz100way/refseq/hg38.fa")
+
 output_path = os.path.join(base_dir, "data/final_data/ASCOT_finetuning/")
 
 os.makedirs(output_path, exist_ok=True)
 
 # === Load data ===
 df = pd.read_csv(csv_file_path)
-df = df[df['Retina - Eye'] != -1.0]  # Only exons with valid PSI values
+# df = df[df['Retina - Eye'] != -1.0]  # Only exons with valid PSI values
 short_exon = 0
 filename = os.path.basename(csv_file_path)           # 'train_cassette_exons.csv'
 prefix = filename.split('_')[0]     
-if prefix == 'variable':
-    df['chromosome'] = df['exon_location'].apply(lambda loc: loc.split(":")[0])
+# if prefix == 'variable':
+#     df['chromosome'] = df['exon_location'].apply(lambda loc: loc.split(":")[0])
 
 
 # === Helper functions ===
@@ -38,15 +39,15 @@ def get_sequence(genome, chrom, start, end, strand):
 
 def calculate_5prime_intron(start, end, strand):
     if strand == '+':
-        return (start - 200, start - 1) if start > 200 else (None, None)
+        return (start - 300, start - 1) if start > 300 else (None, None)
     else:
-        return end + 1, end + 200
+        return end + 1, end + 300
 
 def calculate_3prime_intron(start, end, strand):
     if strand == '+':
-        return end + 1, end + 200
+        return end + 1, end + 300
     else:
-        return (start - 200, start - 1) if start > 200 else (None, None)
+        return (start - 300, start - 1) if start > 300 else (None, None)
 
 def get_exon_segments(genome, chrom, start, end, strand):
     global short_exon
@@ -117,11 +118,11 @@ for _, row in df.iterrows():
 
    
 # === Save ===
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_5primeIntron_sequences.pkl'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_5primeintron_sequences_dict.pkl'), 'wb') as f:
     pickle.dump(dict_5prime, f)
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_3primeintron_sequences_dict'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_3primeintron_sequences_dict.pkl'), 'wb') as f:
     pickle.dump(dict_3prime, f)
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_exon_sequences_dict'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_exon_sequences_dict.pkl'), 'wb') as f:
     pickle.dump(dict_exon, f)
 with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_MERGED.pkl'), 'wb') as f:
     pickle.dump(merged_dict, f)

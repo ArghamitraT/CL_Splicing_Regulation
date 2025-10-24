@@ -36,6 +36,7 @@ df = pd.read_csv(csv_file_path)
 
 # === Initialize dicts ===
 intron_3prime_dict = {}
+intron_5prime_dict = {}
 exon_parts_dict = {}
 
 # === Helpers ===
@@ -103,6 +104,12 @@ for species in refseq_files:
         if intron:
             intron_3prime_dict.setdefault(exon, {})[species] = intron
 
+         # === 5' intron ===
+        intron = get_seq(genome, chrom, row['5prime_Intron_Start'], row['5prime_Intron_End'], strand)
+        if intron:
+            intron_5prime_dict.setdefault(exon, {})[species] = intron
+
+
         # === exon segments ===
         ex_start, ex_end = get_exon_segments(genome, chrom, row['Exon_Start'], row['Exon_End'], strand)
         if ex_start and ex_end:
@@ -124,15 +131,20 @@ for species in refseq_files:
 
 # === Save outputs ===
 base = os.path.basename(csv_file_path).rsplit('.', 1)[0]
-intron_out = os.path.join(output_path, f"{base}_3primeIntronSeq.pkl")
+intron_3p_out = os.path.join(output_path, f"{base}_3primeIntronSeq.pkl")
+intron_5p_out = os.path.join(output_path, f"{base}_5primeIntronSeq.pkl")
 exon_out = os.path.join(output_path, f"{base}_ExonSeq.pkl")
 
-with open(intron_out, 'wb') as f:
+with open(intron_3p_out, 'wb') as f:
     pickle.dump(intron_3prime_dict, f)
+
+with open(intron_5p_out, 'wb') as f:
+    pickle.dump(intron_5prime_dict, f)
 
 with open(exon_out, 'wb') as f:
     pickle.dump(exon_parts_dict, f)
 
-print(f"\n✅ 3′ intron saved to: {intron_out}")
+print(f"\n✅ 3′ intron saved to: {intron_3p_out}")
+print(f"✅ 5′ intron saved to: {intron_5p_out}")
 print(f"✅ Exon start/end saved to: {exon_out}")
 print(f"🕒 Total time: {(time.time() - start_totalcode)/60:.2f} min")

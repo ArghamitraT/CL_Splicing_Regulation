@@ -41,7 +41,7 @@ def load_ground_truth(gt_path: str, pred_shape_M: int) -> tuple[pd.DataFrame, li
 # 2. Merge predictions with ground truth
 # --------------------------
 def merge_predictions(gt: pd.DataFrame, exon_ids, y_pred, tissue_cols: list[str]) -> pd.DataFrame:
-    pred_delta_cols = [f"{t}_pred_delta" for t in tissue_cols]
+    pred_delta_cols = [f"{t}_pred_delta_logit" for t in tissue_cols]
     pred_df = pd.DataFrame(y_pred, columns=pred_delta_cols)
     pred_df.insert(0, 'exon_id', exon_ids)
     merged = gt.merge(pred_df, on='exon_id')
@@ -214,6 +214,8 @@ class MTSpliceBCE(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y, exon_ids = batch
+
+        #y_pred is delta logit
         y_pred = self(x).squeeze()
         
         # if self.config.aux_models.mtsplice_BCE:
