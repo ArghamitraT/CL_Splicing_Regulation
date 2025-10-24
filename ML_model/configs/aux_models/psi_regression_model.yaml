@@ -1,5 +1,5 @@
 name_or_path: psi_regression
-mode: "mtsplice"  # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
+mode: "intronexon"  # or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
 # mode: "3p"  # or "3p", "5p"
 weights_threeprime: "exprmnt_2025_10_20__00_59_06"
 weights_fiveprime: "exprmnt_2025_10_20__01_00_10"
@@ -17,6 +17,6 @@ mtsplice_BCE: 1 # if instead of regression, you would like the auxiliary model t
 hidden_dim: 512
 output_dim: 1  # Single output for PSI value prediction
 freeze_encoder: False  # Set to false for fine-tuning
-warm_start: False
+warm_start: True
 train_mode: "train" # or eval
 eval_weights: ""

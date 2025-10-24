@@ -14,15 +14,15 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_MTSpliceNewmodel_300bpIntron',
+        slurm_file_name = 'Psi_MTSplNew_CnfdntSpcs_BCE_wtdSupCon',
         task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
         global_batch_size = 2048 ,
         max_epochs = 10,
         optimizer = "adam",
         learning_rate =  1e-3,
-        readme_comment = "new corrected mtsplice model, intron ofset 300 bp like MTsplice\n",
-        wandb_logger_NOTES = "new corrected mtsplice model intron ofset 300 bp like MTsplice",
+        readme_comment = "psi, new corrected mtsplice model, fixed species, weighted supcon\n",
+        wandb_logger_NOTES = "psi new corrected mtsplice model fixed species weighted supcon",
         new_project_wandb = 1,
         
         ##### --- machine configuration
@@ -41,6 +41,7 @@ def get_experiment_config():
         embedder = "mtsplice",
         tokenizer = "onehot_tokenizer",
         tokenizer_seq_len = 400,
+        
         
         ##### --- CL specific parameters
         loss_name = "supcon",
@@ -82,7 +83,7 @@ def get_experiment_config():
 
         ##### --- psi specific parameters --- #####
         freeze_encoder = False,
-        warm_start = False,
+        warm_start = True,
         psi_loss_name = "MTSpliceBCELoss",
         PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
@@ -94,7 +95,10 @@ def get_experiment_config():
         
         ##### --- pretrained weights ---
         ####### mtsplice weights ##########
-        mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # all data weighted CL, 10 aug
+        # mtsplice_weights = "exprmnt_2025_10_23__21_40_25", # CL, new corrected mtsplice model, all species, weighted supcon
+        # mtsplice_weights = "exprmnt_2025_10_23__21_17_52", # CL, new corrected mtsplice model, all species
+        mtsplice_weights = "exprmnt_2025_10_23__21_34_15", # CL, new corrected mtsplice model, fixed species, weighted supcon
+        # mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # CL, new corrected mtsplice model, fixed species
         # mtsplice_weights = "exprmnt_2025_09_23__00_38_41", # ASCOT weighted CL, 10 aug
 
         # mtsplice_weights = "exprmnt_2025_07_30__13_10_26", #2 aug intronexon
