@@ -14,11 +14,17 @@ SERVER_RESULT_BASE="${BASE_PATH}/files/results"
 FINAL_DIR_NAME="combined_runs"
 
 # 👇 List your experiment folders here (space separated)
+# EXPERIMENTS=(
+# exprmnt_2025_10_20__15_18_32
+# exprmnt_2025_10_20__15_11_51
+# exprmnt_2025_10_19__16_56_25
+# exprmnt_2025_10_15__18_14_13
+# )
+
 EXPERIMENTS=(
-exprmnt_2025_10_20__15_18_32
-exprmnt_2025_10_20__15_11_51
-exprmnt_2025_10_19__16_56_25
-exprmnt_2025_10_15__18_14_13
+exprmnt_2025_10_22__23_40_20 # MTsplice new model
+exprmnt_2025_10_22__23_35_53 # MTsplice new model, CL, MSE, confident species
+exprmnt_2025_10_22__23_34_30 # MTsplice new model, CL, BCE, confident species
 )
 
 # ===============================

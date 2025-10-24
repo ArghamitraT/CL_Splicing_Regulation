@@ -23,16 +23,17 @@ NOTES="mtspliceBCEresnet variable"
          
 python -m scripts.psi_regression_training \
         task.global_batch_size=2048\
-        trainer.max_epochs=20\
+        trainer.max_epochs=2\
         trainer.val_check_interval=0.5\
         embedder="mtsplice"\
         tokenizer="onehot_tokenizer"\
+        loss="multitissue_MSE"\
         embedder.maxpooling=true\
         optimizer="adam" \
         optimizer.lr=1e-3 \
         aux_models.freeze_encoder=false\
         aux_models.warm_start=false\
-        aux_models.mtsplice_weights="exprmnt_2025_07_30__13_10_26"\
+        aux_models.mtsplice_weights="exprmnt_2025_10_22__19_42_17"\
         aux_models.mode="mtsplice"\
         aux_models.mtsplice_BCE=1\
         logger.name="Psi__trial__$(date +%Y%m%d_%H%M%S)" \

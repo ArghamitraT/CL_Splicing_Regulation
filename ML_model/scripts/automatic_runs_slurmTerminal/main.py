@@ -14,20 +14,20 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'CL_MTSplNew_CnfdntSpcs',
+        slurm_file_name = 'CL_MTSplNew_CnfdntSpcs_WtSupCon',  # name of the slurm file
         task = "introns_cl", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        global_batch_size = 2048 ,
+        global_batch_size = 4096,
         max_epochs = 25,
         optimizer = "adam",
         learning_rate =  1e-3,
-        readme_comment = "CL, new corrected mtsplice model, fixed species\n",
-        wandb_logger_NOTES = "CL new corrected mtsplice model fixed species",
+        readme_comment = "CL, new corrected mtsplice model, fixed species, weighted supcon loss\n",
+        wandb_logger_NOTES = "CL new corrected mtsplice model fixed species weighted supcon loss",
         new_project_wandb = 0,
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 3,
+        hour = 5,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -44,7 +44,7 @@ def get_experiment_config():
         
         
         ##### --- CL specific parameters
-        loss_name = "supcon",
+        loss_name = "weighted_supcon",
         fixed_species = True,
         n_augmentations = 7,
 

@@ -86,9 +86,9 @@ NOTES="try"
 python -m scripts.cl_training \
         task=introns_cl \
         embedder="mtsplice"\
-        loss="supcon"\
+        loss="weighted_supcon"\
         tokenizer="onehot_tokenizer"\
-        task.global_batch_size=2048\
+        task.global_batch_size=4096\
         trainer.max_epochs=2 \
         trainer.val_check_interval=1.0\
         optimizer="adam" \
