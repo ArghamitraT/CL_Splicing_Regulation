@@ -61,15 +61,55 @@ def setup_datamodule_for_validation(config: DictConfig) -> torch.utils.data.Data
     """Initializes and sets up the DataModule for the validation stage."""
     print("\n--- Setting up DataModule for VALIDATION set ---")
     data_module = PSIRegressionDataModule(config)
-    data_module.setup(stage="validate")
+    data_module.setup()
     val_dataloader = data_module.val_dataloader()
     if not val_dataloader:
          raise RuntimeError("Validation dataloader not found or empty.")
     print(f"Validation dataset size: {len(val_dataloader.dataset)}")
     return val_dataloader
 
-def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | None) -> dict:
-    """Finds and validates checkpoint paths for specified run indices."""
+# def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | None) -> dict:
+#     """Finds and validates checkpoint paths for specified run indices."""
+#     print("\n--- Identifying Ensemble Runs ---")
+#     if not ensemble_base_path.is_dir():
+#         raise FileNotFoundError(f"Base experiment path not found: {ensemble_base_path}")
+
+#     all_run_dirs = sorted([d for d in ensemble_base_path.iterdir() if d.is_dir() and d.name.startswith('run_')])
+
+#     selected_run_dirs = []
+#     if run_indices and len(run_indices) > 0:
+#         print(f"Selecting specific runs: {run_indices}")
+#         run_map = {int(d.name.split('_')[-1]): d for d in all_run_dirs}
+#         for idx in run_indices:
+#             if idx in run_map:
+#                 selected_run_dirs.append(run_map[idx])
+#             else:
+#                 print(f"Warning: Run index {idx} specified but directory not found.")
+#     else:
+#         print("Selecting all found runs.")
+#         selected_run_dirs = all_run_dirs
+
+#     if not selected_run_dirs:
+#         raise FileNotFoundError(f"No valid run directories found or selected in {ensemble_base_path}")
+
+#     print(f"Found {len(selected_run_dirs)} runs for the ensemble:")
+#     valid_checkpoints = {} # {run_dir_path: ckpt_path_str}
+#     for run_dir in selected_run_dirs:
+#         ckpt_path = run_dir / "best-checkpoint.ckpt"
+#         if ckpt_path.exists():
+#             print(f"  - {run_dir.name} -> {ckpt_path.name}")
+#             valid_checkpoints[run_dir] = str(ckpt_path)
+#         else:
+#             print(f"Warning: Checkpoint not found in {run_dir}. Skipping this run.")
+
+#     if not valid_checkpoints:
+#         raise FileNotFoundError("No valid checkpoints found for any selected run.")
+
+#     print(f"Using {len(valid_checkpoints)} models in the ensemble.")
+#     return valid_checkpoints
+
+def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | None, config: DictConfig) -> dict: # Added config
+    """Finds and validates checkpoint paths inside the deeper structure."""
     print("\n--- Identifying Ensemble Runs ---")
     if not ensemble_base_path.is_dir():
         raise FileNotFoundError(f"Base experiment path not found: {ensemble_base_path}")
@@ -77,7 +117,11 @@ def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | 
     all_run_dirs = sorted([d for d in ensemble_base_path.iterdir() if d.is_dir() and d.name.startswith('run_')])
 
     selected_run_dirs = []
-    if run_indices and len(run_indices) > 0:
+    # --- Auto-detect logic ---
+    if not run_indices: # Handles None or empty list
+        print("Selecting all found run_* directories.")
+        selected_run_dirs = all_run_dirs
+    else:
         print(f"Selecting specific runs: {run_indices}")
         run_map = {int(d.name.split('_')[-1]): d for d in all_run_dirs}
         for idx in run_indices:
@@ -85,28 +129,37 @@ def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | 
                 selected_run_dirs.append(run_map[idx])
             else:
                 print(f"Warning: Run index {idx} specified but directory not found.")
-    else:
-        print("Selecting all found runs.")
-        selected_run_dirs = all_run_dirs
+    # --- End Auto-detect ---
 
     if not selected_run_dirs:
         raise FileNotFoundError(f"No valid run directories found or selected in {ensemble_base_path}")
 
     print(f"Found {len(selected_run_dirs)} runs for the ensemble:")
     valid_checkpoints = {} # {run_dir_path: ckpt_path_str}
+
+    # --- Construct the deeper path using config info ---
+    # Example: 'psi_regression/MTsplice/201' - adjust if needed
+    model_specific_subdir = Path(config.task._name_) / config.embedder._name_ / str(config.dataset.seq_len)
+    print(f"Expecting checkpoints inside subdirectory: {model_specific_subdir}")
+    # --- End subdirectory construction ---
+
     for run_dir in selected_run_dirs:
-        ckpt_path = run_dir / "best-checkpoint.ckpt"
+        # --- MODIFIED PATH ---
+        model_run_path = run_dir / model_specific_subdir
+        ckpt_path = model_run_path / "best-checkpoint.ckpt"
+        # --- END MODIFIED PATH ---
+
         if ckpt_path.exists():
-            print(f"  - {run_dir.name} -> {ckpt_path.name}")
-            valid_checkpoints[run_dir] = str(ckpt_path)
+            print(f"  - {run_dir.name} -> {model_specific_subdir / ckpt_path.name}")
+            valid_checkpoints[model_run_path] = str(ckpt_path) # Store the deeper path as key now
         else:
-            print(f"Warning: Checkpoint not found in {run_dir}. Skipping this run.")
+            print(f"Warning: Checkpoint not found at {ckpt_path}. Skipping this run.")
 
     if not valid_checkpoints:
         raise FileNotFoundError("No valid checkpoints found for any selected run.")
 
     print(f"Using {len(valid_checkpoints)} models in the ensemble.")
-    return valid_checkpoints
+    return valid_checkpoints # Keys are now the deeper model_run_path
 
 def generate_predictions_from_checkpoints(
     valid_checkpoints: dict,
@@ -118,37 +171,42 @@ def generate_predictions_from_checkpoints(
     print("\n--- Running Validation via trainer.test() and Loading Predictions ---")
     all_predictions_dfs = []
 
-    trainer = create_trainer(config, prediction_mode=True)
-    base_model = initialize_encoders_and_model(config, root_path).float()
+    trainer = create_trainer(config)
+    base_model = initialize_encoders_and_model(config, root_path)
     num_ensemble_models = len(valid_checkpoints)
+    base_ensemble_output_dir = Path(config.ensemble.output_subdir)
 
     for i, (run_dir, ckpt_path) in enumerate(valid_checkpoints.items()):
         print(f"Processing model {i+1}/{num_ensemble_models} from {run_dir.name}...")
 
-        try:
-             trainer.test(model=base_model, dataloaders=dataloader, ckpt_path=ckpt_path)
-        except Exception as e:
-            print(f"  -> ERROR during trainer.test: {e}. Skipping run.")
-            continue
+        # --- Modify config for this specific run ---
+        run_specific_output_dir = base_ensemble_output_dir / f'run_{str(i+1)}'
+        # Ensure OmegaConf allows modification even if struct was restored
+        OmegaConf.set_struct(config.ensemble, False) 
+        config.ensemble.output_subdir = str(run_specific_output_dir) 
+        print(f"  -> Setting output dir for test hook to: {config.ensemble.output_subdir}")
+        # OmegaConf.set_struct(config.ensemble, True) # Optional: restore struct
 
-        pred_file_path = run_dir / raw_pred_filename
-        if pred_file_path.exists():
-            try:
-                pred_df = pd.read_csv(pred_file_path, sep='\t')
-                if 'exon_id' not in pred_df.columns:
-                     print(f"  -> ERROR: 'exon_id' missing in {pred_file_path}. Skipping.")
-                     continue
-                all_predictions_dfs.append(pred_df.set_index('exon_id'))
-                print(f"  -> Loaded predictions DF shape: {pred_df.shape}")
-            except Exception as e:
-                 print(f"  -> ERROR loading/processing {pred_file_path}: {e}. Skipping.")
-        else:
-            print(f"  -> ERROR: Prediction file not found at {pred_file_path}. Skipping run.")
+        trainer.test(model=base_model, dataloaders=dataloader, ckpt_path=ckpt_path)
+        
+    #     pred_file_path = run_dir / raw_pred_filename
+    #     if pred_file_path.exists():
+    #         try:
+    #             pred_df = pd.read_csv(pred_file_path, sep='\t')
+    #             if 'exon_id' not in pred_df.columns:
+    #                  print(f"  -> ERROR: 'exon_id' missing in {pred_file_path}. Skipping.")
+    #                  continue
+    #             all_predictions_dfs.append(pred_df.set_index('exon_id'))
+    #             print(f"  -> Loaded predictions DF shape: {pred_df.shape}")
+    #         except Exception as e:
+    #              print(f"  -> ERROR loading/processing {pred_file_path}: {e}. Skipping.")
+    #     else:
+    #         print(f"  -> ERROR: Prediction file not found at {pred_file_path}. Skipping run.")
 
-    if not all_predictions_dfs:
-         raise RuntimeError("Failed to load predictions from any run's output file.")
+    # if not all_predictions_dfs:
+    #      raise RuntimeError("Failed to load predictions from any run's output file.")
 
-    return all_predictions_dfs
+    # return all_predictions_dfs
 
 def average_predictions(all_predictions_dfs: list[pd.DataFrame]) -> pd.DataFrame:
     """Averages predictions across multiple runs, aligning by exon_id."""
@@ -253,26 +311,23 @@ def main_evaluate_ensemble(config: DictConfig):
     ensemble_base_path = results_base_dir / config.ensemble.base_experiment_path
     save_dir = ensemble_base_path / config.ensemble.output_subdir
 
-    try:
-        val_dataloader = setup_datamodule_for_validation(config)
-        valid_checkpoints = identify_ensemble_checkpoints(
-            ensemble_base_path, OmegaConf.to_object(config.ensemble.run_indices)
-        )
-        all_predictions_dfs = generate_predictions_from_checkpoints(
-            valid_checkpoints, config, val_dataloader
-        )
-        averaged_preds_df = average_predictions(all_predictions_dfs)
-        save_dataframe(averaged_preds_df, save_dir, config.ensemble.predictions_filename)
-        calculate_and_save_ensemble_metrics(
-            averaged_preds_df,
-            config.data,
-            save_dir,
-            config.ensemble.metrics_filename
-        )
-    except (FileNotFoundError, RuntimeError, ValueError, KeyError, Exception) as e:
-        print(f"\n--- SCRIPT FAILED ---")
-        print(f"Error: {e}")
-        sys.exit(1)
+    
+    val_dataloader = setup_datamodule_for_validation(config)
+    valid_checkpoints = identify_ensemble_checkpoints(
+        ensemble_base_path, config.ensemble.run_indices, config
+    )
+    all_predictions_dfs = generate_predictions_from_checkpoints(
+        valid_checkpoints, config, val_dataloader
+    )
+    averaged_preds_df = average_predictions(all_predictions_dfs)
+    save_dataframe(averaged_preds_df, save_dir, config.ensemble.predictions_filename)
+    calculate_and_save_ensemble_metrics(
+        averaged_preds_df,
+        config.data,
+        save_dir,
+        config.ensemble.metrics_filename
+    )
+
 
     print("\n--- Ensemble Evaluation Finished Successfully ---")
 
@@ -281,17 +336,21 @@ def main_evaluate_ensemble(config: DictConfig):
 @hydra.main(version_base=None, config_path="../configs", config_name="psi_regression.yaml")
 def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression.yaml
 
+
+    # Parameters #
+    experiment_folder = "exprmnt_2025_10_22__17_47_17"
+    output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
+
     # --- Define Ensemble Parameters Here ---
-    # These will be MERGED into the config loaded by Hydra
     ensemble_params = OmegaConf.create({
         "ensemble": {
-            # --- USER INPUT NEEDED HERE ---
-            "base_experiment_path": "exprmnt_2025_10_22__17_47_17/weights/checkpoints/psi_regression/MTsplice/201", # <<< UPDATE THIS if needed
-            "run_indices": [1, 2, 3, 4, 5, 6, 7, 8], # <<< UPDATE THIS if needed
-            # "run_indices": [], # Use empty list or None for all runs
-            "output_subdir": "ensemble_evaluation_from_test",
-            "metrics_filename": "ensemble_metrics_by_tissue.tsv",
-            "predictions_filename": "ensemble_raw_predictions_all_tissues.tsv"
+            # --- CORRECTED PATH ---
+            "base_experiment_path": f"{experiment_folder}/weights/checkpoints", # <<< Stops at checkpoints
+            # --- OPTION 1: Specify runs ---
+            # "run_indices": [1, 2, 3, 4, 5, 6, 7, 8], # <<< Keep if you want specific runs
+            # --- OPTION 2: Auto-detect all runs ---
+            "run_indices": [], # <<< Use empty list or null to find all run_* folders
+            "output_subdir": output_subdir,
         }
     })
 
@@ -300,10 +359,6 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
 
     # --- Merge ensemble params into the loaded config ---
     config = OmegaConf.merge(config, ensemble_params)
-
-    # --- Optional: Restore struct mode after merging ---
-    OmegaConf.set_struct(config, True)
-    print_config(config, resolve=True)
 
     # --- GPU Selection (Copied from your example) ---
     def get_free_gpu():
@@ -322,6 +377,17 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
         free_gpu = get_free_gpu()
         os.environ["CUDA_VISIBLE_DEVICES"] = str(free_gpu)
         print(f"Using GPU {free_gpu}: {torch.cuda.get_device_name(0)}")
+
+    config.trainer.max_epochs = 1
+    config.trainer.logger = None
+    config.trainer.enable_checkpointing = False
+    config.aux_models.eval_weights = None
+    config.aux_models.train_mode = "eval"
+    config.aux_models.warm_start = False
+    config.dataset.test_files = config.dataset.val_files
+
+    # --- Optional: Restore struct mode *after* all modifications ---
+    OmegaConf.set_struct(config, True)
 
     # --- Run the main evaluation function with the final config ---
     main_evaluate_ensemble(config)

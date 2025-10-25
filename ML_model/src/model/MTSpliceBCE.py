@@ -52,8 +52,26 @@ def merge_predictions(gt: pd.DataFrame, exon_ids, y_pred, tissue_cols: list[str]
 # 3. Compute final PSI predictions (in %)
 # --------------------------
 def compute_final_psi(merged: pd.DataFrame, tissue_cols: list[str]) -> pd.DataFrame:
-    logit_mean = merged['logit_mean_psi'].to_numpy()[:, None]  # (N,1)
-    pred_delta_mat = merged[[f"{t}_pred_delta" for t in tissue_cols]].to_numpy()
+
+    suffix = None
+    if tissue_cols: # Check if tissue_cols is not empty
+        first_tissue = tissue_cols[0]
+        if f"{first_tissue}_pred_delta_logit" in merged.columns:
+            suffix = "_pred_delta_logit"
+        elif f"{first_tissue}_pred_delta" in merged.columns:
+            suffix = "_pred_delta"
+        logit_mean = merged['logit_mean_psi'].to_numpy()[:, None]  # (N,1)
+
+    # --- Build the column list using the detected suffix ---
+    pred_cols = [f"{t}{suffix}" for t in tissue_cols]
+
+    # --- Select columns and convert to NumPy array ---
+    # Add a check to ensure all columns actually exist before selecting
+    missing_cols = [col for col in pred_cols if col not in merged.columns]
+    if missing_cols:
+        raise ValueError(f"Missing expected prediction columns after determining suffix: {missing_cols}")
+
+    pred_delta_mat = merged[pred_cols].to_numpy()
     
     
     final_psi_pct = 100.0 * expit(pred_delta_mat + logit_mean)  # (N,M)
@@ -72,7 +90,21 @@ def compute_per_tissue_corr(merged: pd.DataFrame, pred_psi_df: pd.DataFrame, tis
     for t in tissue_cols:
         truth_psi_pct = merged[t]
         pred_psi_pct_t = pred_psi_df[t]
-        pred_delta_t = merged[f"{t}_pred_delta"]
+
+        # pred_delta_t = merged[f"{t}_pred_delta"]
+        # --- Dynamically select the prediction delta column ---
+        col_logit = f"{t}_pred_delta_logit"
+        col_psi = f"{t}_pred_delta"
+
+        if col_logit in merged.columns:
+            pred_delta_t = merged[col_logit]
+            
+        elif col_psi in merged.columns:
+            pred_delta_t = merged[col_psi]
+            
+        else:
+            # Handle the error if neither column is found for this tissue
+            raise KeyError(f"Neither '{col_logit}' nor '{col_psi}' found in 'merged' DataFrame columns for tissue '{t}'.")
 
         valid = (
             truth_psi_pct.between(0, 100) &
@@ -306,8 +338,19 @@ class MTSpliceBCE(pl.LightningModule):
         import pandas as pd
 
         # ---- Where to save
-        out_dir = resolve_out_dir(self.config.callbacks.model_checkpoint.dirpath)
-        out_dir.mkdir(parents=True, exist_ok=True)
+        out_dir_ensemble = None
+
+        try:
+            out_dir_ensemble = self.config.ensemble.output_subdir
+        except:
+            out_dir_ensemble = None
+
+        if out_dir_ensemble:
+            out_dir = Path(out_dir_ensemble)
+            out_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            out_dir = resolve_out_dir(self.config.callbacks.model_checkpoint.dirpath)
+            out_dir.mkdir(parents=True, exist_ok=True)
 
         if self.config.aux_models.mtsplice_BCE:
 
