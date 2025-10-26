@@ -86,7 +86,7 @@ NOTES="try"
 python -m scripts.cl_training \
         task=introns_cl \
         embedder="mtsplice"\
-        loss="supcon"\
+        loss="weighted_supcon"\
         tokenizer="onehot_tokenizer"\
         task.global_batch_size=2048\
         trainer.max_epochs=2 \
@@ -96,7 +96,7 @@ python -m scripts.cl_training \
         logger.name="cl_trial_$(date +%Y%m%d_%H%M%S)"\
         logger.notes="$NOTES"\
         dataset.n_augmentations=7 \
-        dataset.fixed_species=true\
+        dataset.fixed_species=false\
         dataset.train_data_file=$TRAIN_DATA_FILE \
         dataset.val_data_file=$VAL_DATA_FILE \
         dataset.test_data_file=$TEST_DATA_FILE

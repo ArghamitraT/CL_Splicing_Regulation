@@ -21,11 +21,24 @@ FINAL_DIR_NAME="combined_runs"
 # exprmnt_2025_10_15__18_14_13
 # )
 
+# EXPERIMENTS=(
+# exprmnt_2025_10_22__23_40_20 # MTsplice new model
+# exprmnt_2025_10_22__23_35_53 # MTsplice new model, CL, MSE, confident species
+# exprmnt_2025_10_22__23_34_30 # MTsplice new model, CL, BCE, confident species
+# )
+
+# EXPERIMENTS=(
+# exprmnt_2025_10_24__16_11_26 # EMPRAIPsi_MTSplNew_CnfdntSpcs_BCE_wtdSupCon
+# exprmnt_2025_10_24__16_07_40 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon
+# exprmnt_2025_10_24__16_05_34 # EMPRAIPsi_MTSplNew_AllSpcs_BCE
+# exprmnt_2025_10_24__04_01_01 # EMPRAIPsi_MTSpliceNewmodel_300bpIntron
+# )
+
 EXPERIMENTS=(
-exprmnt_2025_10_22__23_40_20 # MTsplice new model
-exprmnt_2025_10_22__23_35_53 # MTsplice new model, CL, MSE, confident species
-exprmnt_2025_10_22__23_34_30 # MTsplice new model, CL, BCE, confident species
+exprmnt_2025_10_25__22_41_13 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_noASCOTTestinTrain
+exprmnt_2025_10_25__22_38_22 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon_noASCOTTestinTrain
 )
+
 
 # ===============================
 # PATH SETUP

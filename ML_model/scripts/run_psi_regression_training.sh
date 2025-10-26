@@ -32,8 +32,8 @@ python -m scripts.psi_regression_training \
         optimizer="adam" \
         optimizer.lr=1e-3 \
         aux_models.freeze_encoder=false\
-        aux_models.warm_start=false\
-        aux_models.mtsplice_weights="exprmnt_2025_10_22__19_42_17"\
+        aux_models.warm_start=true\
+        aux_models.mtsplice_weights="exprmnt_2025_10_25__14_52_07"\
         aux_models.mode="mtsplice"\
         aux_models.mtsplice_BCE=1\
         logger.name="Psi__trial__$(date +%Y%m%d_%H%M%S)" \
