@@ -185,6 +185,22 @@ def resolve_out_dir(ckpt_dir_str: str) -> Path:
     
 
 
+# --- NEW: 1. Define the He Normal initialization function ---
+def init_weights_he_normal(module):
+    """
+    Applies He normal (Kaiming normal) initialization to
+    Linear layers.
+    """
+    if isinstance(module, nn.Linear):
+        # Apply Kaiming normal initialization to the weights
+        nn.init.kaiming_normal_(module.weight, mode='fan_in', nonlinearity='relu')
+        
+        # Initialize biases to zero (a common practice)
+        if module.bias is not None:
+            nn.init.constant_(module.bias, 0)
+# --- END NEW ---
+
+
 class MTSpliceBCE(pl.LightningModule):
     def __init__(self, encoder, config, embed_dim=32, out_dim=56, dropout=0.5):
         super().__init__()
@@ -222,6 +238,14 @@ class MTSpliceBCE(pl.LightningModule):
         self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
         self.dropout = nn.Dropout(dropout)
         self.fc2 = nn.Linear(embed_dim, out_dim)
+
+        # --- NEW: 2. Apply He initialization to the new head layers ---
+        print("Applying He Normal initialization to the new fine-tuning head (fc1, fc2)...")
+        # We apply it specifically to fc1 and fc2.
+        # BatchNorm (bn2) is left with its default initialization (which is correct).
+        self.fc1.apply(init_weights_he_normal)
+        self.fc2.apply(init_weights_he_normal)
+        # --- END NEW ---
 
 
         # Instantiate loss and metrics via Hydra
