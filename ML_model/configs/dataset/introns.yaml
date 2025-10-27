@@ -19,3 +19,5 @@ test_ratio: null      # Evaluation split ratio
 cache_dir: "../data"         # Cache directory for the dataset
 n_augmentations: 2  # how many augmentations (homologs) you would like to choose; # or 3, or 'all' (quotes needed for string)
 fixed_species: false # if want to choose fixed species as positive pairs across batch, not randomly sampled
+fivep_ovrhang: 300  # how much overhang to include from 5'  intron
+threep_ovrhang: 300 # how much overhang to include from 3'  intron

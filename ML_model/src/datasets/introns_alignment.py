@@ -27,7 +27,7 @@ def debug_warning(message):
 ############# DEBUG Message ###############
 
 class ContrastiveIntronsDataset(Dataset):
-    def __init__(self, data_file, n_augmentations=2, embedder=None, fixed_species=0):
+    def __init__(self, data_file, n_augmentations=2, embedder=None, fixed_species=0, len_5p=300, len_3p=200):
         # Load the merged data and exon names
         with open(data_file, 'rb') as file:
             self.data = pickle.load(file)
@@ -40,9 +40,9 @@ class ContrastiveIntronsDataset(Dataset):
         reset_debug_warning()
         debug_warning("our intron length is 300 bp; check the data")
         # Fixed lengths for MTSplice windowing
-        self.len_5p = 300
+        self.len_5p = len_5p
         self.len_exon = 100
-        self.len_3p = 300
+        self.len_3p = len_3p
 
         # reset_debug_warning()
         # debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")

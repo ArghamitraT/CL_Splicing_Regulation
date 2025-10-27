@@ -97,6 +97,9 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
         # self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder.name_or_path)
         self.collate_fn = make_collate_fn(self.tokenizer, self.padding_strategy, self.embedder_name)
         self.fixed_species = config.dataset.fixed_species
+        self.len_5p = config.dataset.fivep_ovrhang  # how much overhang to include from 5' intron
+        self.len_3p = config.dataset.threep_ovrhang # how much overhang to include from 3' intron
+
 
     def prepare_data(self):
         # Data preparation steps if needed, such as data checks or downloads.
@@ -108,21 +111,27 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
             data_file=self.train_file,
             n_augmentations=self.n_augmentations,
             embedder=self.embedder,
-            fixed_species=self.fixed_species
+            fixed_species=self.fixed_species,
+            len_5p=self.len_5p,
+            len_3p=self.len_3p
         )
 
         self.val_set = ContrastiveIntronsDataset(
             data_file=self.val_file,
             n_augmentations=self.n_augmentations,
             embedder=self.embedder,
-            fixed_species=self.fixed_species
+            fixed_species=self.fixed_species,
+            len_5p=self.len_5p,
+            len_3p=self.len_3p
         )
 
         self.test_set = ContrastiveIntronsDataset(
             data_file=self.test_file,
             n_augmentations=self.n_augmentations,
             embedder=self.embedder,
-            fixed_species=self.fixed_species
+            fixed_species=self.fixed_species,
+            len_5p=self.len_5p,
+            len_3p=self.len_3p
              )
     
         
