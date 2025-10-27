@@ -20,3 +20,5 @@ freeze_encoder: False  # Set to false for fine-tuning
 warm_start: True
 train_mode: "train" # or eval
 eval_weights: ""
+dropout: 0.5
+He_Normalinitial: False

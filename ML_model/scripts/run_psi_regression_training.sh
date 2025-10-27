@@ -1,7 +1,7 @@
 # "intronexon"  # or "3p", "5p", "intronOnly"
 # aux_models.5p_weights: "exprmnt_2025_06_08__20_39_37"
 # aux_models.3p_weights: "exprmnt_2025_06_08__20_38_28"
-NOTES="mtspliceBCEresnet variable"
+NOTES="trial"
 
 # python -m scripts.psi_regression_training \
 #         task.global_batch_size=2048\
@@ -27,12 +27,13 @@ python -m scripts.psi_regression_training \
         trainer.val_check_interval=0.5\
         embedder="mtsplice"\
         tokenizer="onehot_tokenizer"\
-        loss="multitissue_MSE"\
+        loss="MTSpliceBCELoss"\
         embedder.maxpooling=true\
         optimizer="adam" \
         optimizer.lr=1e-3 \
         aux_models.freeze_encoder=false\
-        aux_models.warm_start=true\
+        aux_models.warm_start=false\
+        aux_models.dropout=0.8\
         aux_models.mtsplice_weights="exprmnt_2025_10_25__14_52_07"\
         aux_models.mode="mtsplice"\
         aux_models.mtsplice_BCE=1\

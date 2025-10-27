@@ -202,7 +202,7 @@ def init_weights_he_normal(module):
 
 
 class MTSpliceBCE(pl.LightningModule):
-    def __init__(self, encoder, config, embed_dim=32, out_dim=56, dropout=0.5):
+    def __init__(self, encoder, config, embed_dim=32, out_dim=56):
         super().__init__()
         # self.save_hyperparameters(ignore=['encoder'])
 
@@ -236,15 +236,19 @@ class MTSpliceBCE(pl.LightningModule):
         
         self.fc1 = nn.Linear(encoder_output_dim, embed_dim)
         self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
-        self.dropout = nn.Dropout(dropout)
+        # print(f"🔧 Using dropout rate: {self.config.aux_models.get('dropout', 0.5)}")
+        dropout_rate = self.config.aux_models.get('dropout', 0.5)
+        self.dropout = nn.Dropout(dropout_rate)
         self.fc2 = nn.Linear(embed_dim, out_dim)
 
         # --- NEW: 2. Apply He initialization to the new head layers ---
-        print("Applying He Normal initialization to the new fine-tuning head (fc1, fc2)...")
         # We apply it specifically to fc1 and fc2.
         # BatchNorm (bn2) is left with its default initialization (which is correct).
-        self.fc1.apply(init_weights_he_normal)
-        self.fc2.apply(init_weights_he_normal)
+        if self.config.aux_models.He_Normalinitial:
+            self.fc1.apply(init_weights_he_normal)
+            self.fc2.apply(init_weights_he_normal)
+            print("⚠️ Applying He Normal initialization to the new fine-tuning head (fc1, fc2)...")
+        
         # --- END NEW ---
 
 

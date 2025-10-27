@@ -14,20 +14,20 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'CL_MTSplNew_10Aug_300bpIntron_wtdSupcon',
-        task = "introns_cl", # "psi_regression_task" or "introns_cl"
+        slurm_file_name = 'Psi_MTSpliceNewmodel_300bpIntron_HeInitialized',
+        task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        global_batch_size = 2048,
-        max_epochs = 25,
+        global_batch_size = 2048 ,
+        max_epochs = 10,
         optimizer = "adam",
         learning_rate =  1e-3,
-        readme_comment = "CL, 300 bp intron, new corrected mtsplice model, no fixed species, 10 augmentation, weighted supcon, removed ASCOT test/variable exons from the training set so that there is no data leakage\n",
-        wandb_logger_NOTES = "CL 300 bp intron new corrected mtsplice model no fixed species 10 augmentation weighted supcom removed ASCOT test and variable exons from the training set so that there is no data leakage",
-        new_project_wandb = 0,
+        readme_comment = "new corrected mtsplice model, intron ofset 300 bp like MTsplice, no CL, HE initialized\n",
+        wandb_logger_NOTES = "new corrected mtsplice model intron ofset 300 bp like MTsplice no CL HE initialized",
+        new_project_wandb = 1,
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 5,
+        hour = 3,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -42,10 +42,10 @@ def get_experiment_config():
         tokenizer = "onehot_tokenizer",
         tokenizer_seq_len = 400,
         
-        ################### --- CL specific parameters ################### 
-        loss_name = "weighted_supcon",
-        fixed_species = False,
-        n_augmentations = 10,
+        ##### --- CL specific parameters
+        loss_name = "supcon",
+        fixed_species = True,
+        n_augmentations = 7,
 
         # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl",
         # VAL_FILE="val_3primeIntron_filtered.pkl",
@@ -78,9 +78,9 @@ def get_experiment_config():
         # TRAIN_FILE="ASCOT_data/train_ASCOT_ExonSeq_filtered.pkl",
         # VAL_FILE="ASCOT_data/val_ASCOT_ExonSeq_filtered.pkl",
         # TEST_FILE="ASCOT_data/test_ASCOT_ExonSeq_filtered.pkl",
-        ################### --- CL specific parameters ################### 
+        ##### --- CL specific parameters --- #####
 
-        ################### --- psi specific parameters ################### 
+        ##### --- psi specific parameters --- #####
         freeze_encoder = False,
         warm_start = False,
         psi_loss_name = "MTSpliceBCELoss",
@@ -89,16 +89,19 @@ def get_experiment_config():
         mode = "mtsplice", # mode: or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
         train_mode = "train",
         eval_weights = "exprmnt_2025_08_17__02_17_03",
-        run_num = 5,
+        run_num = 20,
         val_check_interval = 1.0,
         
         ##### --- pretrained weights ---
-        mtsplice_weights = "exprmnt_2025_10_15__00_49_37", # all data weighted CL, 10 aug
+        ####### mtsplice weights ##########
+        mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # all data weighted CL, 10 aug
         # mtsplice_weights = "exprmnt_2025_09_23__00_38_41", # ASCOT weighted CL, 10 aug
+
         # mtsplice_weights = "exprmnt_2025_07_30__13_10_26", #2 aug intronexon
         # mtsplice_weights = "exprmnt_2025_08_16__22_30_50", #2 aug intron
         # mtsplice_weights = "exprmnt_2025_08_16__20_42_52", #10 aug intronexon
         # mtsplice_weights = "exprmnt_2025_08_23__20_30_33", #10 aug intron
+
 
         ####### ntv2 weights for 5', 3' and exon ##########
         weight_3p = "exprmnt_2025_10_20__00_59_06",
@@ -122,7 +125,7 @@ def get_experiment_config():
         # weight_5p = "exprmnt_2025_08_23__21_14_26",
         # weight_3p = "exprmnt_2025_07_08__20_39_38",
         # weight_exon = "exprmnt_2025_08_23__21_20_33",
-       ################### --- psi specific parameters ################### 
+        ##### --- psi specific parameters --- #####
     )
     return cfg
 

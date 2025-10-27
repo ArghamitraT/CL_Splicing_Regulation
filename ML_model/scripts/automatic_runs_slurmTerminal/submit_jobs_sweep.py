@@ -196,65 +196,169 @@ def create_slurm_header_cl(cfg, paths):
 
 
 
-def create_prg_header_psi(cfg, paths):
-    # NOTE: we will export RUN_IDX in the Slurm script loop.
-    # We suffix logger.name (and optionally hydra.run.dir) with _r$RUN_IDX
-    test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"+cfg["PSI_TEST_FILE"]
+# def create_prg_header_psi(cfg, paths):
+
+#     """
+#     Creates the program header (the hydra command) for a psi_regression_task.
+#     Reads all sweepable parameters directly from the cfg dictionary.
+#     """
     
-    header = f"""#!/bin/bash
-    set -e
-    cd $HOME
-    source ~/.bashrc
-    conda activate cl_splicing_regulation3
-    : "${{RUN_IDX:=1}}"
-    : "${{NEW_WANDB_PROJECT:=0}}"    # 1 => one new W&B project for ALL runs in this job
-    PROJECT_NAME="{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}"   # no _run_ suffix
-    EXTRA_WANDB_PROJECT=""
-    if [ "$NEW_WANDB_PROJECT" = "1" ]; then
-      EXTRA_WANDB_PROJECT=++logger.project="$PROJECT_NAME"
-    fi
-    WORKDIR={paths["data_dir"]}
-    cd $WORKDIR
-    python -m scripts.psi_regression_training \\
-            task={cfg["task"]} \\
-            task.val_check_interval={cfg["val_check_interval"]}\\
-            task.global_batch_size={cfg["global_batch_size"]}\\
-            trainer.max_epochs={cfg["max_epochs"]}\\
-            tokenizer={cfg["tokenizer"]} \\
-            embedder={cfg["embedder"]} \\
-            loss={cfg["psi_loss_name"]} \\
-            optimizer={cfg["optimizer"]} \\
-            optimizer.lr={cfg["learning_rate"]} \\
-            aux_models.freeze_encoder={cfg["freeze_encoder"]} \\
-            aux_models.warm_start={cfg["warm_start"]} \\
-            aux_models.mtsplice_weights={cfg["mtsplice_weights"]} \\
-            aux_models.weights_threeprime={cfg["weight_3p"]} \\
-            aux_models.weights_fiveprime={cfg["weight_5p"]} \\
-            aux_models.weights_exon={cfg["weight_exon"]} \\
-            embedder.maxpooling={cfg["maxpooling"]} \\
-            tokenizer.seq_len={cfg["tokenizer_seq_len"]} \\
-            aux_models.mode={cfg["mode"]} \\
-            aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
-            dataset.test_files.intronexon={test_file} \\
-            ++wandb.dir="'{paths["wandb_dir"]}'"\\
-            $EXTRA_WANDB_PROJECT \\
-            ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}_run_$RUN_IDX'"\\
-            ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}/run_$RUN_IDX'"\\
-            ++hydra.run.dir="{paths["hydra_dir"]}/run_$RUN_IDX"\\
-            ++logger.notes="{cfg["wandb_logger_NOTES"]}"
+#     # 1. Get test file path
+#     test_file = paths["server_path"] + "Contrastive_Learning/data/final_data/ASCOT_finetuning/" + cfg["PSI_TEST_FILE"]
+    
+#     # 2. Get W&B keys from cfg (set in submit_job)
+#     project_name = cfg['final_wandb_project']
+#     run_name = cfg['final_wandb_run_name']
+#     run_id = cfg['final_wandb_run_id']
+    
+#     # 3. Get all sweepable parameters with safe defaults
+#     #    This makes your script robust, even if you don't sweep all params.
+#     learning_rate = cfg.get('learning_rate', 1e-3)
+#     dropout_rate = cfg.get('dropout_rate', 0.5) # 0.5 is a common default
+#     freeze_encoder = cfg.get('freeze_encoder', False)
+#     accumulate_batches = cfg.get('accumulate_grad_batches', 1)
+#     grad_clip = cfg.get('gradient_clip_val', 1.0)
+    
+#     # 4. Create the final bash script content
+#     #    This version is much cleaner and fully controlled by Python.
+#     header = f"""#!/bin/bash
+#     set -e
+#     cd $HOME
+#     source ~/.bashrc
+#     conda activate cl_splicing_regulation3
+
+#     WORKDIR={paths["data_dir"]}
+#     cd $WORKDIR
+
+#     echo "--- Starting Hydra Run ---"
+#     echo "W&B Project: {project_name}"
+#     echo "W&B Run Name: {run_name}"
+#     echo "W&B Run ID: {run_id}"
+#     echo "---------------------------"
+
+#     python -m scripts.psi_regression_training \\
+#             task={cfg["task"]} \\
+#             task.val_check_interval={cfg["val_check_interval"]}\\
+#             task.global_batch_size={cfg["global_batch_size"]}\\
+#             tokenizer={cfg["tokenizer"]} \\
+#             embedder={cfg["embedder"]} \\
+#             loss={cfg["psi_loss_name"]} \\
+#             optimizer={cfg["optimizer"]} \\
+            
+#             # --- All Swept Params ---
+#             optimizer.lr={learning_rate} \\
+#             aux_models.freeze_encoder={freeze_encoder} \\
+#             aux_models.dropout={dropout_rate} \\
+#             trainer.accumulate_grad_batches={accumulate_batches} \\
+
+#             # --- Trainer ---
+#             trainer.max_epochs={cfg["max_epochs"]}\\
+            
+#             # --- Model/Paths ---
+#             aux_models.warm_start={cfg["warm_start"]} \\
+#             aux_models.mtsplice_weights={cfg["mtsplice_weights"]} \\
+#             aux_models.weights_threeprime={cfg["weight_3p"]} \\
+#             aux_models.weights_fiveprime={cfg["weight_5p"]} \\
+#             aux_models.weights_exon={cfg["weight_exon"]} \\
+#             embedder.maxpooling={cfg["maxpooling"]} \\
+#             tokenizer.seq_len={cfg["tokenizer_seq_len"]} \\
+#             aux_models.mode={cfg["mode"]} \\
+#             aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
+#             dataset.test_files.intronexon={test_file} \\
+            
+#             # --- W&B / Hydra Overrides ---
+#             # These paths use the unique run_name for clean log separation
+#             ++wandb.dir="'{paths["wandb_dir"]}'"\\
+#             ++logger.project="{project_name}" \\
+#             ++logger.name="{run_name}" \\
+#             ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}/{run_name}'"\\
+#             ++hydra.run.dir="{paths["hydra_dir"]}/{run_name}"\\
+#             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
+#     """
+#     return header
+
+
+
+def create_prg_header_psi(cfg, paths):
+    """
+    PSI regression SLURM header — single-run version, creating a new W&B project.
+    Works with Lightning's WandbLogger that uses 'logger.project'.
     """
 
-    # reset_debug_warning()
-    # debug_warning("add those args later")
-    #
+    test_file = (
+        paths["server_path"]
+        + "Contrastive_Learning/data/final_data/ASCOT_finetuning/"
+        + cfg["PSI_TEST_FILE"]
+    )
 
+    project_name = cfg["final_wandb_project"]
+    run_name = cfg["final_wandb_run_name"]
+    run_id = cfg["final_wandb_run_id"]
+
+    lr = cfg.get("learning_rate", 1e-3)
+    dropout = cfg.get("dropout_rate", 0.5)
+    freeze_encoder = cfg.get("freeze_encoder", False)
+    acc_batches = cfg.get("accumulate_grad_batches", 1)
+
+    header = f"""#!/bin/bash
+set -e
+cd $HOME
+source ~/.bashrc
+conda activate cl_splicing_regulation3
+
+WORKDIR={paths["data_dir"]}
+cd $WORKDIR
+
+echo "=== Starting PSI Regression Run ==="
+echo "Project: {project_name}"
+echo "Run Name: {run_name}"
+echo "==================================="
+
+python -m scripts.psi_regression_training \\
+    task={cfg["task"]} \\
+    task.val_check_interval={cfg["val_check_interval"]}\\
+    task.global_batch_size={cfg["global_batch_size"]}\\
+    tokenizer={cfg["tokenizer"]} \\
+    embedder={cfg["embedder"]} \\
+    loss={cfg["psi_loss_name"]} \\
+    optimizer={cfg["optimizer"]} \\
+    optimizer.lr={lr} \\
+    aux_models.freeze_encoder={freeze_encoder} \\
+    aux_models.dropout={dropout} \\
+    trainer.accumulate_grad_batches={acc_batches} \\
+    trainer.max_epochs={cfg["max_epochs"]}\\
+    aux_models.warm_start={cfg["warm_start"]} \\
+    aux_models.mtsplice_weights={cfg["mtsplice_weights"]} \\
+    aux_models.weights_threeprime={cfg["weight_3p"]} \\
+    aux_models.weights_fiveprime={cfg["weight_5p"]} \\
+    aux_models.weights_exon={cfg["weight_exon"]} \\
+    embedder.maxpooling={cfg["maxpooling"]} \\
+    tokenizer.seq_len={cfg["tokenizer_seq_len"]} \\
+    aux_models.mode={cfg["mode"]} \\
+    aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
+    dataset.test_files.intronexon={test_file} \\
+    ++wandb.dir={paths["wandb_dir"]} \\
+    ++logger.project="{project_name}" \\
+    ++logger.name="{run_name}" \\
+    ++callbacks.model_checkpoint.dirpath={paths["checkpoint_dir"]}/{run_name} \\
+    ++hydra.run.dir={paths["hydra_dir"]}/{run_name} \\
+    ++logger.notes="{cfg["wandb_logger_NOTES"]}"
+"""
     return header
 
+
 def create_slurm_header_psi(cfg, paths):
+    """
+    Creates the Slurm header for a *single* psi_regression_task.
+    The for-loop has been REMOVED to work with the sweep runner.
+    """
     
-    #### need NYGC vs EMIPIRE AI condition here later #### (AT)
-    show_name = "_".join(cfg["job_name"].split("_")[1:])
-    show_name = f"{cfg['slurm_file_name']}_{show_name}"
+    # Use the unique run name for cleaner log files
+    run_name = cfg['final_wandb_run_name']
+    
+    # Use the original slurm_file_name for the job name, or the unique one
+    # Using the unique one is safer
+    show_name = f"{cfg['slurm_file_name']}__{run_name}"
 
     if paths['server_name'] == "EMPRAI":
         header = (
@@ -271,24 +375,21 @@ def create_slurm_header_psi(cfg, paths):
         f"#SBATCH --time={cfg['hour']}:30:00\n"
         f"#SBATCH --mem={cfg['memory']}G\n"
         "#SBATCH --mail-type=END,FAIL\n"
-        f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      # job-wide stdout/err\n"
+        # Use the unique run_name for the output log
+        f"#SBATCH --output={paths['output_dir']}/slurm_out_{run_name}.%j\n" 
         "#SBATCH --mail-user=at3836@columbia.edu\n"
         "\n"
-        f"RUNS={cfg['run_num']}\n"
-        f"NEW_WANDB_PROJECT={cfg['new_project_wandb']}\n"   # set once; all runs share one project if =1
+        # --- FOR LOOP REMOVED ---
         "echo \"SLURM_JOB_ID=$SLURM_JOB_ID\"\n"
-        "for i in $(seq 1 $RUNS); do\n"
-        "  export RUN_IDX=$i\n"
-        "  export NEW_WANDB_PROJECT=$NEW_WANDB_PROJECT\n"
-        "  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
-        f"  bash {paths['prg_file_path']} 2>&1 | tee {paths['output_dir']}/out_{cfg['job_name']}_r${{i}}.${{SLURM_JOB_ID}}.txt\n"
-        "  status=${PIPESTATUS[0]}\n"
-        "  echo \"===== [$(date)] Finished RUN $i/$RUNS with status ${status} =====\"\n"
-        "  if [[ $status -ne 0 ]]; then\n"
-        "    echo \"Run $i failed (status $status). Exiting early.\" >&2\n"
-        "    exit $status\n"
-        "  fi\n"
-        "done\n"
+        "echo \"===== [$(date)] Starting RUN on job $SLURM_JOB_ID =====\"\n"
+        # Run the single program file, and log its output to a unique file
+        f"bash {paths['prg_file_path']} 2>&1 | tee {paths['output_dir']}/run_log_{run_name}.${{SLURM_JOB_ID}}.txt\n"
+        "status=${PIPESTATUS[0]}\n"
+        "echo \"===== [$(date)] Finished RUN with status ${status} =====\"\n"
+        "if [[ $status -ne 0 ]]; then\n"
+        "  echo \"Run failed (status $status). Exiting.\" >&2\n"
+        "  exit $status\n"
+        "fi\n"
     )
 
     elif paths['server_name'] == "NYGC":
@@ -302,24 +403,19 @@ def create_slurm_header_psi(cfg, paths):
             f"#SBATCH --mem={cfg['memory']}G\n"
             f"#SBATCH --cpus-per-task={cfg['nthred']}\n"
             "#SBATCH --mail-type=END,FAIL\n"
-            f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j\n"
+            f"#SBATCH --output={paths['output_dir']}/slurm_out_{run_name}.%j\n"
             "#SBATCH --mail-user=atalukder@nygenome.org\n"
             "\n"
-            f"RUNS={cfg['run_num']}\n"
-            f"NEW_WANDB_PROJECT={cfg['new_project_wandb']}\n"   # set once; all runs share one project if =1
+            # --- FOR LOOP REMOVED ---
             "echo \"SLURM_JOB_ID=$SLURM_JOB_ID\"\n"
-            "for i in $(seq 1 $RUNS); do\n"
-            "  export RUN_IDX=$i\n"
-            "  export NEW_WANDB_PROJECT=$NEW_WANDB_PROJECT\n"
-            "  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
-            f"  bash {paths['prg_file_path']} 2>&1 | tee {paths['output_dir']}/out_{cfg['job_name']}_r${{i}}.${{SLURM_JOB_ID}}.txt\n"
-            "  status=${PIPESTATUS[0]}\n"
-            "  echo \"===== [$(date)] Finished RUN $i/$RUNS with status ${status} =====\"\n"
-            "  if [[ $status -ne 0 ]]; then\n"
-            "    echo \"Run $i failed (status $status). Exiting early.\" >&2\n"
-            "    exit $status\n"
-            "  fi\n"
-            "done\n"
+            "echo \"===== [$(date)] Starting RUN on job $SLURM_JOB_ID =====\"\n"
+            f"bash {paths['prg_file_path']} 2>&1 | tee {paths['output_dir']}/run_log_{run_name}.${{SLURM_JOB_ID}}.txt\n"
+            "status=${PIPESTATUS[0]}\n"
+            "echo \"===== [$(date)] Finished RUN with status ${status} =====\"\n"
+            "if [[ $status -ne 0 ]]; then\n"
+            "  echo \"Run failed (status $status). Exiting.\" >&2\n"
+            "  exit $status\n"
+            "fi\n"
         )
     return header
 
@@ -368,6 +464,42 @@ def submit_job(cfg, paths):
     
     kind = cfg["slurm_file_name"]
     hash_obj = random.getrandbits(25)
+    
+    job_name = get_file_name(f"{kind}_{hash_obj}", ext=False)
+    cfg["job_name"] = job_name # This is still good for slurm
+
+    # --- W&B Logic Block (This is correct) ---
+    if 'wandb_project_override' in cfg:
+        cfg['final_wandb_project'] = cfg['wandb_project_override']
+        cfg['final_wandb_run_name'] = cfg['wandb_run_name_override']
+        cfg['final_wandb_run_id'] = cfg['wandb_run_name_override']
+    else:
+        cfg['final_wandb_project'] = job_name
+        cfg['final_wandb_run_name'] = job_name
+        cfg['final_wandb_run_id'] = job_name
+    # --- END W&B Logic Block ---
+    
+    # -----------------------------------------------------------------
+    # --- NEW README LOGIC (Fix for Problem 1) ---
+    # -----------------------------------------------------------------
+    # Write a unique readme for this specific run in the output folder.
+    # This avoids overwriting the main readme.
+    readme_content = cfg.get("readme_comment", "No readme provided for this run.")
+    readme_filename = f"readme_{cfg['final_wandb_run_name']}.txt"
+    readme_path = os.path.join(paths['output_dir'], readme_filename)
+    
+    try:
+        # Assuming create_readme just writes a file.
+        # If it's more complex, we can just write it directly.
+        with open(readme_path, 'w') as f:
+            f.write(readme_content)
+        # If you have a 'create_readme' function that takes a path and content:
+        # create_readme(readme_path, readme_content) 
+    except Exception as e:
+        print(f"Warning: Could not write readme file to {readme_path}. Error: {e}")
+    # -----------------------------------------------------------------
+    # --- END README LOGIC ---
+    # -----------------------------------------------------------------
 
     prg_file = os.path.join(paths["job_path"], get_file_name(f"prg_{kind}_{hash_obj}"))
     slurm_file = os.path.join(paths["job_path"], get_file_name(f"slurm_{kind}_{hash_obj}"))
@@ -379,81 +511,23 @@ def submit_job(cfg, paths):
     os.system(f"cp -r {paths['code_dir']}/configs {paths['data_dir']}")
     os.system(f"cp -r {paths['code_dir']}/src {paths['data_dir']}")
     
-
-    job_name = get_file_name(f"{kind}_{hash_obj}", ext=False)
-    cfg["job_name"] = job_name
-
-    task = cfg["task"] # "psi_regression_task" or "introns_cl"
+    task = cfg["task"] 
+    
     if task == "introns_cl":
         prg_header =  create_prg_header_cl(cfg, paths)
         slurm_header =  create_slurm_header_cl(cfg, paths)
     elif task == "psi_regression_task":
         prg_header =  create_prg_header_psi(cfg, paths)
-        slurm_header =  create_slurm_header_psi(cfg, paths)
+        # Use the NEW slurm header function
+        slurm_header =  create_slurm_header_psi(cfg, paths) 
 
     create_bash_file(prg_header, prg_file)
     create_bash_file(slurm_header, slurm_file)
 
+    # Re-enable these lines to actually submit the job
     os.system(f"chmod u+x {prg_file}")
     os.system(f"chmod u+x {slurm_file}")
     os.system(f"sbatch {slurm_file}")
-
-
-
-# def submit_job(cfg, paths):
-#     """Create program + slurm script and submit."""
-    
-#     kind = cfg["slurm_file_name"]
-#     hash_obj = random.getrandbits(25)
-    
-#     # --- This is your existing logic for a unique job name ---
-#     job_name = get_file_name(f"{kind}_{hash_obj}", ext=False)
-#     cfg["job_name"] = job_name # This is still good for slurm
-
-#     # -----------------------------------------------------------------
-#     # --- NEW LOGIC BLOCK FOR WANDB ---
-#     # -----------------------------------------------------------------
-#     # Check if this is a sweep run (keys are from sweep_runner.py)
-#     if 'wandb_project_override' in cfg:
-#         # It's a sweep run: use the shared project and unique run name
-#         cfg['final_wandb_project'] = cfg['wandb_project_override']
-#         cfg['final_wandb_run_name'] = cfg['wandb_run_name_override']
-#         cfg['final_wandb_run_id'] = cfg['wandb_run_name_override'] # Use name for ID
-#     else:
-#         # It's a single run: use your old logic (e.g., use job_name)
-#         cfg['final_wandb_project'] = job_name # Or whatever you used before
-#         cfg['final_wandb_run_name'] = job_name
-#         cfg['final_wandb_run_id'] = job_name
-#     # -----------------------------------------------------------------
-#     # --- END NEW LOGIC BLOCK ---
-#     # -----------------------------------------------------------------
-
-#     prg_file = os.path.join(paths["job_path"], get_file_name(f"prg_{kind}_{hash_obj}"))
-#     slurm_file = os.path.join(paths["job_path"], get_file_name(f"slurm_{kind}_{hash_obj}"))
-
-#     paths['prg_file_path'] = prg_file
-#     paths['slurm_file_path'] = slurm_file
-   
-#     os.system(f"cp -r {paths['code_dir']}/scripts {paths['data_dir']}")
-#     os.system(f"cp -r {paths['code_dir']}/configs {paths['data_dir']}")
-#     os.system(f"cp -r {paths['code_dir']}/src {paths['data_dir']}")
-    
-#     task = cfg["task"] # "psi_regression_task" or "introns_cl"
-    
-#     # Now, these functions will receive the cfg with the NEW 'final_...' keys
-#     if task == "introns_cl":
-#         prg_header =  create_prg_header_cl(cfg, paths)
-#         slurm_header =  create_slurm_header_cl(cfg, paths)
-#     elif task == "psi_regression_task":
-#         prg_header =  create_prg_header_psi(cfg, paths)
-#         slurm_header =  create_slurm_header_psi(cfg, paths)
-
-#     create_bash_file(prg_header, prg_file)
-#     create_bash_file(slurm_header, slurm_file)
-
-#     os.system(f"chmod u+x {prg_file}")
-#     os.system(f"chmod u+x {slurm_file}")
-#     os.system(f"sbatch {slurm_file}")
 
 
 

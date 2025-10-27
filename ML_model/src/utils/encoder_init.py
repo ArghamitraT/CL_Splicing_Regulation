@@ -64,7 +64,7 @@ def load_encoder(config, root_path, result_dir):
     
     # --- NEW ---
     # 2. Add 'else' block to initialize encoder if not warm-starting
-    else:
+    elif config.aux_models.He_Normalinitial:
         # Not pre-initializing, so apply He Normal initialization to the encoder
         print(f"⚠️ 'warm_start' is False. Applying He Normal initialization to encoder.")
         simclr_model.encoder.apply(init_weights_he_normal)
