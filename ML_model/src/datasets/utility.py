@@ -8,12 +8,12 @@ def get_windows_with_padding(tissue_acceptor_intron, tissue_donor_intron, tissue
             """
 
             (acceptor_intron, donor_intron) = overhang
-
+            
             assert acceptor_intron <= len(seq), "Input sequence acceptor intron" \
                 " length cannot be longer than the input sequence"
             assert donor_intron <= len(seq), "Input sequence donor intron length" \
                 " cannot be longer than the input sequence"
-
+            
             # need to pad N if seq not enough long
             diff_acceptor = acceptor_intron - tissue_acceptor_intron
             if diff_acceptor < 0:

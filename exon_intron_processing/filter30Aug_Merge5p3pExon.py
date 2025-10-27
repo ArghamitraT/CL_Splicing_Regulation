@@ -2,20 +2,18 @@ import pickle
 
 # --- File paths ---
 # split_name = "val"
-# main_dir = "/mnt/home/at3836/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+# main_dir = "/mnt/home/at3836/Contrastive_Learning/data/final_data_new/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
 # path_5p = main_dir + f"{split_name}_5primeIntron_filtered.pkl"
 # path_3p = main_dir + f"{split_name}_3primeIntron_filtered.pkl"
 # path_exon = main_dir + f"{split_name}_ExonSeq_filtered.pkl"
 # output_path = main_dir + f"{split_name}_merged_filtered_min30Views.pkl"
 
 split_name = "train"
-main_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
-path_5p = main_dir + f"{split_name}_ASCOT_5primeIntron_filtered.pkl"
-path_3p = main_dir + f"{split_name}_ASCOT_3primeIntron_filtered.pkl"
-path_exon = main_dir + f"{split_name}_ASCOT_ExonSeq_filtered.pkl"
-output_path = main_dir + f"{split_name}_ASCOT_merged_filtered_min30Views.pkl"
-
-
+main_dir = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data_new/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+path_5p = main_dir + f"{split_name}_5primeIntron_filtered.pkl"
+path_3p = main_dir + f"{split_name}_3primeIntron_filtered.pkl"
+path_exon = main_dir + f"{split_name}_ExonSeq_filtered.pkl"
+output_path = main_dir + f"{split_name}_merged_filtered_min30Views.pkl"
 # --- Load files ---
 with open(path_5p, "rb") as f:
     data_5p = pickle.load(f)
@@ -43,8 +41,8 @@ for exon_id in data_5p:
     
     common_species = species_5p & species_3p & species_exon
 
-    if len(common_species) < 30:
-        continue
+    # if len(common_species) < 30:
+    #     continue
 
     merged_data[exon_id] = {}
 
@@ -64,7 +62,7 @@ for exon_id in data_5p:
         }
 
     i += 1
-    print(i)
+    # print(i)
 
 
 # --- Save output ---

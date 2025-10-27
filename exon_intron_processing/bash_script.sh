@@ -2,7 +2,7 @@
 ##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION
 ##NECESSARY JOB SPECIFICATIONS
 #SBATCH --job-name=Simulation      #Set the job name too "JobExample1"
-#SBATCH --time=8:00:00              #Set the wall clock limit to 1hr and 30min,takes 100min/EM iteration **CHANGE (AT)**
+#SBATCH --time=4:00:00              #Set the wall clock limit to 1hr and 30min,takes 100min/EM iteration **CHANGE (AT)**
 #SBATCH --mem=100G              
 #SBATCH --cpus-per-task=2                   
 #SBATCH --mail-type=END,FAIL    
@@ -17,7 +17,42 @@ conda activate cl_splicing_regulation3
 # gunzip -d /gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/*.fa.gz
 # echo "unzipping completed!"
 
-python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_intronexon_seq3.py
+
+
+# --- Define Directory and Output Zip Name ---
+# <<< IMPORTANT: REPLACE THESE PLACEHOLDERS >>>
+DIRECTORY_TO_ZIP="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash2"
+OUTPUT_ZIP_FILE="/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash2.zip"
+# <<< END OF PLACEHOLDERS >>>
+
+# --- Change to the parent directory of the target directory (optional but often helpful) ---
+PARENT_DIR=$(dirname "$DIRECTORY_TO_ZIP")
+cd "$PARENT_DIR"
+echo "Changed directory to: $(pwd)"
+
+# --- Get just the directory name ---
+DIR_NAME=$(basename "$DIRECTORY_TO_ZIP")
+
+# --- Execute the zip command ---
+echo "Starting zip operation..."
+echo "Archiving directory: $DIR_NAME"
+echo "Saving to: $OUTPUT_ZIP_FILE"
+
+# Use -r for recursive, specify output file, then the directory name
+zip -r "$OUTPUT_ZIP_FILE" "$DIR_NAME"
+
+# Check the exit code of the zip command
+ZIP_EXIT_CODE=$?
+if [ $ZIP_EXIT_CODE -eq 0 ]; then
+  echo "Zip operation completed successfully!"
+else
+  echo "Zip operation failed with exit code $ZIP_EXIT_CODE."
+  exit $ZIP_EXIT_CODE # Exit script with the error code
+fi
+
+echo "Job finished."
+
+# python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_intronexon_seq3.py
 
 # python /gpfs/commons/home/atalukder/Contrastive_Learning/code/exon_intron_processing/get_ExonIntron_position3_5and3prime2_RELIABLE.py
 
