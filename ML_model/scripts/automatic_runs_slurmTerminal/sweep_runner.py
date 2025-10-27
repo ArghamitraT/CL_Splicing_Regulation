@@ -9,12 +9,7 @@ import os # Make sure os is imported
 # --- Make sure all these functions are in submit_jobs.py ---
 from submit_jobs_sweep import (
     setup_paths, 
-    create_readme, 
     submit_job, 
-    get_file_name, 
-    create_bash_file,
-    create_slurm_header_psi, # We need this
-    create_prg_header_psi    # And thisw
 )
 
 # --------------------------------------------------------------------
@@ -25,20 +20,22 @@ def get_base_config():
     """Return all non-swept parameters."""
 
     cfg = dict(
-        slurm_file_name = 'Psi__SWEEP',
-        task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
+        slurm_file_name = 'cl__SWEEP',
+        task = "introns_cl", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
         global_batch_size = 2048 , # Default, will be overridden by sweep
-        max_epochs = 15,
+        max_epochs = 2,
         optimizer = "adam",
         learning_rate =  1e-3,     # Default, will be overridden by sweep
-        readme_comment = "SWEEP: new corrected mtsplice model, 300bp, no CL\n",
-        wandb_logger_NOTES = "SWEEP new corrected mtsplice model 300bp no CL",
+        readme_comment = "SWEEP: CL try\n",
+        wandb_logger_NOTES = "SWEEP CL try",
         new_project_wandb = 1, # Set to 1 for sweep logic
+        fivep_ovrhang = 300,
+        threep_ovrhang = 300,
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 3,
+        hour = 1,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -55,8 +52,8 @@ def get_base_config():
         
         ##### --- CL specific parameters (unused in this task)
         loss_name = "supcon",
-        fixed_species = True,
-        n_augmentations = 7,
+        fixed_species = False,
+        n_augmentations = 2,
 
         TRAIN_FILE="train_merged_filtered_min30Views.pkl",
         VAL_FILE="val_merged_filtered_min30Views.pkl",    
@@ -101,12 +98,51 @@ def define_sweep_grid():
     """
     
     # === DEFINE YOUR SWEEP HERE ===
+    # === DEFINE YOUR CL SWEEP HERE ===
+#     param_grid = {
+#         # Tier 1
+#         'learning_rate': [1e-3, 5e-4, 1e-4],
+#         'temperature': [0.1, 0.2, 0.5], # For SupConLoss
+#         'global_batch_size': [1024, 2048], 
+#         'accumulate_grad_batches': [1, 2], # Test effective batch sizes
+        
+#         # Tier 2
+#         'max_epochs': [25, 50], 
+        
+#         # Tier 3
+#         'n_augmentations': [2, 5, 10], 
+#         'projection_dim': [128, 256],
+#         'hidden_dim': [512, 1024],
+#         'loss_name':["supcon", "weighted_supcon"]
+# }
     param_grid = {
-        'learning_rate': [1e-3, 5e-4, 1e-4],
-        'dropout_rate': [0.1, 0.25, 0.5],
-        'global_batch_size': [1024, 2048], # Example: you could add 1024
-        'accumulate_grad_batches': [1, 2], # <-- Consider adding this
-}
+            # Tier 1
+            'learning_rate': [1e-3],
+            'temperature': [0.1], # For SupConLoss
+            'global_batch_size': [2048], 
+            'accumulate_grad_batches': [2], # Test effective batch sizes
+            
+            # Tier 2
+            'max_epochs': [2], 
+            
+            # Tier 3
+            'n_augmentations': [10], 
+            'hidden_dim': [1024],
+            'projection_dim': [256],
+            'loss_name':["supcon", "weighted_supcon"]
+    }
+
+
+
+
+
+    # ===============================
+#     param_grid = {
+#         'learning_rate': [1e-3, 5e-4, 1e-4],
+#         'dropout_rate': [0.1, 0.25, 0.5],
+#         'global_batch_size': [1024, 2048], # Example: you could add 1024
+#         'accumulate_grad_batches': [1, 2], # <-- Consider adding this
+# }
 
     # param_grid = {
     #         'learning_rate': [1e-3],
@@ -132,27 +168,22 @@ def get_run_names(params_dict):
     run_suffix = []
     
     # --- This now includes ALL swept parameters ---
-    if 'learning_rate' in params_dict:
-        run_suffix.append(f"lr_{params_dict['learning_rate']}")
-        
+    # Customize based on your CL sweep grid
+    if 'learning_rate' in params_dict: run_suffix.append(f"lr_{params_dict['learning_rate']}")
+    if 'temperature' in params_dict: run_suffix.append(f"temp_{params_dict['temperature']}")
+    if 'weight_decay' in params_dict and params_dict['weight_decay'] > 0: run_suffix.append(f"wd_{params_dict['weight_decay']}")
+    if 'global_batch_size' in params_dict: run_suffix.append(f"bs_{params_dict['global_batch_size']}")
+    if 'accumulate_grad_batches' in params_dict and params_dict['accumulate_grad_batches'] > 1: run_suffix.append(f"accum_{params_dict['accumulate_grad_batches']}")
+    if 'max_epochs' in params_dict: run_suffix.append(f"ep_{params_dict['max_epochs']}")
+    if 'n_augmentations' in params_dict: run_suffix.append(f"aug_{params_dict['n_augmentations']}")
+    if 'projection_dim' in params_dict: run_suffix.append(f"proj_{params_dict['projection_dim']}")
+    if 'hidden_dim' in params_dict: run_suffix.append(f"hid_{params_dict['hidden_dim']}")
+    if 'loss_name' in params_dict: run_suffix.append(f"loss_{params_dict['loss_name']}")
+    if 'dropout_rate' in params_dict: run_suffix.append(f"do_{params_dict['dropout_rate']}")
     if 'freeze_encoder' in params_dict:
-        # This is a key parameter!
         freeze_str = "Freeze" if params_dict['freeze_encoder'] else "Finetune"
         run_suffix.append(freeze_str)
-        
-    if 'weight_decay' in params_dict and params_dict['weight_decay'] > 0:
-        run_suffix.append(f"wd_{params_dict['weight_decay']}")
-        
-    if 'dropout_rate' in params_dict:
-        run_suffix.append(f"do_{params_dict['dropout_rate']}")
     
-    # Add any other parameters you sweep (e.g., batch_size)
-    if 'global_batch_size' in params_dict:
-        run_suffix.append(f"bs_{params_dict['global_batch_size']}")
-
-    if 'accumulate_grad_batches' in params_dict:
-        run_suffix.append(f"accum_{params_dict['accumulate_grad_batches']}")
-
     return "__".join(run_suffix)
 # --------------------------------------------------------------------
 # 4. MAIN SWEEP RUNNER

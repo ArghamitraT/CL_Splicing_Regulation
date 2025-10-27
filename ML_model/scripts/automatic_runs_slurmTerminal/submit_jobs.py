@@ -117,6 +117,10 @@ def create_prg_header_cl(cfg, paths):
     val_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["VAL_FILE"]
     test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TEST_FILE"]
 
+    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+        reset_debug_warning()
+        debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
+        return None
     
     header = f"""#!/bin/bash
     set -e
@@ -129,18 +133,20 @@ def create_prg_header_cl(cfg, paths):
             task={cfg["task"]} \\
             task.val_check_interval={cfg["val_check_interval"]}\\
             task.global_batch_size={cfg["global_batch_size"]}\\
-            trainer.max_epochs={cfg["max_epochs"]}\\
             tokenizer={cfg["tokenizer"]} \\
             embedder={cfg["embedder"]} \\
             loss={cfg["loss_name"]} \\
             optimizer={cfg["optimizer"]} \\
             dataset.n_augmentations={cfg["n_augmentations"]} \\
+            trainer.max_epochs={cfg["max_epochs"]}\\
             embedder.maxpooling={cfg["maxpooling"]} \\
             embedder.seq_len={cfg["tokenizer_seq_len"]}\\
             dataset.fixed_species={cfg["fixed_species"]} \\
             dataset.train_data_file={train_file} \\
             dataset.val_data_file={val_file} \\
             dataset.test_data_file={test_file} \\
+            dataset.fivep_ovrhang={cfg["fivep_ovrhang"]} \\
+            dataset.threep_ovrhang={cfg["threep_ovrhang"]} \\
             ++wandb.dir="'{paths["wandb_dir"]}'"\\
             ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}'"\\
@@ -201,6 +207,11 @@ def create_prg_header_psi(cfg, paths):
     # We suffix logger.name (and optionally hydra.run.dir) with _r$RUN_IDX
     test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"+cfg["PSI_TEST_FILE"]
     
+    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+        reset_debug_warning()
+        debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
+        return None
+    
     header = f"""#!/bin/bash
     set -e
     cd $HOME
@@ -236,6 +247,8 @@ def create_prg_header_psi(cfg, paths):
             aux_models.mode={cfg["mode"]} \\
             aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
             dataset.test_files.intronexon={test_file} \\
+            dataset.fivep_ovrhang={cfg["fivep_ovrhang"]} \\
+            dataset.threep_ovrhang={cfg["threep_ovrhang"]} \\
             ++wandb.dir="'{paths["wandb_dir"]}'"\\
             $EXTRA_WANDB_PROJECT \\
             ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}_run_$RUN_IDX'"\\
@@ -397,63 +410,6 @@ def submit_job(cfg, paths):
     os.system(f"chmod u+x {prg_file}")
     os.system(f"chmod u+x {slurm_file}")
     os.system(f"sbatch {slurm_file}")
-
-
-
-# def submit_job(cfg, paths):
-#     """Create program + slurm script and submit."""
-    
-#     kind = cfg["slurm_file_name"]
-#     hash_obj = random.getrandbits(25)
-    
-#     # --- This is your existing logic for a unique job name ---
-#     job_name = get_file_name(f"{kind}_{hash_obj}", ext=False)
-#     cfg["job_name"] = job_name # This is still good for slurm
-
-#     # -----------------------------------------------------------------
-#     # --- NEW LOGIC BLOCK FOR WANDB ---
-#     # -----------------------------------------------------------------
-#     # Check if this is a sweep run (keys are from sweep_runner.py)
-#     if 'wandb_project_override' in cfg:
-#         # It's a sweep run: use the shared project and unique run name
-#         cfg['final_wandb_project'] = cfg['wandb_project_override']
-#         cfg['final_wandb_run_name'] = cfg['wandb_run_name_override']
-#         cfg['final_wandb_run_id'] = cfg['wandb_run_name_override'] # Use name for ID
-#     else:
-#         # It's a single run: use your old logic (e.g., use job_name)
-#         cfg['final_wandb_project'] = job_name # Or whatever you used before
-#         cfg['final_wandb_run_name'] = job_name
-#         cfg['final_wandb_run_id'] = job_name
-#     # -----------------------------------------------------------------
-#     # --- END NEW LOGIC BLOCK ---
-#     # -----------------------------------------------------------------
-
-#     prg_file = os.path.join(paths["job_path"], get_file_name(f"prg_{kind}_{hash_obj}"))
-#     slurm_file = os.path.join(paths["job_path"], get_file_name(f"slurm_{kind}_{hash_obj}"))
-
-#     paths['prg_file_path'] = prg_file
-#     paths['slurm_file_path'] = slurm_file
-   
-#     os.system(f"cp -r {paths['code_dir']}/scripts {paths['data_dir']}")
-#     os.system(f"cp -r {paths['code_dir']}/configs {paths['data_dir']}")
-#     os.system(f"cp -r {paths['code_dir']}/src {paths['data_dir']}")
-    
-#     task = cfg["task"] # "psi_regression_task" or "introns_cl"
-    
-#     # Now, these functions will receive the cfg with the NEW 'final_...' keys
-#     if task == "introns_cl":
-#         prg_header =  create_prg_header_cl(cfg, paths)
-#         slurm_header =  create_slurm_header_cl(cfg, paths)
-#     elif task == "psi_regression_task":
-#         prg_header =  create_prg_header_psi(cfg, paths)
-#         slurm_header =  create_slurm_header_psi(cfg, paths)
-
-#     create_bash_file(prg_header, prg_file)
-#     create_bash_file(slurm_header, slurm_file)
-
-#     os.system(f"chmod u+x {prg_file}")
-#     os.system(f"chmod u+x {slurm_file}")
-#     os.system(f"sbatch {slurm_file}")
 
 
 

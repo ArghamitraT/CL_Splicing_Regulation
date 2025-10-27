@@ -111,54 +111,141 @@ def create_readme(data_dir, readme_comment):
 
 #############
 
-def create_prg_header_cl(cfg, paths):
+# def create_prg_header_cl(cfg, paths):
 
-    train_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TRAIN_FILE"]
-    val_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["VAL_FILE"]
-    test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TEST_FILE"]
+#     train_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TRAIN_FILE"]
+#     val_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["VAL_FILE"]
+#     test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TEST_FILE"]
 
     
+#     header = f"""#!/bin/bash
+#     set -e
+#     cd $HOME
+#     source ~/.bashrc
+#     conda activate cl_splicing_regulation3
+#     WORKDIR={paths["data_dir"]}
+#     cd $WORKDIR
+#     python -m scripts.cl_training \\
+#             task={cfg["task"]} \\
+#             task.val_check_interval={cfg["val_check_interval"]}\\
+#             task.global_batch_size={cfg["global_batch_size"]}\\
+#             trainer.max_epochs={cfg["max_epochs"]}\\
+#             tokenizer={cfg["tokenizer"]} \\
+#             embedder={cfg["embedder"]} \\
+#             loss={cfg["loss_name"]} \\
+#             optimizer={cfg["optimizer"]} \\
+#             dataset.n_augmentations={cfg["n_augmentations"]} \\
+#             embedder.maxpooling={cfg["maxpooling"]} \\
+#             embedder.seq_len={cfg["tokenizer_seq_len"]}\\
+#             dataset.fixed_species={cfg["fixed_species"]} \\
+#             dataset.train_data_file={train_file} \\
+#             dataset.val_data_file={val_file} \\
+#             dataset.test_data_file={test_file} \\
+#             ++wandb.dir="'{paths["wandb_dir"]}'"\\
+#             ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}'"\\
+#             ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}'"\\
+#             ++hydra.run.dir={paths["hydra_dir"]}\\
+#             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
+#     """
+#     # reset_debug_warning()
+#     # debug_warning("add those args later")
+   
+#     # tokenizer.seq_len={tokenizer_seq_len} \\
+#     return header
+
+def create_prg_header_cl(cfg, paths):
+    """
+    Creates the program header (hydra command) for the CL task.
+    Reads sweep parameters from cfg.
+    """
+
+    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+        reset_debug_warning()
+        debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
+        return None
+    
+    # 1. Data file paths (ensure these base paths are correct)
+    cl_data_base = paths["server_path"] + "Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+    train_file = cl_data_base + cfg["TRAIN_FILE"]
+    val_file = cl_data_base + cfg["VAL_FILE"]
+    test_file = cl_data_base + cfg["TEST_FILE"]
+
+    # 2. Get W&B keys
+    project_name = cfg['final_wandb_project']
+    run_name = cfg['final_wandb_run_name']
+    run_id = cfg['final_wandb_run_id']
+
+    # 3. Get sweepable CL parameters with defaults
+    learning_rate = cfg.get('learning_rate', 1e-3)
+    temperature = cfg.get('temperature', 0.5)
+    n_augmentations = cfg.get('n_augmentations', 10)
+    accumulate_batches = cfg.get('accumulate_grad_batches', 1)
+    grad_clip = cfg.get('gradient_clip_val', 1.0) # Add if you sweep this
+    projection_dim = cfg.get('projection_dim', 128) # Add if you sweep this
+    hidden_dim = cfg.get('hidden_dim', 512) # Usually fixed or tied to proj_dim
+
+    # 4. Create bash script content
     header = f"""#!/bin/bash
     set -e
     cd $HOME
     source ~/.bashrc
     conda activate cl_splicing_regulation3
+
     WORKDIR={paths["data_dir"]}
     cd $WORKDIR
+
+    echo "--- Starting CL Hydra Run ---"
+    echo "W&B Project: {project_name}"
+    echo "W&B Run Name: {run_name}"
+    echo "W&B Run ID: {run_id}"
+    echo "---------------------------"
+
     python -m scripts.cl_training \\
             task={cfg["task"]} \\
             task.val_check_interval={cfg["val_check_interval"]}\\
-            task.global_batch_size={cfg["global_batch_size"]}\\
-            trainer.max_epochs={cfg["max_epochs"]}\\
             tokenizer={cfg["tokenizer"]} \\
             embedder={cfg["embedder"]} \\
-            loss={cfg["loss_name"]} \\
             optimizer={cfg["optimizer"]} \\
-            dataset.n_augmentations={cfg["n_augmentations"]} \\
+
+            # --- Swept CL Params ---
+            optimizer.lr={learning_rate} \\
+            loss.temperature={temperature} \\
+            task.global_batch_size={cfg["global_batch_size"]}\\
+            trainer.accumulate_grad_batches={accumulate_batches} \\
+            trainer.max_epochs={cfg["max_epochs"]}\\
+            dataset.n_augmentations={n_augmentations} \\
+            model.projection_dim={projection_dim} \\
+            model.hidden_dim={hidden_dim} \\
+            loss={cfg["loss_name"]} \\
+        
+            # --- Model/Data/Paths ---
             embedder.maxpooling={cfg["maxpooling"]} \\
-            embedder.seq_len={cfg["tokenizer_seq_len"]}\\
+            embedder.seq_len={cfg["tokenizer_seq_len"]} \\
             dataset.fixed_species={cfg["fixed_species"]} \\
             dataset.train_data_file={train_file} \\
             dataset.val_data_file={val_file} \\
             dataset.test_data_file={test_file} \\
-            ++wandb.dir="'{paths["wandb_dir"]}'"\\
-            ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}'"\\
-            ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}'"\\
-            ++hydra.run.dir={paths["hydra_dir"]}\\
+            dataset.fivep_ovrhang={cfg["fivep_ovrhang"]} \\
+            dataset.threep_ovrhang={cfg["threep_ovrhang"]} \\
+
+            # --- W&B / Hydra Overrides ---
+            ++wandb.dir={paths["wandb_dir"]} \\
+            ++logger.project="{project_name}" \\
+            ++logger.name="{run_name}" \\
+            ++callbacks.model_checkpoint.dirpath={paths["checkpoint_dir"]}/{run_name} \\
+            ++hydra.run.dir={paths["hydra_dir"]}/{run_name} \\
             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
-    """
-    # reset_debug_warning()
-    # debug_warning("add those args later")
-   
-    # tokenizer.seq_len={tokenizer_seq_len} \\
+            """
     return header
 
-
 def create_slurm_header_cl(cfg, paths):
+
+    # Use the unique run name for cleaner log files
+    run_name = cfg['final_wandb_run_name']
     
     #### need NYGC vs EMIPIRE AI condition here later #### (AT)
     show_name = '_'.join(cfg["job_name"].split('_')[1:])
-    show_name = f"{cfg['slurm_file_name']}_{show_name}"
+    show_name = f"{cfg['slurm_file_name']}_{show_name}__{run_name}"
 
     if paths['server_name'] == "EMPRAI":
         header = f"#!/bin/bash\n" + \
@@ -173,8 +260,24 @@ def create_slurm_header_cl(cfg, paths):
         f"#SBATCH --cpus-per-task={cfg['nthred']}                   \n" + \
         "#SBATCH --mail-type=END,FAIL    \n" + \
         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      #Send stdout/err to\n" + \
-        "#SBATCH --mail-user=at3836@columbia.edu                    \n" + \
-         f"{paths['prg_file_path']}"
+        "#SBATCH --mail-user=at3836@columbia.edu\n"
+        "\n"
+        f"RUNS={cfg['run_num']}\n"
+        f"NEW_WANDB_PROJECT={cfg['new_project_wandb']}\n"   # set once; all runs share one project if =1
+        "echo \"SLURM_JOB_ID=$SLURM_JOB_ID\"\n"
+        "for i in $(seq 1 $RUNS); do\n"
+        "  export RUN_IDX=$i\n"
+        "  export NEW_WANDB_PROJECT=$NEW_WANDB_PROJECT\n"
+        "  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
+        f"  bash {paths['prg_file_path']} 2>&1 | tee {paths['output_dir']}/out_{cfg['job_name']}_r${{i}}.${{SLURM_JOB_ID}}.txt\n"
+        "  status=${PIPESTATUS[0]}\n"
+        "  echo \"===== [$(date)] Finished RUN $i/$RUNS with status ${status} =====\"\n"
+        "  if [[ $status -ne 0 ]]; then\n"
+        "    echo \"Run $i failed (status $status). Exiting early.\" >&2\n"
+        "    exit $status\n"
+        "  fi\n"
+        "done\n"
+        
     
     elif paths['server_name'] == "NYGC":
         header = f"#!/bin/bash\n" + \
@@ -188,93 +291,67 @@ def create_slurm_header_cl(cfg, paths):
         f"#SBATCH --cpus-per-task={cfg['nthred']}                   \n" + \
         "#SBATCH --mail-type=END,FAIL    \n" + \
         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      #Send stdout/err to\n" + \
-        "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
-        f"{paths['prg_file_path']}"
-
+        "#SBATCH --mail-user=atalukder@nygenome.org\n"
+        "\n"
+        f"RUNS={cfg['run_num']}\n"
+        f"NEW_WANDB_PROJECT={cfg['new_project_wandb']}\n"   # set once; all runs share one project if =1
+        "echo \"SLURM_JOB_ID=$SLURM_JOB_ID\"\n"
+        "for i in $(seq 1 $RUNS); do\n"
+        "  export RUN_IDX=$i\n"
+        "  export NEW_WANDB_PROJECT=$NEW_WANDB_PROJECT\n"
+        "  echo \"===== [$(date)] Starting RUN $i/$RUNS on job $SLURM_JOB_ID =====\"\n"
+        f"  bash {paths['prg_file_path']} 2>&1 | tee {paths['output_dir']}/out_{cfg['job_name']}_r${{i}}.${{SLURM_JOB_ID}}.txt\n"
+        "  status=${PIPESTATUS[0]}\n"
+        "  echo \"===== [$(date)] Finished RUN $i/$RUNS with status ${status} =====\"\n"
+        "  if [[ $status -ne 0 ]]; then\n"
+        "    echo \"Run $i failed (status $status). Exiting early.\" >&2\n"
+        "    exit $status\n"
+        "  fi\n"
+        "done\n"
+        
 
     return header
 
 
 
-# def create_prg_header_psi(cfg, paths):
-
-#     """
-#     Creates the program header (the hydra command) for a psi_regression_task.
-#     Reads all sweepable parameters directly from the cfg dictionary.
-#     """
+# def create_slurm_header_cl(cfg, paths):
     
-#     # 1. Get test file path
-#     test_file = paths["server_path"] + "Contrastive_Learning/data/final_data/ASCOT_finetuning/" + cfg["PSI_TEST_FILE"]
+#     #### need NYGC vs EMIPIRE AI condition here later #### (AT)
+#     show_name = '_'.join(cfg["job_name"].split('_')[1:])
+#     show_name = f"{cfg['slurm_file_name']}_{show_name}"
+
+#     if paths['server_name'] == "EMPRAI":
+#         header = f"#!/bin/bash\n" + \
+#         "##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION\n" + \
+#         "##NECESSARY JOB SPECIFICATIONS\n" + \
+#         f"#SBATCH --job-name={show_name}      #Set the job name to \"JobExample1\"\n" + \
+#         "#SBATCH --partition=columbia     \n" + \
+#         "#SBATCH --account=columbia     \n" + \
+#         f"#SBATCH --gres=gpu:{cfg['gpu_num']}     \n" + \
+#         f"#SBATCH --time={cfg['hour']}:45:00              #Set the wall clock limit \n" + \
+#         f"#SBATCH --mem={cfg['memory']}G              \n" + \
+#         f"#SBATCH --cpus-per-task={cfg['nthred']}                   \n" + \
+#         "#SBATCH --mail-type=END,FAIL    \n" + \
+#         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      #Send stdout/err to\n" + \
+#         "#SBATCH --mail-user=at3836@columbia.edu                    \n" + \
+#          f"{paths['prg_file_path']}"
     
-#     # 2. Get W&B keys from cfg (set in submit_job)
-#     project_name = cfg['final_wandb_project']
-#     run_name = cfg['final_wandb_run_name']
-#     run_id = cfg['final_wandb_run_id']
-    
-#     # 3. Get all sweepable parameters with safe defaults
-#     #    This makes your script robust, even if you don't sweep all params.
-#     learning_rate = cfg.get('learning_rate', 1e-3)
-#     dropout_rate = cfg.get('dropout_rate', 0.5) # 0.5 is a common default
-#     freeze_encoder = cfg.get('freeze_encoder', False)
-#     accumulate_batches = cfg.get('accumulate_grad_batches', 1)
-#     grad_clip = cfg.get('gradient_clip_val', 1.0)
-    
-#     # 4. Create the final bash script content
-#     #    This version is much cleaner and fully controlled by Python.
-#     header = f"""#!/bin/bash
-#     set -e
-#     cd $HOME
-#     source ~/.bashrc
-#     conda activate cl_splicing_regulation3
+#     elif paths['server_name'] == "NYGC":
+#         header = f"#!/bin/bash\n" + \
+#         "##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION\n" + \
+#         "##NECESSARY JOB SPECIFICATIONS\n" + \
+#         f"#SBATCH --job-name={show_name}      #Set the job name to \"JobExample1\"\n" + \
+#         "#SBATCH --partition=gpu     \n" + \
+#         f"#SBATCH --gres=gpu:{cfg['gpu_num']}     \n" + \
+#         f"#SBATCH --time={cfg['hour']}:45:00              #Set the wall clock limit \n" + \
+#         f"#SBATCH --mem={cfg['memory']}G              \n" + \
+#         f"#SBATCH --cpus-per-task={cfg['nthred']}                   \n" + \
+#         "#SBATCH --mail-type=END,FAIL    \n" + \
+#         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      #Send stdout/err to\n" + \
+#         "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
+#         f"{paths['prg_file_path']}"
 
-#     WORKDIR={paths["data_dir"]}
-#     cd $WORKDIR
 
-#     echo "--- Starting Hydra Run ---"
-#     echo "W&B Project: {project_name}"
-#     echo "W&B Run Name: {run_name}"
-#     echo "W&B Run ID: {run_id}"
-#     echo "---------------------------"
-
-#     python -m scripts.psi_regression_training \\
-#             task={cfg["task"]} \\
-#             task.val_check_interval={cfg["val_check_interval"]}\\
-#             task.global_batch_size={cfg["global_batch_size"]}\\
-#             tokenizer={cfg["tokenizer"]} \\
-#             embedder={cfg["embedder"]} \\
-#             loss={cfg["psi_loss_name"]} \\
-#             optimizer={cfg["optimizer"]} \\
-            
-#             # --- All Swept Params ---
-#             optimizer.lr={learning_rate} \\
-#             aux_models.freeze_encoder={freeze_encoder} \\
-#             aux_models.dropout={dropout_rate} \\
-#             trainer.accumulate_grad_batches={accumulate_batches} \\
-
-#             # --- Trainer ---
-#             trainer.max_epochs={cfg["max_epochs"]}\\
-            
-#             # --- Model/Paths ---
-#             aux_models.warm_start={cfg["warm_start"]} \\
-#             aux_models.mtsplice_weights={cfg["mtsplice_weights"]} \\
-#             aux_models.weights_threeprime={cfg["weight_3p"]} \\
-#             aux_models.weights_fiveprime={cfg["weight_5p"]} \\
-#             aux_models.weights_exon={cfg["weight_exon"]} \\
-#             embedder.maxpooling={cfg["maxpooling"]} \\
-#             tokenizer.seq_len={cfg["tokenizer_seq_len"]} \\
-#             aux_models.mode={cfg["mode"]} \\
-#             aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
-#             dataset.test_files.intronexon={test_file} \\
-            
-#             # --- W&B / Hydra Overrides ---
-#             # These paths use the unique run_name for clean log separation
-#             ++wandb.dir="'{paths["wandb_dir"]}'"\\
-#             ++logger.project="{project_name}" \\
-#             ++logger.name="{run_name}" \\
-#             ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}/{run_name}'"\\
-#             ++hydra.run.dir="{paths["hydra_dir"]}/{run_name}"\\
-#             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
-#     """
 #     return header
 
 
@@ -284,6 +361,10 @@ def create_prg_header_psi(cfg, paths):
     PSI regression SLURM header — single-run version, creating a new W&B project.
     Works with Lightning's WandbLogger that uses 'logger.project'.
     """
+    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+        reset_debug_warning()
+        debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
+        return None
 
     test_file = (
         paths["server_path"]

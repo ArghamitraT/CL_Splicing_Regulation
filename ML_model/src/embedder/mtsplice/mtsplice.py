@@ -112,11 +112,7 @@ class MTSpliceEncoder(BaseEmbedder):
 
         self.global_pool = nn.AdaptiveAvgPool1d(1)
         self.bn1 = nn.BatchNorm1d(hidden_dim, eps=1e-3, momentum=0.01) # *2 because we concatenate hidden_dim from both branches
-        # self.fc1 = nn.Linear(hidden_dim, embed_dim)
-        # self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
-        # self.dropout = nn.Dropout(dropout)
-        # self.fc2 = nn.Linear(embed_dim, out_dim)
-
+        
     def forward(self, seql, seqr, **kwargs):
         x_l = self.branch_l(seql)  # Output shape: (B, hidden_dim, 400)
         x_r = self.branch_r(seqr)  # Output shape: (B, hidden_dim, 400)
@@ -131,10 +127,7 @@ class MTSpliceEncoder(BaseEmbedder):
         # The rest of your head architecture
         # Ensure self.bn1 and self.fc1 are initialized with `hidden_dim`
         x = self.bn1(x)
-        # x = self.fc1(x)
-        # x = self.bn2(x)
-        # x = self.dropout(x)
-        # x = self.fc2(x)
+        
         return x
         
     def get_regularization_loss(self):
