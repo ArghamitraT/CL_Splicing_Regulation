@@ -17,7 +17,7 @@ mtsplice_BCE: 1 # if instead of regression, you would like the auxiliary model t
 hidden_dim: 512
 output_dim: 1  # Single output for PSI value prediction
 freeze_encoder: False  # Set to false for fine-tuning
-warm_start: True
+warm_start: False
 train_mode: "train" # or eval
 eval_weights: ""
 dropout: 0.5
