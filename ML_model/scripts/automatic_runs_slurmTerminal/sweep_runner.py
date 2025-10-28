@@ -103,7 +103,7 @@ def define_sweep_grid():
 #         # Tier 1
 #         'learning_rate': [1e-3, 5e-4, 1e-4],
 #         'temperature': [0.1, 0.2, 0.5], # For SupConLoss
-#         'global_batch_size': [1024, 2048], 
+#         'global_batch_size': [2048, 4096, 8192], 
 #         'accumulate_grad_batches': [1, 2], # Test effective batch sizes
         
 #         # Tier 2

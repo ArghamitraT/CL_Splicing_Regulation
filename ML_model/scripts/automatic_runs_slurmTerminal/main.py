@@ -24,7 +24,9 @@ def get_experiment_config():
         readme_comment = "new corrected mtsplice model, intron ofset 300 bp like MTsplice, no CL, HE initialized\n",
         wandb_logger_NOTES = "new corrected mtsplice model intron ofset 300 bp like MTsplice no CL HE initialized",
         new_project_wandb = 1,
-        
+        fivep_ovrhang = 300,
+        threep_ovrhang = 300,
+
         ##### --- machine configuration
         gpu_num = 1,
         hour = 3,

@@ -240,12 +240,9 @@ def create_prg_header_cl(cfg, paths):
 
 def create_slurm_header_cl(cfg, paths):
 
-    # Use the unique run name for cleaner log files
-    run_name = cfg['final_wandb_run_name']
-    
     #### need NYGC vs EMIPIRE AI condition here later #### (AT)
     show_name = '_'.join(cfg["job_name"].split('_')[1:])
-    show_name = f"{cfg['slurm_file_name']}_{show_name}__{run_name}"
+    show_name = f"{cfg['slurm_file_name']}_{show_name}"
 
     if paths['server_name'] == "EMPRAI":
         header = f"#!/bin/bash\n" + \

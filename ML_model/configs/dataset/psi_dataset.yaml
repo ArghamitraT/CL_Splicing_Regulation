@@ -45,3 +45,5 @@ num_workers: ${optimal_workers:}  # Increase for faster data loading
 # test_ratio: 0.1
 # data_file: "/gpfs/commons/home/atalukder/Contrastive_Learning/data/fine_tuning/Psi_values/psi_Lung_intron_sequences_dict.pkl"  # New PSI dataset
 cache_dir: "../data"
+fivep_ovrhang: 300  # how much overhang to include from 5'  intron
+threep_ovrhang: 300 # how much overhang to include from 3'  intron

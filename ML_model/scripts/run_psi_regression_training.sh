@@ -37,6 +37,8 @@ python -m scripts.psi_regression_training \
         aux_models.mtsplice_weights="exprmnt_2025_10_25__14_52_07"\
         aux_models.mode="mtsplice"\
         aux_models.mtsplice_BCE=1\
+        dataset.fivep_ovrhang=300 \
+        dataset.threep_ovrhang=300 \
         logger.name="Psi__trial__$(date +%Y%m%d_%H%M%S)" \
         logger.notes="$NOTES"
        

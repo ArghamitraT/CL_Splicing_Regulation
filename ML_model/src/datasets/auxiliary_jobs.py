@@ -27,7 +27,7 @@ def debug_warning(message):
 ############# DEBUG Message ###############
 
 class PSIRegressionDataset(Dataset):
-    def __init__(self, data_file, tokenizer, max_length=201, mode="5p"):
+    def __init__(self, data_file, tokenizer, max_length=201, mode="5p", len_5p=300, len_3p=300):
         """
         Dataset for PSI Regression.
 
@@ -48,12 +48,12 @@ class PSIRegressionDataset(Dataset):
         self.mode = mode
         self.entries = list(self.data.items())  # Convert dictionary to list format
 
-        reset_debug_warning()
-        debug_warning("our intron length is 300 bp; check the data")
+        # reset_debug_warning()
+        # debug_warning("our intron length is 300 bp; check the data")
         # Fixed lengths for MTSplice windowing
-        self.len_5p = 300
+        self.len_5p = len_5p
         self.len_exon = 100
-        self.len_3p = 300
+        self.len_3p = len_3p
 
         # reset_debug_warning()
         # debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")
@@ -147,23 +147,25 @@ class PSIRegressionDataModule(pl.LightningDataModule):
         self.train_files = config.dataset.train_files
         self.val_files = config.dataset.val_files
         self.test_files = config.dataset.test_files
+        self.len_5p = config.dataset.fivep_ovrhang  # how much overhang to include from 5' intron
+        self.len_3p = config.dataset.threep_ovrhang # how much overhang to include from 3' intron
 
     def setup(self, stage=None):
         if self.mode == "3p":
-            self.train_set = PSIRegressionDataset(self.train_files["3p"], self.tokenizer, mode=self.mode)
-            self.val_set = PSIRegressionDataset(self.val_files["3p"], self.tokenizer, mode=self.mode)
-            self.test_set = PSIRegressionDataset(self.test_files["3p"], self.tokenizer, mode=self.mode)
+            self.train_set = PSIRegressionDataset(self.train_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.val_set = PSIRegressionDataset(self.val_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.test_set = PSIRegressionDataset(self.test_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
 
         elif self.mode == "5p":
-            self.train_set = PSIRegressionDataset(self.train_files["5p"], self.tokenizer, mode=self.mode)
-            self.val_set = PSIRegressionDataset(self.val_files["5p"], self.tokenizer, mode=self.mode)
-            self.test_set = PSIRegressionDataset(self.test_files["5p"], self.tokenizer, mode=self.mode)
+            self.train_set = PSIRegressionDataset(self.train_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.val_set = PSIRegressionDataset(self.val_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.test_set = PSIRegressionDataset(self.test_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
 
         # elif self.mode == "intronexon":
         else:
-            self.train_set = PSIRegressionDataset(self.train_files["intronexon"], self.tokenizer, mode=self.mode)
-            self.val_set = PSIRegressionDataset(self.val_files["intronexon"], self.tokenizer, mode=self.mode)
-            self.test_set = PSIRegressionDataset(self.test_files["intronexon"], self.tokenizer, mode=self.mode)
+            self.train_set = PSIRegressionDataset(self.train_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.val_set = PSIRegressionDataset(self.val_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.test_set = PSIRegressionDataset(self.test_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
 
             # self.train_set = {
             #     "5p": PSIRegressionDataset(self.train_files["5p"], self.tokenizer),
