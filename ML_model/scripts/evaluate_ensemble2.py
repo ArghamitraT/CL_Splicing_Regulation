@@ -68,45 +68,7 @@ def setup_datamodule_for_validation(config: DictConfig) -> torch.utils.data.Data
     print(f"Validation dataset size: {len(val_dataloader.dataset)}")
     return val_dataloader
 
-# def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | None) -> dict:
-#     """Finds and validates checkpoint paths for specified run indices."""
-#     print("\n--- Identifying Ensemble Runs ---")
-#     if not ensemble_base_path.is_dir():
-#         raise FileNotFoundError(f"Base experiment path not found: {ensemble_base_path}")
 
-#     all_run_dirs = sorted([d for d in ensemble_base_path.iterdir() if d.is_dir() and d.name.startswith('run_')])
-
-#     selected_run_dirs = []
-#     if run_indices and len(run_indices) > 0:
-#         print(f"Selecting specific runs: {run_indices}")
-#         run_map = {int(d.name.split('_')[-1]): d for d in all_run_dirs}
-#         for idx in run_indices:
-#             if idx in run_map:
-#                 selected_run_dirs.append(run_map[idx])
-#             else:
-#                 print(f"Warning: Run index {idx} specified but directory not found.")
-#     else:
-#         print("Selecting all found runs.")
-#         selected_run_dirs = all_run_dirs
-
-#     if not selected_run_dirs:
-#         raise FileNotFoundError(f"No valid run directories found or selected in {ensemble_base_path}")
-
-#     print(f"Found {len(selected_run_dirs)} runs for the ensemble:")
-#     valid_checkpoints = {} # {run_dir_path: ckpt_path_str}
-#     for run_dir in selected_run_dirs:
-#         ckpt_path = run_dir / "best-checkpoint.ckpt"
-#         if ckpt_path.exists():
-#             print(f"  - {run_dir.name} -> {ckpt_path.name}")
-#             valid_checkpoints[run_dir] = str(ckpt_path)
-#         else:
-#             print(f"Warning: Checkpoint not found in {run_dir}. Skipping this run.")
-
-#     if not valid_checkpoints:
-#         raise FileNotFoundError("No valid checkpoints found for any selected run.")
-
-#     print(f"Using {len(valid_checkpoints)} models in the ensemble.")
-#     return valid_checkpoints
 
 def identify_ensemble_checkpoints(ensemble_base_path: Path, run_indices: list | None, config: DictConfig) -> dict: # Added config
     """Finds and validates checkpoint paths inside the deeper structure."""
@@ -176,6 +138,7 @@ def generate_predictions_from_checkpoints(
     num_ensemble_models = len(valid_checkpoints)
     base_ensemble_output_dir = Path(config.ensemble.output_subdir)
 
+    model_performance_list = []
     for i, (run_dir, ckpt_path) in enumerate(valid_checkpoints.items()):
         print(f"Processing model {i+1}/{num_ensemble_models} from {run_dir.name}...")
 
@@ -187,38 +150,72 @@ def generate_predictions_from_checkpoints(
         print(f"  -> Setting output dir for test hook to: {config.ensemble.output_subdir}")
         # OmegaConf.set_struct(config.ensemble, True) # Optional: restore struct
 
-        trainer.test(model=base_model, dataloaders=dataloader, ckpt_path=ckpt_path)
-        
-    #     pred_file_path = run_dir / raw_pred_filename
-    #     if pred_file_path.exists():
-    #         try:
-    #             pred_df = pd.read_csv(pred_file_path, sep='\t')
-    #             if 'exon_id' not in pred_df.columns:
-    #                  print(f"  -> ERROR: 'exon_id' missing in {pred_file_path}. Skipping.")
-    #                  continue
-    #             all_predictions_dfs.append(pred_df.set_index('exon_id'))
-    #             print(f"  -> Loaded predictions DF shape: {pred_df.shape}")
-    #         except Exception as e:
-    #              print(f"  -> ERROR loading/processing {pred_file_path}: {e}. Skipping.")
-    #     else:
-    #         print(f"  -> ERROR: Prediction file not found at {pred_file_path}. Skipping run.")
+        results = trainer.test(model=base_model, dataloaders=dataloader, ckpt_path=ckpt_path)
+        # --- Extract the validation loss ---
+        try:
+            # IMPORTANT: Assumes your test_step logs 'test_loss_epoch'. 
+            # Change this key if your metric is named differently (e.g., 'test_loss', 'val_rmse').
+            individual_loss = results[0]['test_loss_epoch'] 
+            print(f"  -> Individual Loss (val_loss): {individual_loss:.6f}")
+        except (KeyError, IndexError) as e:
+            print(f"  -> ERROR: Could not find 'val_loss' in trainer results: {results}. Skipping.")
+            continue
+            
+        pred_file_path = run_specific_output_dir / raw_pred_filename
+        if pred_file_path.exists():
+            try:
+                # Load the full file
+                pred_df = pd.read_csv(pred_file_path, sep='\t')
+                
+                # --- NEW: Extract only the delta_logit columns ---
+                delta_logit_cols = [col for col in pred_df.columns if col.endswith('_pred_delta_logit')]
+                
+                if not delta_logit_cols:
+                    print(f"  -> ERROR: No '_pred_delta_logit' columns found in {pred_file_path}. Skipping.")
+                    continue
 
-    # if not all_predictions_dfs:
-    #      raise RuntimeError("Failed to load predictions from any run's output file.")
+                # --- NEW: Create a new DF with just exon_id and delta_logits ---
+                pred_delta_logit_df = pred_df[['exon_id'] + delta_logit_cols].set_index('exon_id')
+                
+                # Rename columns to remove suffix for easier matching
+                pred_delta_logit_df.columns = [
+                    col.replace('_pred_delta_logit', '') for col in pred_delta_logit_df.columns
+                ]
+                
+                model_performance_list.append({
+                    "loss": individual_loss,
+                    "df": pred_delta_logit_df, # Store the delta_logit_df
+                    "name": f"run_{str(i+1)}"
+                })
+                print(f"  -> Loaded & processed delta_logits DF shape: {pred_delta_logit_df.shape}")
+                
+            except Exception as e:
+                 print(f"  -> ERROR loading/processing {pred_file_path}: {e}. Skipping.")
+        else:
+            print(f"  -> ERROR: Prediction file not found at {pred_file_path}. Skipping run.")
 
-    # return all_predictions_dfs
+    if not model_performance_list:
+         raise RuntimeError("Failed to get performance from any model.")
+         
+    sorted_models = sorted(model_performance_list, key=lambda x: x['loss'])
+    
+    print("\n--- Model Performance Summary (Sorted by Loss) ---")
+    for model_info in sorted_models:
+        print(f"  - {model_info['name']}: {model_info['loss']:.6f}")
 
+    return sorted_models
+    
 def average_predictions(all_predictions_dfs: list[pd.DataFrame]) -> pd.DataFrame:
-    """Averages predictions across multiple runs, aligning by exon_id."""
-    print("\n--- Averaging Predictions ---")
+    """Averages predictions across multiple runs, aligning by exon_id (index)."""
+    # This function now correctly averages the delta-logit DataFrames
     if not all_predictions_dfs:
         raise ValueError("Prediction list is empty, cannot average.")
 
     combined_preds = pd.concat(all_predictions_dfs, axis=0)
     averaged_predictions_series = combined_preds.groupby(combined_preds.index).mean()
     averaged_preds_df_wide = averaged_predictions_series.reset_index()
-    print(f"Averaged predictions DataFrame shape: {averaged_preds_df_wide.shape}")
     return averaged_preds_df_wide
+
 
 def save_dataframe(df: pd.DataFrame, save_dir: Path, filename: str):
     """Saves a DataFrame to a specified directory and filename."""
@@ -228,55 +225,67 @@ def save_dataframe(df: pd.DataFrame, save_dir: Path, filename: str):
     print(f"DataFrame saved to: {save_path}")
 
 def calculate_and_save_ensemble_metrics(
-    averaged_preds_df_wide: pd.DataFrame,
-    gt_config: DictConfig, # Pass config section relevant to GT
+    averaged_delta_logit_df: pd.DataFrame, # This is now avg delta_logits
+    gt_lookup_df: pd.DataFrame, # This is the GT file with 'logit_mean_psi'
+    gt_df_for_metrics: pd.DataFrame, # This is the full metrics GT file
+    common_tissues: list[str], # The list of common tissue names
     save_dir: Path,
     metrics_filename: str
     ):
-    """Calculates Delta PSI/Logit and RMSE, then saves the metrics."""
-    print("\n--- Calculating and Saving Metrics ---")
-
-    # Determine Ground Truth File Path from config
-    gt_file_path = f"{root_path}/Contrastive_Learning/data/final_data/ASCOT_finetuning/{gt_config.target_file_name}"
-
+    """
+    Converts avg_delta_logits to psi_pred, then calculates and saves 
+    the final Delta PSI/Logit and RMSE metrics.
+    """
+    print("\n--- Calculating and Saving FINAL Metrics ---")
+    
     try:
-        gt_df_full, gt_tissue_cols = load_ground_truth(gt_file_path)
-    except FileNotFoundError:
-        print(f"Error: Ground truth file not found at {gt_file_path}")
-        return # Or raise
-    except Exception as e:
-        print(f"Error loading ground truth: {e}")
-        return # Or raise
+        # --- NEW: Convert avg_delta_logits to avg_psi_pred ---
+        
+        # 1. Align pred and gt_lookup
+        pred_df_indexed = averaged_delta_logit_df.set_index('exon_id')
+        pred_aligned, gt_aligned = pred_df_indexed.align(
+            gt_lookup_df, join='inner', axis=0
+        )
+        
+        # 2. Get matching logit_mean_psi
+        logit_mean_psi = torch.tensor(
+            gt_aligned["logit_mean_psi"].values,
+            dtype=torch.float32
+        ) # Shape (B,)
+        
+        # 3. Get avg_delta_logit tensor
+        avg_delta_logit_tensor = torch.tensor(
+            pred_aligned[common_tissues].values,
+            dtype=torch.float32
+        ) # Shape (B, 56)
+        
+        # 4. Convert delta_logits -> logits -> psi
+        logits_tensor = avg_delta_logit_tensor + logit_mean_psi[:, None]
+        avg_psi_tensor = torch.sigmoid(logits_tensor)
+        
+        # 5. Convert back to DataFrame for metric functions
+        averaged_preds_df_wide = pd.DataFrame(
+            avg_psi_tensor.numpy(),
+            columns=common_tissues
+        )
+        averaged_preds_df_wide['exon_id'] = pred_aligned.index
+        # --- END CONVERSION ---
 
-    pred_tissue_cols = averaged_preds_df_wide.columns[1:].tolist() # Exclude exon_id
+        # The rest of the function now works as before
+        avg_preds_df_filtered = averaged_preds_df_wide[['exon_id'] + common_tissues]
 
-    # Check tissue consistency
-    if set(pred_tissue_cols) != set(gt_tissue_cols):
-         print("Warning: Tissue names mismatch between predictions and ground truth!")
-         common_tissues = sorted(list(set(pred_tissue_cols) & set(gt_tissue_cols)))
-         if not common_tissues:
-             print("Error: No common tissues found. Cannot calculate metrics.")
-             return
-         print(f"Using {len(common_tissues)} common tissues for evaluation.")
-         tissue_cols_for_eval = common_tissues
-         avg_preds_df_filtered = averaged_preds_df_wide[['exon_id'] + tissue_cols_for_eval]
-    else:
-         tissue_cols_for_eval = pred_tissue_cols
-         avg_preds_df_filtered = averaged_preds_df_wide
-
-    try:
         # Calculate Delta PSI for predictions and GT
-        delta_psi_pred_df, _ = get_delta_psi(avg_preds_df_filtered, tissue_cols_for_eval, gt_df_full)
+        delta_psi_pred_df, _ = get_delta_psi(avg_preds_df_filtered, common_tissues, gt_df_for_metrics)
         delta_psi_pred_df_long = delta_psi_pred_df.melt(
-            id_vars=['exon_id'], value_vars=tissue_cols_for_eval,
+            id_vars=['exon_id'], value_vars=common_tissues,
             var_name='tissue', value_name='pred_delta_psi'
         )
 
-        delta_psi_gt_df, _ = get_delta_psi(gt_df_full, gt_tissue_cols, gt_df_full)
-        if set(pred_tissue_cols) != set(gt_tissue_cols):
-            delta_psi_gt_df = delta_psi_gt_df[['exon_id'] + tissue_cols_for_eval]
+        gt_df_filtered = gt_df_for_metrics[['exon_id'] + common_tissues + ['mean_psi']] 
+        delta_psi_gt_df, _ = get_delta_psi(gt_df_filtered, common_tissues, gt_df_filtered)
+        
         delta_psi_gt_df_long = delta_psi_gt_df.melt(
-            id_vars=['exon_id'], value_vars=tissue_cols_for_eval,
+            id_vars=['exon_id'], value_vars=common_tissues,
             var_name='tissue', value_name='gt_delta_psi'
         )
 
@@ -285,11 +294,11 @@ def calculate_and_save_ensemble_metrics(
 
         # Save Metrics
         save_dataframe(ensemble_rmse_df, save_dir, metrics_filename)
-        print("Top 5 RMSE results:")
+        print("Top 5 RMSE results for final ensemble:")
         print(ensemble_rmse_df.sort_values(by='rmse_delta_psi').head())
 
     except Exception as e:
-        print(f"Error calculating or saving metrics: {e}")
+        print(f"Error calculating or saving final metrics: {e}")
 
 
 # --- Orchestration Function (Keep this defined globally) ---
@@ -316,20 +325,102 @@ def main_evaluate_ensemble(config: DictConfig):
     valid_checkpoints = identify_ensemble_checkpoints(
         ensemble_base_path, config.ensemble.run_indices, config
     )
-    all_predictions_dfs = generate_predictions_from_checkpoints(
+    sorted_models = generate_predictions_from_checkpoints(
         valid_checkpoints, config, val_dataloader
     )
-    averaged_preds_df = average_predictions(all_predictions_dfs)
-    save_dataframe(averaged_preds_df, save_dir, config.ensemble.predictions_filename)
-    calculate_and_save_ensemble_metrics(
-        averaged_preds_df,
-        config.data,
-        save_dir,
-        config.ensemble.metrics_filename
-    )
+    if not sorted_models:
+        print("FATAL: No models were successfully evaluated. Exiting.")
+        return
+    
+    # --- 6. Forward Selection Loop ---
+    print(f"\n--- Starting Forward Selection Loop (Metric: {config.loss._target_}) ---")
+    
+    best_ensemble_loss = float('inf')
+    best_ensemble_k = 0
+    best_ensemble_df = None # This will store the *averaged_delta_logit_df*
+    
+    current_ensemble_dfs = [] # List of delta-logit DataFrames
+    
+    # Determine common tissues before the loop
+    # We use the columns from the first *delta_logit* DF
+    common_tissues = sorted_models[0]['df'].columns.tolist()
 
+    try:
+        loss_fn = hydra.utils.instantiate(config.loss, _recursive_=False)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        loss_fn.to(device) # Move loss function to device
+        print(f"Successfully instantiated loss function: {config.loss._target_}")
+    except Exception as e:
+        print(f"FATAL: Could not instantiate loss function: {e}")
+        return
+    
+
+    for i, model_info in enumerate(sorted_models):
+        k = i + 1
+        current_ensemble_dfs.append(model_info['df'])
+        
+        # Average the 'delta_logit' values
+        avg_delta_logit_df = average_predictions(current_ensemble_dfs)
+        
+        # --- Convert averaged_delta_logit_df to tensor ---
+        # Align with GT to get exon_ids in the correct order for the loss_fn
+        # pred_aligned, _ = avg_delta_logit_df.set_index('exon_id').align(
+        #     gt_val_df, join='inner', axis=0
+        # )
+        
+        # if pred_aligned.empty:
+        #     print(f"  -> Skipping k={k}, no common exons with GT file.")
+        #     continue
+
+        pred_aligned = avg_delta_logit_df.set_index('exon_id')
+            
+        exon_ids = pred_aligned.index.tolist()
+        delta_logits_tensor = torch.tensor(
+            pred_aligned[common_tissues].values,
+            dtype=torch.float32,
+            device=device # Move tensor to the same device as the loss_fn
+        )
+
+        # --- Call your *actual* loss function ---
+        loss_tensor = loss_fn(delta_logits_tensor, exon_ids, split='val')
+        current_loss = loss_tensor.item()
+        
+        print(f"  Ensemble k={k} (adding {model_info['name']}) -> Loss (from class): {current_loss:.6f}")
+        
+        if current_loss < best_ensemble_loss:
+            best_ensemble_loss = current_loss
+            best_ensemble_k = k
+            best_ensemble_df = avg_delta_logit_df # Save the averaged delta-logit DF
+            print(f"    -> NEW BEST LOSS FOUND!")
+        else:
+            print(f"    -> Loss did not improve (Current: {current_loss:.6f} vs Best: {best_ensemble_loss:.6f}). Stopping.")
+            break 
+
+    # --- 7. Save Final Results ---
+    print("\n--- Forward Selection Finished ---")
+    
+    if best_ensemble_df is None:
+        print("FATAL: No valid ensemble was created.")
+        return
+        
+    print(f"Best Ensemble Size (k): {best_ensemble_k}")
+    print(f"Best Ensemble Loss (from class): {best_ensemble_loss:.6f}")
+    
+    # Save the predictions (averaged DELTA LOGITS) of the best ensemble
+    save_dataframe(best_ensemble_df, save_dir, config.ensemble.predictions_filename)
+    
+    # Calculate and save the final RMSE metrics
+    # calculate_and_save_ensemble_metrics(
+    #     best_ensemble_df,      # The avg_delta_logit_df
+    #     gt_val_df,             # The GT file for logit_mean_psi lookup
+    #     gt_df_for_metrics,     # The full GT file for final metrics
+    #     common_tissues,
+    #     save_dir,
+    #     config.ensemble.metrics_filename
+    # )
 
     print("\n--- Ensemble Evaluation Finished Successfully ---")
+
 
 
 # --- Main execution block (Using @hydra.main) ---
@@ -351,6 +442,7 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
             # --- OPTION 2: Auto-detect all runs ---
             "run_indices": [], # <<< Use empty list or null to find all run_* folders
             "output_subdir": output_subdir,
+            "predictions_filename": "tsplice_ensemble_avg_delta_logit_all_tissues.tsv",
         }
     })
 

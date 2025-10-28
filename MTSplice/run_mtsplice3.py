@@ -80,7 +80,8 @@ def get_windows_with_padding(seq, overhang, tissue_acceptor_intron=300, tissue_a
 
 
 # Retina index
-split_name = "test"
+# split_name = "test"
+split_name = "variable"
 file = f'/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_{split_name}_Retina___Eye_psi_MERGED.pkl'
 # Replace with your actual file path
 with open(file, "rb") as f:
