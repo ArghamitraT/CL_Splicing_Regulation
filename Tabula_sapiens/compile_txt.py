@@ -26,7 +26,7 @@ def main():
 
     print(f"Creating intermediate directories...")
     for subdir in ["", "temp", "output"]:
-        dir_path = os.path.join(cwd, cell_type, subdir)
+        dir_path = os.path.join(cwd, cell_type.replace(" ", "_"), subdir)
         os.makedirs(dir_path, exist_ok=True)
         print(f"Ensured directory exists: {dir_path}")
 
