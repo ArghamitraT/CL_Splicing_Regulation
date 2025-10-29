@@ -529,27 +529,6 @@ def main_evaluate_ensemble(config: DictConfig):
         logging.error(f"Failed to save pickle file: {e}", exc_info=True)
     return sorted_models, best_ensemble_k
     
-    # # 1. Get the list of checkpoint paths for the k-best models
-    # best_checkpoints = [m['ckpt_path'] for m in sorted_models[:best_ensemble_k]]
-    
-    # # 2. Define a new save directory for the test set results
-    # test_save_dir = save_dir / "test_set_evaluation"
-    
-    # # 3. Define the name for the final output file
-    # avg_test_pred_filename = "test_ensemble_avg_delta_logit.tsv"
-    
-    # # 4. Call the simplified function
-    # get_average_test_prediction(
-    #     best_checkpoints, 
-    #     config, 
-    #     test_save_dir, 
-    #     config.ensemble.raw_pred_filename,
-    #     avg_test_pred_filename
-    # )
-
-    # logging.info("\n--- Ensemble Evaluation Finished Successfully ---")
-
-
 
 
 # --- Main execution block (Using @hydra.main) ---
@@ -558,7 +537,13 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
 
 
     # Parameters #
-    experiment_folder = "exprmnt_2025_10_22__17_47_17"
+    overhang = 200
+    # experiment_folder = "exprmnt_2025_10_28__20_12_11" # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
+    # experiment_folder = "exprmnt_2025_10_28__20_12_58" # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+    # experiment_folder = "exprmnt_2025_10_28__20_28_29" # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+    experiment_folder = "exprmnt_2025_10_28__20_30_30" # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
+
+    
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
 
     # --- Define Ensemble Parameters Here ---
@@ -607,7 +592,18 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
     config.aux_models.eval_weights = None
     config.aux_models.train_mode = "eval"
     config.aux_models.warm_start = False
+    config.dataset.fivep_ovrhang = overhang  # how much overhang to include from 5'  intron
+    config.dataset.threep_ovrhang = overhang
+
+    if overhang == 200:
+        config.dataset.train_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_train_Retina___Eye_psi_MERGED.pkl"
+        config.dataset.val_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl"
+        config.dataset.test_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
     config.dataset.test_files = config.dataset.val_files
+
+    # (AT)
+
+    # 
 
     # --- Optional: Restore struct mode *after* all modifications ---
     OmegaConf.set_struct(config, True)

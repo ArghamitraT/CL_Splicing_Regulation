@@ -34,11 +34,16 @@ FINAL_DIR_NAME="combined_runs"
 # exprmnt_2025_10_24__04_01_01 # EMPRAIPsi_MTSpliceNewmodel_300bpIntron
 # )
 
+# EXPERIMENTS=(
+# exprmnt_2025_10_25__22_41_13 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_noASCOTTestinTrain
+# exprmnt_2025_10_25__22_38_22 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon_noASCOTTestinTrain
+# )
 EXPERIMENTS=(
-exprmnt_2025_10_25__22_41_13 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_noASCOTTestinTrain
-exprmnt_2025_10_25__22_38_22 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon_noASCOTTestinTrain
+ exprmnt_2025_10_28__20_12_11 # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
+ exprmnt_2025_10_28__20_12_58 # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+ exprmnt_2025_10_28__20_28_29 # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+ exprmnt_2025_10_28__20_30_30 # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
 )
-
 
 # ===============================
 # PATH SETUP

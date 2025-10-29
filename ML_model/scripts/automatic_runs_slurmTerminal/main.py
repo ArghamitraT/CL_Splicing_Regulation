@@ -14,18 +14,20 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_MTSpliceNewmodel_300bpIntron_HeInitialized',
+        slurm_file_name = 'Psi_wtdSupCon_200bpIntrons_mtspliceHyperparams',
         task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        global_batch_size = 2048 ,
+        
         max_epochs = 10,
         optimizer = "adam",
-        learning_rate =  1e-3,
-        readme_comment = "new corrected mtsplice model, intron ofset 300 bp like MTsplice, no CL, HE initialized\n",
-        wandb_logger_NOTES = "new corrected mtsplice model intron ofset 300 bp like MTsplice no CL HE initialized",
+        readme_comment = "intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters\n",
+        wandb_logger_NOTES = "intron ofset 200 bp like MTsplice CL weighted Supcon MTSplice hyperparameters",
         new_project_wandb = 1,
-        fivep_ovrhang = 300,
-        threep_ovrhang = 300,
+        fivep_ovrhang = 200,
+        threep_ovrhang = 200,
+        learning_rate =  1e-3, # Best Psi: 1e-3
+        global_batch_size = 1024, # Best Psi: 1024
+        accumulate_grad_batches = 1, # Best Psi: 1
 
         ##### --- machine configuration
         gpu_num = 1,
@@ -84,7 +86,7 @@ def get_experiment_config():
 
         ##### --- psi specific parameters --- #####
         freeze_encoder = False,
-        warm_start = False,
+        warm_start = True,
         psi_loss_name = "MTSpliceBCELoss",
         PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
@@ -93,10 +95,18 @@ def get_experiment_config():
         eval_weights = "exprmnt_2025_08_17__02_17_03",
         run_num = 20,
         val_check_interval = 1.0,
+        dropout_rate = 0.1, # Best Psi: 0.1
         
         ##### --- pretrained weights ---
         ####### mtsplice weights ##########
-        mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # all data weighted CL, 10 aug
+        # mtsplice_weights = "exprmnt_2025_10_26__14_30_11",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train, cl 300 bp intron
+        # mtsplice_weights = "exprmnt_2025_10_26__14_29_04",  # CL, new corrected mtsplice model, all species, no ASCOT test in train, cl 300 bp intron
+        # mtsplice_weights = "exprmnt_2025_10_25__15_31_32",  # CL, new corrected mtsplice model, all species, no ASCOT test in train
+        mtsplice_weights = "exprmnt_2025_10_25__14_52_07",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train
+
+        # mtsplice_weights = "exprmnt_2025_10_23__21_40_25", # CL, new corrected mtsplice model, all species, weighted supcon
+        # mtsplice_weights = "exprmnt_2025_10_23__21_17_52", # CL, new corrected mtsplice model, all species
+        # mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # CL, new corrected mtsplice model, fixed species
         # mtsplice_weights = "exprmnt_2025_09_23__00_38_41", # ASCOT weighted CL, 10 aug
 
         # mtsplice_weights = "exprmnt_2025_07_30__13_10_26", #2 aug intronexon

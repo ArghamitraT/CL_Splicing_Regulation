@@ -356,7 +356,11 @@ def run_ensemble_test_evaluation(
 def main(config: OmegaConf):
     
     # Parameters (MUST MATCH your first script)
-    experiment_folder = "exprmnt_2025_10_22__17_47_17"
+    # experiment_folder = "exprmnt_2025_10_28__20_12_11" # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
+    # experiment_folder = "exprmnt_2025_10_28__20_12_58" # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+    # experiment_folder = "exprmnt_2025_10_28__20_28_29" # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+    experiment_folder = "exprmnt_2025_10_28__20_30_30" # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
+
     # This is the directory where the .pkl file is saved
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
 
@@ -457,7 +461,7 @@ def main(config: OmegaConf):
     avg_test_pred_filename = "test_ensemble_avg_delta_logit.tsv"
     
     # 3. Call the simplified function
-    
+    # (AT) DO NOT ERASE:  if you want to validate on test set, then you would have to adjust the folder
     # get_average_test_prediction(
     #     best_checkpoints, 
     #     config, 
@@ -465,8 +469,13 @@ def main(config: OmegaConf):
     #     config.ensemble.raw_pred_filename,
     #     avg_test_pred_filename
     # )
+    # if overhang == 200:
+    #     config.dataset.train_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_train_Retina___Eye_psi_MERGED.pkl"
+    #     config.dataset.val_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl"
+    #     config.dataset.test_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
     # logging.info("\n--- TEST SET SCRIPT FINISHED ---")
 
+    # (AT) DO NOT ERASE: for variable as we already have the prediction, no need to run the trainer.test
     run_ensemble_test_evaluation( # Renamed function
             best_checkpoints, 
             config, 

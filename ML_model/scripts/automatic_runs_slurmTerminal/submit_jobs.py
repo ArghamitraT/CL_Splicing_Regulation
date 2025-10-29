@@ -113,9 +113,16 @@ def create_readme(data_dir, readme_comment):
 
 def create_prg_header_cl(cfg, paths):
 
-    train_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TRAIN_FILE"]
-    val_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["VAL_FILE"]
-    test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TEST_FILE"]
+    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+        reset_debug_warning()
+        debug_warning("Using 200bp overhangs; data_dir changed")
+        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data_old/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+    else:
+        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"
+
+    train_file = main_data_dir + cfg["TRAIN_FILE"]
+    val_file = main_data_dir + cfg["VAL_FILE"]
+    test_file = main_data_dir + cfg["TEST_FILE"]
 
     if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
         reset_debug_warning()
@@ -205,13 +212,19 @@ def create_slurm_header_cl(cfg, paths):
 def create_prg_header_psi(cfg, paths):
     # NOTE: we will export RUN_IDX in the Slurm script loop.
     # We suffix logger.name (and optionally hydra.run.dir) with _r$RUN_IDX
-    test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"+cfg["PSI_TEST_FILE"]
-    
     if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
         reset_debug_warning()
-        debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
-        return None
-    
+        debug_warning("Using 200bp overhangs; data_dir changed")
+        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data_old/ASCOT_finetuning/"
+    else:
+        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"
+
+    # These definitions now correctly use the main_data_dir set by the logic above.
+    train_file = main_data_dir + "psi_train_Retina___Eye_psi_MERGED.pkl"
+    val_file = main_data_dir + "psi_val_Retina___Eye_psi_MERGED.pkl"
+    test_file = main_data_dir + cfg["PSI_TEST_FILE"]
+
+
     header = f"""#!/bin/bash
     set -e
     cd $HOME
@@ -229,13 +242,15 @@ def create_prg_header_psi(cfg, paths):
     python -m scripts.psi_regression_training \\
             task={cfg["task"]} \\
             task.val_check_interval={cfg["val_check_interval"]}\\
-            task.global_batch_size={cfg["global_batch_size"]}\\
             trainer.max_epochs={cfg["max_epochs"]}\\
             tokenizer={cfg["tokenizer"]} \\
             embedder={cfg["embedder"]} \\
             loss={cfg["psi_loss_name"]} \\
             optimizer={cfg["optimizer"]} \\
             optimizer.lr={cfg["learning_rate"]} \\
+            task.global_batch_size={cfg["global_batch_size"]}\\
+            trainer.accumulate_grad_batches={cfg["accumulate_grad_batches"]} \\
+            aux_models.dropout={cfg["dropout_rate"]} \\
             aux_models.freeze_encoder={cfg["freeze_encoder"]} \\
             aux_models.warm_start={cfg["warm_start"]} \\
             aux_models.mtsplice_weights={cfg["mtsplice_weights"]} \\
@@ -246,6 +261,8 @@ def create_prg_header_psi(cfg, paths):
             tokenizer.seq_len={cfg["tokenizer_seq_len"]} \\
             aux_models.mode={cfg["mode"]} \\
             aux_models.mtsplice_BCE={cfg["mtsplice_BCE"]} \\
+            dataset.train_files.intronexon={train_file} \\
+            dataset.val_files.intronexon={val_file} \\
             dataset.test_files.intronexon={test_file} \\
             dataset.fivep_ovrhang={cfg["fivep_ovrhang"]} \\
             dataset.threep_ovrhang={cfg["threep_ovrhang"]} \\
