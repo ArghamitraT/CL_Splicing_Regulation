@@ -19,7 +19,8 @@ def main():
     # Delete temp files
     dirs_to_delete = [
         os.path.join(cell_dir, "temp"),
-        os.path.join(cell_dir, "output", "tmp")
+        os.path.join(cell_dir, "output", "tmp"),
+        os.path.join(cell_dir, "data")
     ]
     for d in dirs_to_delete:
         if os.path.exists(d):
