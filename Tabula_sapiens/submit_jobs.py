@@ -31,6 +31,9 @@ else:
 
 # -------------------- UTILITIES --------------------
 
+timestamp = time.strftime("_%Y%m%d_%H%M%S")
+
+
 def create_prg(cell_type):
    
     header = f"""#!/bin/bash
@@ -57,7 +60,7 @@ def create_prg(cell_type):
         -t single \\
         --readLength 100 \\
         --nthread 8 \\
-        --statoff"
+        --statoff
     
     # Delete Temp and Zip Output
     WORKDIR={code_dir}
@@ -71,7 +74,6 @@ def create_prg(cell_type):
 
 def create_slurm_file(prg_script, slurm_file_path, cell_type):
     safe_cell = cell_type.replace(" ", "_")
-    timestamp = time.strftime("_%Y%m%d_%H%M%S")
     job_name = f"ts_{safe_cell}{timestamp}"
     header = f"#!/bin/bash\n" + \
     "##ENVIRONMENT SETTINGS; REPLACE WITH CAUTION\n" + \
@@ -96,7 +98,7 @@ def submit_job(cell):
     prg_script = create_prg(cell) 
     
     safe_cell = cell.replace(" ", "_")
-    slurm_file_path = os.path.join(slurm_dir, "scripts", f"ts_{safe_cell}.sh")
+    slurm_file_path = os.path.join(slurm_dir, "scripts", f"ts_{safe_cell}{timestamp}.sh")
 
     create_slurm_file(prg_script=prg_script, 
                     slurm_file_path=slurm_file_path, 
@@ -112,15 +114,17 @@ def main():
 
     counts = pd.read_csv(cell_counts_file, sep="\t")
     for cell in cells:
+
+        safe_cell = cell.replace(" ", "_")
+        if safe_cell in completed_cells:
+            continue
+
         minutes_per_cell = 54 / 569  # runtime per cell in minutes
         num_cells = counts.loc[counts['cell_type'] == cell, 'count'].iloc[0]
         estimated_minutes = int(num_cells * minutes_per_cell * 1.2)  # add 20% buffer
         global hour
         hour = max(1, estimated_minutes // 60 + 1)  # round up to hours, min 1h
 
-        safe_cell = cell.replace(" ", "_")
-        if safe_cell in completed_cells:
-            continue
 
         submit_job(cell)
 
