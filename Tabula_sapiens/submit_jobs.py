@@ -116,7 +116,7 @@ def main():
     for cell in cells:
 
         safe_cell = cell.replace(" ", "_")
-        if safe_cell in completed_cells:
+        if safe_cell in completed_cells or cell not in counts['cell_type'].values:
             continue
 
         minutes_per_cell = 54 / 569  # runtime per cell in minutes
