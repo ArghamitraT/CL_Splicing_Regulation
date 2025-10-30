@@ -45,10 +45,13 @@ def create_prg(cell_type):
     conda activate tabula_sapiens
     WORKDIR={code_dir}
     cd $WORKDIR
+    echo "Running compile_txt.py"
     python compile_txt.py --cell_type "{cell_type}" --metadata {metadata_file} --main_dir {data_dir}
+    echo "compile_txt.py finished  with exit code $? at $(date)"
     conda deactivate
 
     # Run rMATS
+    echo "Starting rMATS at $(date)"
     source $HOME/miniconda3/etc/profile.d/conda.sh
     conda activate rmats_testing
     WORKDIR={os.path.join(data_dir, cell_type.replace(" ", "_"))}
@@ -61,11 +64,14 @@ def create_prg(cell_type):
         --readLength 100 \\
         --nthread 8 \\
         --statoff
+    echo "rMATS finished with exit code $?"
     
     # Delete Temp and Zip Output
+    echo "Starting post_process.py"
     WORKDIR={code_dir}
     cd $WORKDIR
     python post_process.py --cell_type "{cell_type}" --main_dir {data_dir}
+    echo "Job done"
     """
 
     return header
