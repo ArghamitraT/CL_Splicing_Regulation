@@ -50,13 +50,6 @@ class ResidualBlock(nn.Module):
 class MTSpliceBranch(nn.Module):
     def __init__(self, seq_len, in_channels=4, hidden_channels=64, num_blocks=8, spline_kwargs={}):
         super().__init__()
-        # layers = [
-        #     nn.Conv1d(in_channels, hidden_channels, kernel_size=11, padding='same'),
-        #     nn.BatchNorm1d(hidden_channels, eps=1e-3, momentum=0.01)
-        # ]
-        # for _ in range(num_blocks):
-        #     layers.append(ResidualBlock(hidden_channels))
-        # self.resnet = nn.Sequential(*layers)
 
         # First conv + BN to initialize
         self.initial_conv = nn.Conv1d(in_channels, hidden_channels, kernel_size=11, padding="same")

@@ -106,18 +106,23 @@ class PSIRegressionDataset(Dataset):
         start = exon_dict.get("start", "")
         end = exon_dict.get("end", "")
         
-        # Pad start to 100 bp (right pad)
-        start_padded = start.ljust(100, "N")
+        # # Pad start to 100 bp (right pad)
+        # start_padded = start.ljust(100, "N")
         
-        # Pad end to 100 bp (left pad)
-        end_padded = end.rjust(100, "N")
+        # # Pad end to 100 bp (left pad)
+        # end_padded = end.rjust(100, "N")
         
-        # Concatenate start + end
-        return start_padded + end_padded
+        # # Concatenate start + end
+        # return start_padded + end_padded
+
+        return start+end
+
+        
 
     def _tokenize(self, seq):
         if callable(self.tokenizer) and not hasattr(self.tokenizer, "vocab_size"):
-            return self.tokenizer([seq])[0]
+            tokenized = self.tokenizer([seq])
+            return tokenized[0]
         else:
             return self.tokenizer(
                 seq,

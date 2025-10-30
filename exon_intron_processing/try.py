@@ -35,7 +35,7 @@ import pandas as pd
 
 
 
-main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/'
+main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data_old/intronExonSeq_multizAlignment_noDash/trainTestVal_data/'
 
 # file_name = 'train_3primeIntron_filtered.pkl'
 # pickle_file_path = f'{main_dir}{file_name}'
@@ -73,14 +73,24 @@ main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/in
 # print(f"Data type: {type(data)}")
 
 
-file_name = 'test_merged_filtered_min30Views.pkl'
+# file_name = 'test_merged_filtered_min30Views.pkl'
+# pickle_file_path = f'{main_dir}{file_name}'
+# with open(pickle_file_path, 'rb') as f:
+#     data = pickle.load(f)
+
+# print(f"File loaded: {pickle_file_path}")
+# print(f"Data type: {type(data)}")
+
+
+main_dir = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data_old/ASCOT_finetuning/'
+
+
+file_name = 'psi_test_Retina___Eye_psi_MERGED.pkl'
 pickle_file_path = f'{main_dir}{file_name}'
 with open(pickle_file_path, 'rb') as f:
     data = pickle.load(f)
 
 print(f"File loaded: {pickle_file_path}")
 print(f"Data type: {type(data)}")
-
-
 
 

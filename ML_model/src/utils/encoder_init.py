@@ -51,9 +51,14 @@ def load_encoder(config, root_path, result_dir):
         # simclr_ckpt = "/mnt/home/at3836/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
         
         simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
-
-        ckpt = torch.load(simclr_ckpt)
-        state_dict = ckpt["state_dict"]
+     
+        if torch.cuda.is_available():
+            ckpt = torch.load(simclr_ckpt)  # load normally on GPU
+            device = torch.device("cuda")
+        else:
+            ckpt = torch.load(simclr_ckpt, map_location=torch.device("cpu"))  # fallback to CPU
+            device = torch.device("cpu")
+            state_dict = ckpt["state_dict"]
 
         # REMOVE "model." prefix from all keys
         cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
