@@ -20,7 +20,7 @@ def main():
     safe_cell = cell_type.replace(" ", "_")         # safe cell name for directories
 
     # Filter only cell_types of type "pericyte"
-    ts = ts[ts["cell_type"] == cell_type]
+    ts = ts[(ts["cell_type"] == cell_type) & (ts["path_exists"])]
     paths = ts["bam_path"].tolist()
     num_cells = len(paths)
     print(f"{num_cells} to process for {cell_type}\n")
