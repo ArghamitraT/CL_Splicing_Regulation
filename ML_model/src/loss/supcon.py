@@ -7,6 +7,22 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 
+############# DEBUG Message ###############
+import inspect
+import os
+_warned_debug = False  # module-level flag
+def reset_debug_warning():
+    global _warned_debug
+    _warned_debug = False
+def debug_warning(message):
+    global _warned_debug
+    if not _warned_debug:
+        frame = inspect.currentframe().f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        lineno = frame.f_lineno
+        print(f"\033[1;31m⚠️⚠️ ⚠️ ⚠️ DEBUG MODE ENABLED in {filename}:{lineno} —{message} REMEMBER TO REVERT!\033[0m")
+        _warned_debug = True
+############# DEBUG Message ###############
 
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
@@ -81,20 +97,52 @@ class SupConLoss(nn.Module):
         logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
         logits = anchor_dot_contrast - logits_max.detach()
 
+        # CUDA was going OOM in this line so detached gradient of logits_max
         # tile mask
-        mask = mask.repeat(anchor_count, contrast_count)
-        # mask-out self-contrast cases
-        logits_mask = torch.scatter(
-            torch.ones_like(mask),
-            1,
-            torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
-            0
-        )
-        mask = mask * logits_mask
+        # mask = mask.repeat(anchor_count, contrast_count)
+        # # mask-out self-contrast cases
+        # logits_mask = torch.scatter(
+        #     torch.ones_like(mask),
+        #     1,
+        #     torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
+        #     0
+        # )
+        # mask = mask * logits_mask
+
+
+        reset_debug_warning()
+        debug_warning("check supcon loss GPU: remove later")
+        # --- DEBUG: GPU memory --- (AT): erase
+        torch.cuda.synchronize()
+        alloc = torch.cuda.memory_allocated(device) / 1e9
+        rsvd  = torch.cuda.memory_reserved(device) / 1e9
+        print(f"[DEBUG] After logits: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
+
+
+        with torch.no_grad():
+            mask = mask.repeat(anchor_count, contrast_count)
+            logits_mask = torch.ones_like(mask)
+            idx = torch.arange(batch_size * anchor_count, device=mask.device)
+            logits_mask[idx, idx] = 0
+            mask = mask * logits_mask  # both constant now
+
+        # --- GPU memory again --- (AT): erase
+        torch.cuda.synchronize()
+        alloc = torch.cuda.memory_allocated(device) / 1e9
+        rsvd  = torch.cuda.memory_reserved(device) / 1e9
+        print(f"[DEBUG] After mask build: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
+
 
         # compute log_prob
         exp_logits = torch.exp(logits) * logits_mask
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
+
+         # --- GPU memory again --- (AT): erase
+        torch.cuda.synchronize()
+        alloc = torch.cuda.memory_allocated(device) / 1e9
+        rsvd  = torch.cuda.memory_reserved(device) / 1e9
+        print(f"[DEBUG] After log_prob: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
+
 
         # compute mean of log-likelihood over positive
         # modified to handle edge cases when there is no positive pair
@@ -110,5 +158,12 @@ class SupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size).mean()
+
+        # --- GPU memory again --- (AT): erase
+        torch.cuda.synchronize()
+        alloc = torch.cuda.memory_allocated(device) / 1e9
+        rsvd  = torch.cuda.memory_reserved(device) / 1e9
+        print(f"[DEBUG] After loss compute: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
+
 
         return loss

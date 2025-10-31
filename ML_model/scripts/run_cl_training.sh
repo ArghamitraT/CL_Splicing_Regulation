@@ -89,13 +89,11 @@ python -m scripts.cl_training \
         loss="weighted_supcon"\
         tokenizer="onehot_tokenizer"\
         task.global_batch_size=8192\
-        trainer.max_epochs=2 \
+        trainer.max_epochs=25 \
         trainer.val_check_interval=1.0\
         optimizer="adam" \
         trainer.devices=1\
         trainer.accumulate_grad_batches=2\
-        model.hidden_dim=1024\
-        model.projection_dim=256\
         logger.name="cl_trial_$(date +%Y%m%d_%H%M%S)"\
         logger.notes="$NOTES"\
         dataset.n_augmentations=10 \

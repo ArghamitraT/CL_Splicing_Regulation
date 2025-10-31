@@ -359,8 +359,13 @@ def main(config: OmegaConf):
     # experiment_folder = "exprmnt_2025_10_28__20_12_11" # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_12_58" # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_28_29" # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
-    experiment_folder = "exprmnt_2025_10_28__20_30_30" # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
-
+    # experiment_folder = "exprmnt_2025_10_28__20_30_30" # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
+    # experiment_folder = "exprmnt_2025_10_30__13_01_46" # EMPRAIPsi_300bpIntrons_mtspliceHyperparams_2025_10_30__13_01_46
+    # experiment_folder = "exprmnt_2025_10_30__14_50_31" # EMPRAIPsi_wtdSupCon_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_50_31
+    # experiment_folder = "exprmnt_2025_10_30__14_51_54" # EMPRAIPsi_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_51_54
+    experiment_folder = "exprmnt_2025_10_30__14_53_23" # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23
+    
+    
     # This is the directory where the .pkl file is saved
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
 

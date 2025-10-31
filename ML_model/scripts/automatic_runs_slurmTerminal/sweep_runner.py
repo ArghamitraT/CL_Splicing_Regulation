@@ -27,15 +27,15 @@ def get_base_config():
         max_epochs = 2,
         optimizer = "adam",
         learning_rate =  1e-3,     # Default, will be overridden by sweep
-        readme_comment = "SWEEP: CL try\n",
-        wandb_logger_NOTES = "SWEEP CL try",
+        readme_comment = "SWEEP: CL\n",
+        wandb_logger_NOTES = "SWEEP CL",
         new_project_wandb = 1, # Set to 1 for sweep logic
         fivep_ovrhang = 300,
         threep_ovrhang = 300,
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 1,
+        hour = 4,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -99,38 +99,38 @@ def define_sweep_grid():
     
     # === DEFINE YOUR SWEEP HERE ===
     # === DEFINE YOUR CL SWEEP HERE ===
-#     param_grid = {
-#         # Tier 1
-#         'learning_rate': [1e-3, 5e-4, 1e-4],
-#         'temperature': [0.1, 0.2, 0.5], # For SupConLoss
-#         'global_batch_size': [2048, 4096, 8192], 
-#         'accumulate_grad_batches': [1, 2], # Test effective batch sizes
-        
-#         # Tier 2
-#         'max_epochs': [25, 50], 
-        
-#         # Tier 3
-#         'n_augmentations': [2, 5, 10], 
-#         'projection_dim': [128, 256],
-#         'hidden_dim': [512, 1024],
-#         'loss_name':["supcon", "weighted_supcon"]
-# }
     param_grid = {
-            # Tier 1
-            'learning_rate': [1e-3],
-            'temperature': [0.1], # For SupConLoss
-            'global_batch_size': [2048], 
-            'accumulate_grad_batches': [2], # Test effective batch sizes
+        # Tier 1
+        'learning_rate': [1e-3, 5e-4, 1e-4],
+        'temperature': [0.2, 0.5], # For SupConLoss
+        'global_batch_size': [2048, 4096, 8192], 
+        'accumulate_grad_batches': [1, 2], # Test effective batch sizes
+        
+        # Tier 2
+        'max_epochs': [25], 
+        
+        # Tier 3
+        'n_augmentations': [5, 10], 
+        'loss_name':["supcon"]
+}
+    # 'projection_dim': [128, 256],
+    # 'hidden_dim': [512, 1024],
+    # param_grid = {
+    #         # Tier 1
+    #         'learning_rate': [1e-3],
+    #         'temperature': [0.1], # For SupConLoss
+    #         'global_batch_size': [2048], 
+    #         'accumulate_grad_batches': [2], # Test effective batczh sizes
             
-            # Tier 2
-            'max_epochs': [2], 
+    #         # Tier 2
+    #         'max_epochs': [2], 
             
-            # Tier 3
-            'n_augmentations': [10], 
-            'hidden_dim': [1024],
-            'projection_dim': [256],
-            'loss_name':["supcon", "weighted_supcon"]
-    }
+    #         # Tier 3
+    #         'n_augmentations': [10], 
+    #         'hidden_dim': [1024],
+    #         'projection_dim': [256],
+    #         'loss_name':["supcon", "weighted_supcon"]
+    # }
 
 
 
@@ -173,7 +173,7 @@ def get_run_names(params_dict):
     if 'temperature' in params_dict: run_suffix.append(f"temp_{params_dict['temperature']}")
     if 'weight_decay' in params_dict and params_dict['weight_decay'] > 0: run_suffix.append(f"wd_{params_dict['weight_decay']}")
     if 'global_batch_size' in params_dict: run_suffix.append(f"bs_{params_dict['global_batch_size']}")
-    if 'accumulate_grad_batches' in params_dict and params_dict['accumulate_grad_batches'] > 1: run_suffix.append(f"accum_{params_dict['accumulate_grad_batches']}")
+    if 'accumulate_grad_batches' in params_dict: run_suffix.append(f"accum_{params_dict['accumulate_grad_batches']}")
     if 'max_epochs' in params_dict: run_suffix.append(f"ep_{params_dict['max_epochs']}")
     if 'n_augmentations' in params_dict: run_suffix.append(f"aug_{params_dict['n_augmentations']}")
     if 'projection_dim' in params_dict: run_suffix.append(f"proj_{params_dict['projection_dim']}")

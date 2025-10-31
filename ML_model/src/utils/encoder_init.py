@@ -58,7 +58,8 @@ def load_encoder(config, root_path, result_dir):
         else:
             ckpt = torch.load(simclr_ckpt, map_location=torch.device("cpu"))  # fallback to CPU
             device = torch.device("cpu")
-            state_dict = ckpt["state_dict"]
+        
+        state_dict = ckpt["state_dict"]
 
         # REMOVE "model." prefix from all keys
         cleaned_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}

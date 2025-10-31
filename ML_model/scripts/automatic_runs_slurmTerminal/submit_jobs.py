@@ -129,6 +129,10 @@ def create_prg_header_cl(cfg, paths):
         debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
         return None
     
+    learning_rate   = cfg.get('learning_rate', 1e-3)
+    temperature     = cfg.get('temperature', 0.5)
+    accumulate      = cfg.get('accumulate_grad_batches', 1)
+    
     header = f"""#!/bin/bash
     set -e
     cd $HOME
@@ -143,7 +147,10 @@ def create_prg_header_cl(cfg, paths):
             tokenizer={cfg["tokenizer"]} \\
             embedder={cfg["embedder"]} \\
             loss={cfg["loss_name"]} \\
+            loss.temperature={temperature} \\
             optimizer={cfg["optimizer"]} \\
+            optimizer.lr={learning_rate} \\
+            trainer.accumulate_grad_batches={accumulate} \\
             dataset.n_augmentations={cfg["n_augmentations"]} \\
             trainer.max_epochs={cfg["max_epochs"]}\\
             embedder.maxpooling={cfg["maxpooling"]} \\

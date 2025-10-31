@@ -111,48 +111,6 @@ def create_readme(data_dir, readme_comment):
 
 #############
 
-# def create_prg_header_cl(cfg, paths):
-
-#     train_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TRAIN_FILE"]
-#     val_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["VAL_FILE"]
-#     test_file = paths["server_path"]+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+cfg["TEST_FILE"]
-
-    
-#     header = f"""#!/bin/bash
-#     set -e
-#     cd $HOME
-#     source ~/.bashrc
-#     conda activate cl_splicing_regulation3
-#     WORKDIR={paths["data_dir"]}
-#     cd $WORKDIR
-#     python -m scripts.cl_training \\
-#             task={cfg["task"]} \\
-#             task.val_check_interval={cfg["val_check_interval"]}\\
-#             task.global_batch_size={cfg["global_batch_size"]}\\
-#             trainer.max_epochs={cfg["max_epochs"]}\\
-#             tokenizer={cfg["tokenizer"]} \\
-#             embedder={cfg["embedder"]} \\
-#             loss={cfg["loss_name"]} \\
-#             optimizer={cfg["optimizer"]} \\
-#             dataset.n_augmentations={cfg["n_augmentations"]} \\
-#             embedder.maxpooling={cfg["maxpooling"]} \\
-#             embedder.seq_len={cfg["tokenizer_seq_len"]}\\
-#             dataset.fixed_species={cfg["fixed_species"]} \\
-#             dataset.train_data_file={train_file} \\
-#             dataset.val_data_file={val_file} \\
-#             dataset.test_data_file={test_file} \\
-#             ++wandb.dir="'{paths["wandb_dir"]}'"\\
-#             ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}'"\\
-#             ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}'"\\
-#             ++hydra.run.dir={paths["hydra_dir"]}\\
-#             ++logger.notes="{cfg["wandb_logger_NOTES"]}"
-#     """
-#     # reset_debug_warning()
-#     # debug_warning("add those args later")
-   
-#     # tokenizer.seq_len={tokenizer_seq_len} \\
-#     return header
-
 def create_prg_header_cl(cfg, paths):
     if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
         reset_debug_warning()
@@ -179,13 +137,13 @@ def create_prg_header_cl(cfg, paths):
     # IMPORTANT: point WORKDIR to repo/module root (where `scripts/` lives)
 
     header = f"""#!/bin/bash
-set -euo pipefail
+set -e
 cd $HOME
 source ~/.bashrc
 conda activate cl_splicing_regulation3
 
 # Ensure directories exist
-mkdir -p {paths["wandb_dir"]} {paths["checkpoint_dir"]}/{run_name} {paths["hydra_dir"]}/{run_name}
+mkdir -p {paths["wandb_dir"]} {paths["checkpoint_dir"]}/{run_name} 
 
 # Optional: ensure WANDB API key and an explicit cache dir
 export WANDB_DIR="{paths["wandb_dir"]}"
@@ -234,10 +192,10 @@ python -m scripts.cl_training \\
     dataset.test_data_file={test_file} \\
     dataset.fivep_ovrhang={cfg["fivep_ovrhang"]} \\
     dataset.threep_ovrhang={cfg["threep_ovrhang"]} \\
-    ++wandb.dir={paths["wandb_dir"]} \\
-    ++logger.project="{project_name}" \\
-    ++logger.name="{run_name}" \\
-    ++callbacks.model_checkpoint.dirpath={paths["checkpoint_dir"]}/{run_name} \\
+    ++wandb.dir="'{paths["wandb_dir"]}'" \\
+    ++logger.project="'{project_name}'" \\
+    ++logger.name="'{run_name}'" \\
+    ++callbacks.model_checkpoint.dirpath="'{paths["checkpoint_dir"]}/{run_name}'" \\
     ++hydra.run.dir={paths["hydra_dir"]}/{run_name} \\
     ++logger.notes="{cfg["wandb_logger_NOTES"]}"
 """
@@ -248,7 +206,7 @@ def create_slurm_header_cl(cfg, paths):
 
     #### need NYGC vs EMIPIRE AI condition here later #### (AT)
     show_name = '_'.join(cfg["job_name"].split('_')[1:])
-    show_name = f"{cfg['slurm_file_name']}_{show_name}"
+    show_name = f"{cfg['slurm_file_name']}"
 
     if paths['server_name'] == "EMPRAI":
         header = f"#!/bin/bash\n" + \
@@ -582,6 +540,5 @@ def submit_job(cfg, paths):
     os.system(f"chmod u+x {prg_file}")
     os.system(f"chmod u+x {slurm_file}")
     os.system(f"sbatch {slurm_file}")
-
 
 

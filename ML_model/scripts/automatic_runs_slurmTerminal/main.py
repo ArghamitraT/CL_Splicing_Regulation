@@ -14,24 +14,22 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_wtdSupCon_200bpIntrons_mtspliceHyperparams',
-        task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
+        slurm_file_name = 'CL_OOM_trial',
+        task = "introns_cl", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        
-        max_epochs = 10,
+        global_batch_size = 8192,
+        max_epochs = 25,
         optimizer = "adam",
-        readme_comment = "intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters\n",
-        wandb_logger_NOTES = "intron ofset 200 bp like MTsplice CL weighted Supcon MTSplice hyperparameters",
-        new_project_wandb = 1,
-        fivep_ovrhang = 200,
-        threep_ovrhang = 200,
-        learning_rate =  1e-3, # Best Psi: 1e-3
-        global_batch_size = 1024, # Best Psi: 1024
-        accumulate_grad_batches = 1, # Best Psi: 1
-
+        learning_rate =  1e-3,
+        readme_comment = "CL trying to check OOM\n",
+        wandb_logger_NOTES = "Cl trying to check OOM",
+        new_project_wandb = 0,
+        fivep_ovrhang = 300,
+        threep_ovrhang = 300,
+        
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 3,
+        hour = 5,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -46,74 +44,39 @@ def get_experiment_config():
         tokenizer = "onehot_tokenizer",
         tokenizer_seq_len = 400,
         
-        ##### --- CL specific parameters
-        loss_name = "supcon",
-        fixed_species = True,
-        n_augmentations = 7,
-
-        # TRAIN_FILE="train_3primeIntron_filtered_min30views.pkl",
-        # VAL_FILE="val_3primeIntron_filtered.pkl",
-        # TEST_FILE="test_3primeIntron_filtered.pkl",
-
-        # TRAIN_FILE="train_5primeIntron_filtered.pkl",
-        # VAL_FILE="val_5primeIntron_filtered.pkl",
-        # TEST_FILE="test_5primeIntron_filtered.pkl",
-
-        # TRAIN_FILE="train_ExonSeq_filtered.pkl",
-        # VAL_FILE="val_ExonSeq_filtered.pkl",
-        # TEST_FILE="test_ExonSeq_filtered.pkl",
-
+        ################### --- CL specific parameters ################### 
+        loss_name = "weighted_supcon",
+        fixed_species = False,
+        n_augmentations = 10,
+        temperature     = 0.2,
+        accumulate_grad_batches = 2,
+    
         TRAIN_FILE="train_merged_filtered_min30Views.pkl",
         VAL_FILE="val_merged_filtered_min30Views.pkl",    
         TEST_FILE="test_merged_filtered_min30Views.pkl",
 
-        # TRAIN_FILE="ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl",
-        # VAL_FILE="ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl",
-        # TEST_FILE="ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl",
+        
+        ################### --- CL specific parameters ################### 
 
-        # TRAIN_FILE="ASCOT_data/train_ASCOT_3primeIntron_filtered.pkl",
-        # VAL_FILE="ASCOT_data/val_ASCOT_3primeIntron_filtered.pkl",
-        # TEST_FILE="ASCOT_data/test_ASCOT_3primeIntron_filtered.pkl",
-
-        # TRAIN_FILE="ASCOT_data/train_ASCOT_5primeIntron_filtered.pkl",
-        # VAL_FILE="ASCOT_data/val_ASCOT_5primeIntron_filtered.pkl",
-        # TEST_FILE="ASCOT_data/test_ASCOT_5primeIntron_filtered.pkl",
-
-        # TRAIN_FILE="ASCOT_data/train_ASCOT_ExonSeq_filtered.pkl",
-        # VAL_FILE="ASCOT_data/val_ASCOT_ExonSeq_filtered.pkl",
-        # TEST_FILE="ASCOT_data/test_ASCOT_ExonSeq_filtered.pkl",
-        ##### --- CL specific parameters --- #####
-
-        ##### --- psi specific parameters --- #####
+        ################### --- psi specific parameters ################### 
         freeze_encoder = False,
-        warm_start = True,
+        warm_start = False,
         psi_loss_name = "MTSpliceBCELoss",
         PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
         mode = "mtsplice", # mode: or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
         train_mode = "train",
         eval_weights = "exprmnt_2025_08_17__02_17_03",
-        run_num = 20,
+        run_num = 5,
         val_check_interval = 1.0,
-        dropout_rate = 0.1, # Best Psi: 0.1
         
         ##### --- pretrained weights ---
-        ####### mtsplice weights ##########
-        # mtsplice_weights = "exprmnt_2025_10_26__14_30_11",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train, cl 300 bp intron
-        # mtsplice_weights = "exprmnt_2025_10_26__14_29_04",  # CL, new corrected mtsplice model, all species, no ASCOT test in train, cl 300 bp intron
-        # mtsplice_weights = "exprmnt_2025_10_25__15_31_32",  # CL, new corrected mtsplice model, all species, no ASCOT test in train
-        mtsplice_weights = "exprmnt_2025_10_25__14_52_07",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train
-
-        # mtsplice_weights = "exprmnt_2025_10_23__21_40_25", # CL, new corrected mtsplice model, all species, weighted supcon
-        # mtsplice_weights = "exprmnt_2025_10_23__21_17_52", # CL, new corrected mtsplice model, all species
-        # mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # CL, new corrected mtsplice model, fixed species
+        mtsplice_weights = "exprmnt_2025_10_15__00_49_37", # all data weighted CL, 10 aug
         # mtsplice_weights = "exprmnt_2025_09_23__00_38_41", # ASCOT weighted CL, 10 aug
-
         # mtsplice_weights = "exprmnt_2025_07_30__13_10_26", #2 aug intronexon
         # mtsplice_weights = "exprmnt_2025_08_16__22_30_50", #2 aug intron
         # mtsplice_weights = "exprmnt_2025_08_16__20_42_52", #10 aug intronexon
         # mtsplice_weights = "exprmnt_2025_08_23__20_30_33", #10 aug intron
-
 
         ####### ntv2 weights for 5', 3' and exon ##########
         weight_3p = "exprmnt_2025_10_20__00_59_06",
@@ -137,8 +100,8 @@ def get_experiment_config():
         # weight_5p = "exprmnt_2025_08_23__21_14_26",
         # weight_3p = "exprmnt_2025_07_08__20_39_38",
         # weight_exon = "exprmnt_2025_08_23__21_20_33",
-        ##### --- psi specific parameters --- #####
-    )
+       ################### --- psi specific parameters ################### 
+        )
     return cfg
 
 

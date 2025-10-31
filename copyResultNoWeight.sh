@@ -38,11 +38,19 @@ FINAL_DIR_NAME="combined_runs"
 # exprmnt_2025_10_25__22_41_13 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_noASCOTTestinTrain
 # exprmnt_2025_10_25__22_38_22 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon_noASCOTTestinTrain
 # )
+# EXPERIMENTS=(
+# exprmnt_2025_10_28__20_12_11 # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
+# exprmnt_2025_10_28__20_12_58 # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+# exprmnt_2025_10_28__20_28_29 # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
+# exprmnt_2025_10_28__20_30_30 # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
+#)
+
+
 EXPERIMENTS=(
- exprmnt_2025_10_28__20_12_11 # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
- exprmnt_2025_10_28__20_12_58 # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
- exprmnt_2025_10_28__20_28_29 # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
- exprmnt_2025_10_28__20_30_30 # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
+ exprmnt_2025_10_30__13_01_46 # EMPRAIPsi_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__13_01_46
+ exprmnt_2025_10_30__14_50_31 # EMPRAIPsi_wtdSupCon_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_50_31
+ exprmnt_2025_10_30__14_51_54 # EMPRAIPsi_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_51_54
+ exprmnt_2025_10_30__14_53_23 # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23E
 )
 
 # ===============================
