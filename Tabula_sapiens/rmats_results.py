@@ -1,3 +1,15 @@
+"""
+This script takes in --cell_type and --main_dir as command line arguments, where main_dir is the 
+Tabula Sapiens directory. If no cell_type is specified, the program will look for completed.json in the main
+directory and use that. 
+
+It looks through the main directory for the zipped rMATS outputs, unzips them, and
+then calculates the accumulated PSI values for each splicing event and each cell type. For now, we are only
+considering skipped exon events. Finally, it deletes the unzipped output directory to save space.
+
+Output: The code saves a CSV in ASCOT format using the information obtained from SE.MATS.JCEC.txt and saves it in
+main_dir/psi_data.
+"""
 import pandas as pd
 import numpy as np
 import argparse
