@@ -1,4 +1,10 @@
 """
+Note: This script assumes we are only interested in PSI at the exon level, NOT the junction level.
+We will calculate PSI for exon A regardless of its junction with exon B or exon C. Because of this, 
+we will ignore exon boundaries (the upstream and downstream exon).
+
+If PSI at the junction level is of concern, see /tabula_sapiens/SE_data/ and/or see the comments in this program
+
 This script takes in --cell_type and --main_dir as command line arguments, where main_dir is the 
 Tabula Sapiens directory. If no cell_type is specified, the program will look for completed.json in the main
 directory and use that. 
@@ -44,17 +50,41 @@ def process_cell_type(cell_type, main_dir):
         ijc_df[mask] = np.nan
         sjc_df[mask] = np.nan
 
-        total_inc = np.nansum(ijc_df.values, axis=1)
-        total_skip = np.nansum(sjc_df.values, axis=1)
+        # Raw totals per event (sum across replicates/samples)
+        rmats_df['total_inc'] = np.nansum(ijc_df.values, axis=1)
+        rmats_df['total_skip'] = np.nansum(sjc_df.values, axis=1)
+
+        # For exon-level PSI
+        # ---- Group by exon coordinates and sum raw counts ----
+        group_cols = ['chr', 'strand', 'exonStart_0base', 'exonEnd']
+        agg_counts = (
+            rmats_df
+            .groupby(group_cols, as_index=False)
+            .agg({
+                "total_inc": "sum",
+                "total_skip": "sum",
+                # Take first of each
+                "ID": "first",
+                "GeneID": "first",
+                "geneSymbol": "first",
+                "upstreamES": "first",
+                "upstreamEE": "first",
+                "downstreamES": "first",
+                "downstreamEE": "first"
+            })
+            )
+
 
         # Calculate PSI, normalize as described in rMATS
-        e = rmats_df['exonEnd'] - rmats_df['exonStart_0base']
+        e = agg_counts['exonEnd'] - agg_counts['exonStart_0base']
         len_i = 99 + e.clip(upper=99) + (e-100+1).clip(lower=0)
         len_s = 99
-        i_norm = total_inc / len_i
-        s_norm = total_skip / len_s
-        denom = i_norm + s_norm
-        psi = np.where(denom == 0, '', 100 * (i_norm / denom))
+        agg_counts['i_norm'] = agg_counts['total_inc'] / len_i
+        agg_counts['s_norm'] = agg_counts['total_skip'] / len_s
+        denom = agg_counts['i_norm'] + agg_counts['s_norm']
+        agg_counts['psi'] = np.where(denom == 0, '', 100 * (agg_counts['i_norm'] / denom))
+
+        final_df = agg_counts.copy()
 
         # Construct and save temporary TSV. Merge to form master dataset at the end
         mini_df = pd.DataFrame({
@@ -62,15 +92,16 @@ def process_cell_type(cell_type, main_dir):
             "alternative_splice_site_group": "No",
             "linked_exons": "No",
             "mutually_exclusive_exons": "No",
-            "exon_strand": rmats_df["strand"],
-            "exon_length": rmats_df["exonEnd"] - rmats_df["exonStart_0base"],
+            "exon_strand": final_df["strand"],
+            "exon_length": final_df["exonEnd"] - final_df["exonStart_0base"],
             "gene_type": "NA",
-            "gene_id": rmats_df["GeneID"].str.strip('"'),
-            "gene_symbol": rmats_df["geneSymbol"].str.strip('"'),
-            "exon_location": rmats_df["chr"] + ":" + (rmats_df["exonStart_0base"] + 1).astype(str) + "-" + rmats_df["exonEnd"].astype(str),
-            "exon_boundary": rmats_df["chr"] + ":" + (rmats_df["upstreamEE"] + 1).astype(str) + "-" + rmats_df["downstreamES"].astype(str),
-            f"{cell_type.replace('_', ' ')}": psi,
-            "chromosome": rmats_df["chr"]
+            "gene_id": final_df["GeneID"].str.strip('"'),
+            "gene_symbol": final_df["geneSymbol"].str.strip('"'),
+            "exon_location": final_df["chr"] + ":" + (final_df["exonStart_0base"] + 1).astype(str) + "-" + final_df["exonEnd"].astype(str),
+            # Exclude exon_boundary, since we care only about exon-level inclusion. Exon boundary info will be misleading/incorrect
+            # "exon_boundary": rmats_df["chr"] + ":" + (rmats_df["upstreamEE"] + 1).astype(str) + "-" + rmats_df["downstreamES"].astype(str),
+            f"{cell_type.replace('_', ' ')}": final_df['psi'],
+            "chromosome": final_df["chr"]
         })
 
         csv_name = os.path.join(f"{main_dir}", "psi_data", f"{cell_type}.csv")

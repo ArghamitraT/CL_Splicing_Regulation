@@ -1,8 +1,10 @@
 import pandas as pd
+import numpy as np
 from functools import reduce
 import os
 import json
 import argparse
+from scipy.special import logit
 
 def main():
     parser = argparse.ArgumentParser(description="Combine intermediate tables to final data")
@@ -19,12 +21,14 @@ def main():
     csv_dir = os.path.join(main_dir, "psi_data")
 
     # Columns to merge on
-    merge_keys = ["gene_id", "exon_location", "exon_boundary", "exon_strand", "chromosome"]
+    merge_keys = ["gene_id", "exon_location", "exon_strand", "chromosome"]
 
     master_df = pd.DataFrame()  # Initialize empty dataframe
     original_order = None       # Save column order
 
     processed = 0
+    # reduce should be able to speed things up now
+    # Main source of conflict came from exon_boundary. Removing it should allow reduce to work
     for i, cell_type in enumerate(all_cell_types):
         csv_file = os.path.join(csv_dir, f"{cell_type}.csv")
         df = pd.read_csv(csv_file)
@@ -56,13 +60,24 @@ def main():
     
     print(f"✅ Merged {processed} CSVs")
 
+    psi_cols = [col for col in master_df.columns if col in all_cells_set]   # Get all PSI columns
+    
+    # Remove rows with no PSI values at all
+    psi_vals = master_df[psi_cols].apply(pd.to_numeric, errors='coerce')
+    mask_all_nan = psi_vals.isna().all(axis=1)
+    num_removed = mask_all_nan.sum()
+    if num_removed > 0:
+        print(f"🧹 Removing {num_removed} rows with no PSI values in any cell type")
+    master_df = master_df.loc[~mask_all_nan].reset_index(drop=True)
 
     # Calculate mean PSI
-    psi_cols = [col for col in master_df.columns if col in all_cells_set]   # Get all PSI columns
-
-    psi_vals = master_df[psi_cols].apply(pd.to_numeric, errors='coerce')
     master_df["mean_psi"] = psi_vals.mean(axis=1)
     print(f"✅ Calculated mean PSI")
+
+    # logit mean PSI
+    eps = 1e-6
+    master_df["logit_mean_psi"] = logit(np.clip(master_df["mean_psi"] / 100, eps, 1-eps))
+    print(f"✅ Calculated logit mean PSI")
 
     # Reorder columns
     cols_in_order = [c for c in original_order if c in master_df.columns] + \
@@ -76,7 +91,7 @@ def main():
         [f"TS_{i:06d}" for i in range(1, len(master_df)+1)]
     )
     
-    output_path = os.path.join(main_dir, "final_data", "full_cassette_exons_with_mean_psi.csv")
+    output_path = os.path.join(main_dir, "psi_data", "final_data", "full_cassette_exons_with_mean_psi.csv")
     master_df.to_csv(output_path, sep=",", index=False)
     if os.path.exists(output_path):
         print(f"✅ Successfully saved full dataframe in {output_path}")
