@@ -4,76 +4,24 @@ import argparse
 import json
 import os
 import zipfile
+import shutil
 
 
-# """
-# Calcaulates PSI for each single cell. Should match "IncLevel1"
-# """
-# def per_replicate_psi(row):
-#     ijc_vals = row['IJC_SAMPLE_1'].split(',')
-#     sjc_vals = row['SJC_SAMPLE_1'].split(',')
-#     psi_list = []
-    
-#     for i, s in zip(ijc_vals, sjc_vals):
-#         if i == 'NA' or s == 'NA':
-#             psi_list.append(np.nan)
-#             continue
-        
-#         e = row['exonEnd'] - row['exonStart_0base']
-#         len_i = 99 + min(e, 99) + max(0, e - 100 + 1)
-#         len_s = 99
-#         i_norm = float(i) / len_i
-#         s_norm = float(s) / len_s
-#         denom = i_norm + s_norm
-#         psi_list.append(np.nan if denom == 0 else i_norm / denom)
-    
-#     # Return as comma-separated string or list, depending on what you need
-#     return ','.join(f'{p:.3f}' if not np.isnan(p) else 'NA' for p in psi_list)
+def process_cell_type(cell_type, main_dir):
+    # Unzip output dir
+    cell_dir = os.path.join(main_dir, "rmats", cell_type)
+    zip_path = os.path.join(cell_dir, "output_archive.zip")
+    output_dir = os.path.join(cell_dir, "output")
 
-# def check_match(row):
-#     psi_vals = row['PSI_per_replicate'].split(',')
-#     inc_vals = row['IncLevel1'].split(',')
-    
-#     # Must have same number of replicates
-#     if len(psi_vals) != len(inc_vals):
-#         return False
-    
-#     for psi, inc in zip(psi_vals, inc_vals):
-#         if psi == 'NA' and inc == 'NA':
-#             continue
-#         if psi == 'NA' or inc == 'NA':
-#             return False
-        
-#         # Convert to float and allow for small rounding tolerance
-#         if not np.isclose(float(psi), float(inc), atol=1e-3):
-#             return False
-#     return True
+    # --- Unzip only if output/ doesn't already exist ---
+    if not os.path.exists(output_dir):
+        print(f"\tUnzipping...")
+        with zipfile.ZipFile(zip_path, 'r') as z:
+            z.extractall(cell_dir)
+        print(f"\tUnzipped!")
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Calculate PSI and save in ASCOT format")
-    parser.add_argument("--cell_type", default=None, help="Run a single cell type; otherwise run all")
-    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")
-    args = parser.parse_args()
-
-    # Set working directory
-    main_dir = args.main_dir
-    
-    # Load all completed cell types
-    with open(os.path.join(main_dir, "completed.json"), "r") as f:
-        all_cell_types = json.load(f)
-
-    if args.cell_type:
-        cells_to_run = [args.cell_type]
-    else:
-        cells_to_run = all_cell_types
-    
-    # Create TSV output dir if it does not exist
-    
-    files_saved = 0
-    for cell_type in cells_to_run:
-
-        rmats_df = pd.read_csv(os.path.join(main_dir, "rmats", f"{cell_type}", "output", "SE.MATS.JCEC.txt"), sep="\t")
+    try:
+        rmats_df = pd.read_csv(os.path.join(output_dir, "SE.MATS.JCEC.txt"), sep="\t")
 
         # ---------- CALCULATE PSI ----------
         ijc_df = rmats_df['IJC_SAMPLE_1'].str.split(',', expand=True).replace('NA', np.nan).astype(float)
@@ -116,12 +64,50 @@ def main():
         csv_name = os.path.join(f"{main_dir}", "psi_data", f"{cell_type}.csv")
         mini_df.to_csv(csv_name, sep=",", index=False)
         if os.path.exists(csv_name):
-            print(f"✅ Successfully saved {cell_type}.csv")
+            print(f"\t✅ Successfully saved {cell_type}.csv")
+            retval = 0
         else:
-            print(f"⚠️ Failed to save {cell_type}.csv")
-        files_saved += 1
+            print(f"\t⚠️ Failed to save {cell_type}.csv")
+            retval = 1
     
-    print(f"Successfully saved {files_saved} files")
+    finally:
+         # --- Always clean up the unzipped folder ---
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+            print(f"\tRemoved unzipped files")
+
+    
+    return retval
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Calculate PSI and save in ASCOT format")
+    parser.add_argument("--cell_type", default=None, help="Run a single cell type; otherwise run all")
+    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")
+    args = parser.parse_args()
+
+    # Set working directory
+    main_dir = args.main_dir
+    
+    # Load all completed cell types
+    with open(os.path.join(main_dir, "completed.json"), "r") as f:
+        all_cell_types = json.load(f)
+
+    if args.cell_type:
+        cells_to_run = [args.cell_type]
+    else:
+        cells_to_run = all_cell_types
+    
+    # Create TSV output dir if it does not exist
+    files_saved = 0
+    for cell_type in cells_to_run:
+        print(f"🔷 Processing {cell_type}...")
+        exit_code = process_cell_type(cell_type, main_dir)
+        if exit_code == 0:
+            files_saved += 1
+    
+    print(f"\nSuccessfully saved {files_saved} files")
 
 if __name__ == "__main__":
     main()
