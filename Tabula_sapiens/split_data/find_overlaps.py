@@ -13,9 +13,11 @@ def main(file1: str, file2: str, output_file: str = "overlap_results.csv"):
     
     # df_ncbi = load_exon_coordinates_from_Multiz("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv")
     # df_known = load_exon_coordinates_from_Multiz("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv")
-    df_ncbi = load_csv("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv")
+    # df_ncbi = load_csv("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv")
+    # df_multiz_old = pd.concat([df_known, df_ncbi], ignore_index=True)
     df_known = load_csv("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv")
-    df_multiz_old = pd.concat([df_known, df_ncbi], ignore_index=True)
+    df_used_exons = load_csv("/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/train_exon_list.csv")
+    df_multiz_old = df_known[df_known["Exon Name"].isin(df_used_exons["exon_id"])]
 
     df_multiz = remove_allOther_species_multiz(df_multiz_old)
     
@@ -41,10 +43,10 @@ def main(file1: str, file2: str, output_file: str = "overlap_results.csv"):
 if __name__ == "__main__":
     # file_multiz = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv'
     
-    file_name = "test"
+    file_name = "full"
     file_multiz = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv'
-    file_ascot = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{file_name}_cassette_exons.csv'
-    output_file = f'/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/{file_name}_cassette_exons_multizOverlaps.csv'
+    file_ascot = f'/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/{file_name}_cassette_exons_with_mean_psi.csv'
+    output_file = f'/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/{file_name}_cassette_exons_with_mean_psi_multizOverlaps.csv'
 
     # file = pd.read_csv('/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/gtex_psi.csv')
     # print(len(file))
