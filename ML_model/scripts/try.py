@@ -1,7 +1,8 @@
 import pickle
 
-path = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl"
+file = 'filtered_HiLow_exons_by_tissue'
+path = f"/gpfs/commons/home/atalukder/Contrastive_Learning/data/extra/{file}.pkl"
 with open(path, "rb") as f:
     data = pickle.load(f)
 
-print()
+print(data)

@@ -39,9 +39,20 @@ unzip -q "$ZIP_PATH" -d "$EXTRACT_DIR"
 # ===============================
 # MOVE CONTENTS TO MAIN FOLDER
 # ===============================
-echo "🚚 Moving extracted folders into main results directory..."
+echo "🚚 Moving extracted experiment folders into main results directory..."
+
 shopt -s dotglob  # include hidden files
-mv "$EXTRACT_DIR"/* "$RESULTS_DIR"/ 2>/dev/null || echo "⚠️  Nothing to move."
+
+# If the zip contains a single parent folder (like combined_runs/exprmnt_*),
+# move from one level deeper.
+if [ "$(find "$EXTRACT_DIR" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1 ]; then
+    INNER_DIR=$(find "$EXTRACT_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    echo "📁 Detected inner directory: $INNER_DIR"
+    mv "$INNER_DIR"/* "$RESULTS_DIR"/ 2>/dev/null || echo "⚠️  Nothing to move from inner directory."
+else
+    mv "$EXTRACT_DIR"/* "$RESULTS_DIR"/ 2>/dev/null || echo "⚠️  Nothing to move."
+fi
+
 shopt -u dotglob
 
 # ===============================
