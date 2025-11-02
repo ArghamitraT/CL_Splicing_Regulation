@@ -10,48 +10,28 @@ SERVER_RESULT_BASE="${BASE_PATH}/files/results"
 # ===============================
 # USER INPUT SECTION
 # ===============================
-# 👇 Change this to your desired combined folder name
+# 👇 Combined folder name
 FINAL_DIR_NAME="combined_runs"
 
-# 👇 List your experiment folders here (space separated)
-# EXPERIMENTS=(
-# exprmnt_2025_10_20__15_18_32
-# exprmnt_2025_10_20__15_11_51
-# exprmnt_2025_10_19__16_56_25
-# exprmnt_2025_10_15__18_14_13
-# )
+# 👇 Input full experiment names (space-separated)
+# Example:
+# EMPRAIPsi_200bp_MTCLSwept_10Aug_noExonPad_2025_11_01__18_59_24
+# EMPRAIPsi_200bp_MTCLSwept_5Aug_noExonPad_2025_11_01__18_57_08
+read -p "Enter experiment names (space-separated): " -a EXP_NAMES
 
-# EXPERIMENTS=(
-# exprmnt_2025_10_22__23_40_20 # MTsplice new model
-# exprmnt_2025_10_22__23_35_53 # MTsplice new model, CL, MSE, confident species
-# exprmnt_2025_10_22__23_34_30 # MTsplice new model, CL, BCE, confident species
-# )
-
-# EXPERIMENTS=(
-# exprmnt_2025_10_24__16_11_26 # EMPRAIPsi_MTSplNew_CnfdntSpcs_BCE_wtdSupCon
-# exprmnt_2025_10_24__16_07_40 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon
-# exprmnt_2025_10_24__16_05_34 # EMPRAIPsi_MTSplNew_AllSpcs_BCE
-# exprmnt_2025_10_24__04_01_01 # EMPRAIPsi_MTSpliceNewmodel_300bpIntron
-# )
-
-# EXPERIMENTS=(
-# exprmnt_2025_10_25__22_41_13 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_noASCOTTestinTrain
-# exprmnt_2025_10_25__22_38_22 # EMPRAIPsi_MTSplNew_AllSpcs_BCE_wtdSupCon_noASCOTTestinTrain
-# )
-# EXPERIMENTS=(
-# exprmnt_2025_10_28__20_12_11 # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
-# exprmnt_2025_10_28__20_12_58 # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
-# exprmnt_2025_10_28__20_28_29 # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
-# exprmnt_2025_10_28__20_30_30 # intron ofset 200 bp like MTsplice, CL weighted Supcon, MTSplice hyperparameters
-#)
-
-
-EXPERIMENTS=(
- exprmnt_2025_10_30__13_01_46 # EMPRAIPsi_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__13_01_46
- exprmnt_2025_10_30__14_50_31 # EMPRAIPsi_wtdSupCon_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_50_31
- exprmnt_2025_10_30__14_51_54 # EMPRAIPsi_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_51_54
- exprmnt_2025_10_30__14_53_23 # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23E
-)
+# ===============================
+# DERIVE exprmnt_* FOLDER NAMES
+# ===============================
+EXPERIMENTS=()
+for name in "${EXP_NAMES[@]}"; do
+    # Extract date/time part (pattern: 2025_11_01__18_59_24)
+    datetime=$(echo "$name" | grep -oE '[0-9]{4}_[0-9]{2}_[0-9]{2}__[0-9]{2}_[0-9]{2}_[0-9]{2}')
+    if [ -n "$datetime" ]; then
+        EXPERIMENTS+=("exprmnt_${datetime}")
+    else
+        echo "⚠️  Skipping invalid name (no datetime found): $name"
+    fi
+done
 
 # ===============================
 # PATH SETUP
@@ -84,6 +64,7 @@ done
 
 echo
 echo "✅ Done! All selected experiment folders copied (no .ckpt files)."
+
 # ===============================
 # ZIP THE FINAL FOLDER
 # ===============================

@@ -124,11 +124,6 @@ def create_prg_header_cl(cfg, paths):
     val_file = main_data_dir + cfg["VAL_FILE"]
     test_file = main_data_dir + cfg["TEST_FILE"]
 
-    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
-        reset_debug_warning()
-        debug_warning("Using 200bp overhangs; change data_dir, comment returned None")
-        return None
-    
     learning_rate   = cfg.get('learning_rate', 1e-3)
     temperature     = cfg.get('temperature', 0.5)
     accumulate      = cfg.get('accumulate_grad_batches', 1)
@@ -431,6 +426,7 @@ def submit_job(cfg, paths):
     create_bash_file(prg_header, prg_file)
     create_bash_file(slurm_header, slurm_file)
 
+    # (AT)
     os.system(f"chmod u+x {prg_file}")
     os.system(f"chmod u+x {slurm_file}")
     os.system(f"sbatch {slurm_file}")
