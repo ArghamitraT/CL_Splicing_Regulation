@@ -1,29 +1,51 @@
 import pandas as pd
+import numpy as np
 
-main_dir = '/home/argha/Contrastive_Learning/data/ASCOT/'
+main_dir = '/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/'
+RANDOM_SEED = 124
+rng = np.random.default_rng(RANDOM_SEED)
+
 # Load full dataset
-df = pd.read_csv(main_dir+"gtex_psi.csv")
-
+full_df = pd.read_csv(main_dir+"full_cassette_exons_with_mean_psi.csv")
 # Only keep cassette exons
-cassette_df = df[df["cassette_exon"] == "Yes"].copy()
+full_df = full_df[full_df["cassette_exon"] == "Yes"].copy()
 
-# Extract chromosome name from exon_location (e.g., "chr1:123-456" → "chr1")
-cassette_df["chromosome"] = cassette_df["exon_location"].str.extract(r'(chr[0-9XY]+)')
+n_total = len(full_df)
+n_test = int(0.15 * n_total)
+n_val = int(0.15 * n_total)
+n_train = n_total - n_test - n_val
 
-# Define chromosome groups
-train_chroms = [f'chr{i}' for i in range(10, 23)] + ['chr4', 'chr6', 'chr8', 'chrX', 'chrY']
-val_chroms = ['chr1', 'chr7', 'chr9']
-test_chroms = ['chr2', 'chr3', 'chr5']
+# TEST SET
+allowed_list = pd.read_csv(main_dir+"full_cassette_exons_with_mean_psi_NO_MULTIZ_OVERLAPS.csv")
+# Filtering Tabula Sapiens data
+# Theta join full_df and allowed_list where full_df["exon_id"] == allowed_list["ascot_exon_id"]
+safe_df = full_df.merge(
+    allowed_list[["ascot_exon_id", "Exon Name"]],
+    left_on="exon_id",
+    right_on="ascot_exon_id",
+    how="inner"
+).drop(columns=["ascot_exon_id"])
+test_df = safe_df.sample(n=n_test, random_state=rng)
 
-# Create masks
-train_mask = cassette_df["chromosome"].isin(train_chroms)
-val_mask = cassette_df["chromosome"].isin(val_chroms)
-test_mask = cassette_df["chromosome"].isin(test_chroms)
+remaining_df = full_df[~ full_df["exon_id"].isin(test_df["exon_id"])].reset_index(drop=True)
 
-# Apply splits
-train_df = cassette_df[train_mask]
-val_df = cassette_df[val_mask]
-test_df = cassette_df[test_mask]
+# TRAINING AND VALIDATION SET
+train_df = remaining_df.sample(n=n_train, random_state=rng)
+val_df = remaining_df[~ remaining_df["exon_id"].isin(train_df["exon_id"])].reset_index(drop=True).sample(n=n_val, random_state=rng)
+
+
+# Sanity Checks
+used_exons = pd.read_csv("/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/train_exon_list.csv")
+leaked_data = test_df[test_df["Exon Name"].isin(used_exons["exon_id"])]
+assert len(leaked_data) == 0
+test_df = test_df.drop("Exon Name", axis="columns")
+print(f"✅ No exons used in pre-training found in test set. No data leakage\n")
+
+assert len(set(train_df["exon_id"]) & set(val_df["exon_id"])) == 0
+assert len(set(train_df["exon_id"]) & set(test_df["exon_id"])) == 0
+assert len(set(val_df["exon_id"]) & set(test_df["exon_id"])) == 0
+print("✅ Splits complete and non-overlapping!")
+print(f"Train: {len(train_df)} ({100* len(train_df)/n_total}%), Val: {len(val_df)} ({100* len(val_df)/n_total}%), Test: {len(test_df)} ({100* len(test_df)/n_total}%)")
 
 # Save splits
 train_df.to_csv(main_dir+"train_cassette_exons.csv", index=False)
