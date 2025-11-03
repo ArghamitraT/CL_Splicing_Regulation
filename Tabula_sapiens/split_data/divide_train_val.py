@@ -18,6 +18,8 @@ n_train = n_total - n_test - n_val
 
 # TEST SET
 allowed_list = pd.read_csv(main_dir+"full_cassette_exons_with_mean_psi_NO_MULTIZ_OVERLAPS.csv")
+allowed_list = allowed_list.drop_duplicates(subset=["ascot_exon_id"])
+
 # Filtering Tabula Sapiens data
 # Theta join full_df and allowed_list where full_df["exon_id"] == allowed_list["ascot_exon_id"]
 safe_df = full_df.merge(
