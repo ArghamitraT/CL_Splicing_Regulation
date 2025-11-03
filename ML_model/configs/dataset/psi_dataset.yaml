@@ -47,3 +47,4 @@ num_workers: ${optimal_workers:}  # Increase for faster data loading
 cache_dir: "../data"
 fivep_ovrhang: 300  # how much overhang to include from 5'  intron
 threep_ovrhang: 300 # how much overhang to include from 3'  intron
+ascot: 1

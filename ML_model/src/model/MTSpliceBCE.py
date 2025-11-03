@@ -233,6 +233,10 @@ class MTSpliceBCE(pl.LightningModule):
                 encoder_output_dim = dummy_output.shape[-1]
 
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
+
+        if config.dataset.ascot == True:
+            embed_dim=32
+            out_dim=56
         
         self.fc1 = nn.Linear(encoder_output_dim, embed_dim)
         self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
