@@ -27,7 +27,7 @@ def debug_warning(message):
 ############# DEBUG Message ###############
 
 class PSIRegressionDataset(Dataset):
-    def __init__(self, data_file, tokenizer, max_length=201, mode="5p", len_5p=300, len_3p=300):
+    def __init__(self, data_file, tokenizer, max_length=201, mode="5p", len_5p=300, len_3p=300, ascot=False):
         """
         Dataset for PSI Regression.
 
@@ -65,6 +65,7 @@ class PSIRegressionDataset(Dataset):
         
         self.tissue_acceptor_exon = 100
         self.tissue_donor_exon = 100
+        self.ascot = ascot
 
     def __len__(self):
         return len(self.entries)
@@ -75,6 +76,10 @@ class PSIRegressionDataset(Dataset):
         psi_value = entry["psi_val"]
 
         if self.mode == "mtsplice":
+            if self.ascot and self.len_3p == 200:
+                entry["5p"] = entry["5p"][-200:]
+                entry["3p"] = entry["3p"][:200]
+                
             full_seq =  entry["5p"] + self._process_exon(entry["exon"]) + entry["3p"]
 
             windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
@@ -154,23 +159,24 @@ class PSIRegressionDataModule(pl.LightningDataModule):
         self.test_files = config.dataset.test_files
         self.len_5p = config.dataset.fivep_ovrhang  # how much overhang to include from 5' intron
         self.len_3p = config.dataset.threep_ovrhang # how much overhang to include from 3' intron
+        self.ascot = config.dataset.ascot
 
     def setup(self, stage=None):
         if self.mode == "3p":
-            self.train_set = PSIRegressionDataset(self.train_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
-            self.val_set = PSIRegressionDataset(self.val_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
-            self.test_set = PSIRegressionDataset(self.test_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.train_set = PSIRegressionDataset(self.train_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+            self.val_set = PSIRegressionDataset(self.val_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+            self.test_set = PSIRegressionDataset(self.test_files["3p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
 
         elif self.mode == "5p":
-            self.train_set = PSIRegressionDataset(self.train_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
-            self.val_set = PSIRegressionDataset(self.val_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
-            self.test_set = PSIRegressionDataset(self.test_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.train_set = PSIRegressionDataset(self.train_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+            self.val_set = PSIRegressionDataset(self.val_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+            self.test_set = PSIRegressionDataset(self.test_files["5p"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
 
         # elif self.mode == "intronexon":
         else:
-            self.train_set = PSIRegressionDataset(self.train_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
-            self.val_set = PSIRegressionDataset(self.val_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
-            self.test_set = PSIRegressionDataset(self.test_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p)
+            self.train_set = PSIRegressionDataset(self.train_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+            self.val_set = PSIRegressionDataset(self.val_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+            self.test_set = PSIRegressionDataset(self.test_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
 
             # self.train_set = {
             #     "5p": PSIRegressionDataset(self.train_files["5p"], self.tokenizer),
