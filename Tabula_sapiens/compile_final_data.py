@@ -8,7 +8,7 @@ from scipy.special import logit
 
 def main():
     parser = argparse.ArgumentParser(description="Combine intermediate tables to final data")
-    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")
+    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")  # "/gpfs/commons/home/nkeung/tabula_sapiens"
     args = parser.parse_args()
 
     main_dir = args.main_dir
@@ -70,6 +70,31 @@ def main():
         print(f"🧹 Removing {num_removed} rows with no PSI values in any cell type")
     master_df = master_df.loc[~mask_all_nan].reset_index(drop=True)
 
+    # ---------- FORMATTING OUTPUT ----------
+
+    # Reorder columns
+    
+    # Insert empty "exon_boundary" column
+    master_df["exon_boundary"] = ""
+    # Explicitly set order in case later pipelines require it. Will add 
+    metadata_cols = [
+        "cassette_exon", "alternative_splice_site_group", "linked_exons", "mutually_exclusive_exons",
+        "exon_strand", "exon_length", "gene_type", "gene_id", "gene_symbol", "exon_location", "exon_boundary"
+    ]
+    cols_in_order = metadata_cols
+    cols_in_order.extend(
+                [c for c in master_df.columns if c not in metadata_cols and c != "chromosome"]
+    )
+    cols_in_order.append("chromosome")
+    master_df = master_df[cols_in_order]
+
+    # Construct exon_id column
+    master_df.insert(
+        0,
+        "exon_id", 
+        [f"TS_{i:06d}" for i in range(1, len(master_df)+1)]
+    )
+
     # Calculate mean PSI
     master_df["mean_psi"] = psi_vals.mean(axis=1)
     print(f"✅ Calculated mean PSI")
@@ -79,17 +104,8 @@ def main():
     master_df["logit_mean_psi"] = logit(np.clip(master_df["mean_psi"] / 100, eps, 1-eps))
     print(f"✅ Calculated logit mean PSI")
 
-    # Reorder columns
-    cols_in_order = [c for c in original_order if c in master_df.columns] + \
-                [c for c in master_df.columns if c not in original_order]
-    master_df = master_df[cols_in_order]
 
-    # Construct exon_id column
-    master_df.insert(
-        0,
-        "exon_id", 
-        [f"TS_{i:06d}" for i in range(1, len(master_df)+1)]
-    )
+    print(f"Columns: {master_df.columns}")
     
     output_path = os.path.join(main_dir, "psi_data", "final_data", "full_cassette_exons_with_mean_psi.csv")
     master_df.to_csv(output_path, sep=",", index=False)
