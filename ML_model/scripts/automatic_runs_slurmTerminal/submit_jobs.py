@@ -214,17 +214,30 @@ def create_slurm_header_cl(cfg, paths):
 def create_prg_header_psi(cfg, paths):
     # NOTE: we will export RUN_IDX in the Slurm script loop.
     # We suffix logger.name (and optionally hydra.run.dir) with _r$RUN_IDX
-    if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
-        reset_debug_warning()
-        debug_warning("Using 200bp overhangs; data_dir changed")
-        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data_old/ASCOT_finetuning/"
-    else:
-        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"
+    
+    # if ascot dataset
+    if cfg['ascot']:
+        if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+            reset_debug_warning()
+            debug_warning("Using 200bp overhangs; data_dir changed")
+            main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data_old/ASCOT_finetuning/"
+        else:
+            main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"
 
-    # These definitions now correctly use the main_data_dir set by the logic above.
-    train_file = main_data_dir + "psi_train_Retina___Eye_psi_MERGED.pkl"
-    val_file = main_data_dir + "psi_val_Retina___Eye_psi_MERGED.pkl"
-    test_file = main_data_dir + cfg["PSI_TEST_FILE"]
+        # These definitions now correctly use the main_data_dir set by the logic above.
+        train_file = main_data_dir + "psi_train_Retina___Eye_psi_MERGED.pkl"
+        val_file = main_data_dir + "psi_val_Retina___Eye_psi_MERGED.pkl"
+        test_file = main_data_dir + cfg["PSI_TEST_FILE"]
+    
+    # if tabula dataset 
+    else:
+        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/TSCelltype_finetuning/"
+
+        # These definitions now correctly use the main_data_dir set by the logic above.
+        train_file = main_data_dir + "psi_train_pericyte_psi_MERGED.pkl"
+        val_file = main_data_dir + "psi_val_pericyte_psi_MERGED.pkl"
+        test_file = main_data_dir + "psi_test_pericyte_psi_MERGED.pkl"
+
 
 
     header = f"""#!/bin/bash
@@ -248,6 +261,7 @@ def create_prg_header_psi(cfg, paths):
             tokenizer={cfg["tokenizer"]} \\
             embedder={cfg["embedder"]} \\
             loss={cfg["psi_loss_name"]} \\
+            loss.csv_dir={main_data_dir} \\
             optimizer={cfg["optimizer"]} \\
             optimizer.lr={cfg["learning_rate"]} \\
             task.global_batch_size={cfg["global_batch_size"]}\\
@@ -268,6 +282,7 @@ def create_prg_header_psi(cfg, paths):
             dataset.test_files.intronexon={test_file} \\
             dataset.fivep_ovrhang={cfg["fivep_ovrhang"]} \\
             dataset.threep_ovrhang={cfg["threep_ovrhang"]} \\
+            dataset.ascot={cfg["ascot"]} \\
             ++wandb.dir="'{paths["wandb_dir"]}'"\\
             $EXTRA_WANDB_PROJECT \\
             ++logger.name="'{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}_run_$RUN_IDX'"\\

@@ -14,23 +14,23 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_200bp_MTCLSwept_10Aug_noExonPad',
+        slurm_file_name = 'Psi_TblaSpns_300bp_MTCLSwept_10Aug_noExonPad',
         task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        max_epochs = 10,
+        max_epochs = 25,
         optimizer = "adam",
-        readme_comment = "intron offset 200 bp like MTsplice, no exon padding, 10 aug, CL normal Supcon, both CL and psi hyperparameters swept\n",
-        wandb_logger_NOTES = "intron offset 200 bp like MTsplice no exon padding 10 aug CL normal Supcon both CL and psi hyperparameters swept",
+        readme_comment = "PSI first tabula sapiense experiment, 300 bp, with 10 augmentations, CL hyperparameters swept\n",
+        wandb_logger_NOTES = "PSI first tabula sapiense experiment 300 bp with 10 augmentations CL hyperparameters swept",
         new_project_wandb = 1,
-        fivep_ovrhang = 200,
-        threep_ovrhang = 200,
+        fivep_ovrhang = 300,
+        threep_ovrhang = 300,
         learning_rate =  1e-3, # Best Psi, CL: 1e-3
         global_batch_size = 1024, # Best Psi: 1024, CL: 2048
         accumulate_grad_batches = 1, # Best Psi, CL: 1
         
         ##### --- machine configuration
         gpu_num = 1,
-        hour = 2,
+        hour = 3,
         memory = 100,        # GB
         nthred = 8,          # CPUs
 
@@ -61,6 +61,7 @@ def get_experiment_config():
         ################### --- psi specific parameters ################### 
         freeze_encoder = False,
         warm_start = True,
+        ascot = False, # if ASCOT dataset the true, if Tabula Sapiens false     
         psi_loss_name = "MTSpliceBCELoss",
         PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
@@ -73,18 +74,36 @@ def get_experiment_config():
         
         ##### --- pretrained weights ---
         ####### mtsplice weights ##########
+        
         # after CL hyperparameter sweep
-        mtsplice_weights = "exprmnt_2025_11_01__13_07_04",  # EMPRAICL_afterSweep_aug10_200bp_2025_11_01__13_07_04
-        # mtsplice_weights = "exprmnt_2025_11_01__13_07_53",  # EMPRAICL_afterSweep_aug5_200bp_2025_11_01__13_07_53
-        # mtsplice_weights = "exprmnt_2025_11_01__12_08_52",  # CL swept, 300bp, no exon pad, 10 aug
+             # intron+exon
+        mtsplice_weights = "exprmnt_2025_11_01__12_08_52",  # CL swept, 300bp, no exon pad, 10 aug
         # mtsplice_weights = "exprmnt_2025_11_01__12_16_52",  # CL swept, 300bp, no exon pad, 5 aug
+        # mtsplice_weights = "exprmnt_2025_11_01__13_07_04",  # EMPRAICL_afterSweep_aug10_200bp_2025_11_01__13_07_04
+        # mtsplice_weights = "exprmnt_2025_11_01__13_07_53",  # EMPRAICL_afterSweep_aug5_200bp_2025_11_01__13_07_53
+            # intron only
+        # mtsplice_weights = "exprmnt_2025_11_01__22_56_28",  # EMPRAICL_afterSweep_aug10_300bp_INTRON_SupCon_2025_11_01__22_56_28
+        # mtsplice_weights = "exprmnt_2025_11_01__22_58_09",  # EMPRAICL_afterSweep_aug5_300bp_INTRON_SupCon_2025_11_01__22_58_09
+        # mtsplice_weights = "exprmnt_2025_11_01__22_51_48",  # EMPRAICL_afterSweep_aug10_200bp_INTRON_SupCon_2025_11_01__22_51_48
+        # mtsplice_weights = "exprmnt_2025_11_01__22_51_25",  # EMPRAICL_afterSweep_aug5_200bp_INTRON_SupCon_2025_11_01__22_51_25
+
+            
 
         # before CL hyperparameter sweep
-        # mtsplice_weights = "exprmnt_2025_10_26__14_30_11",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train, cl 300 bp intron
-        # mtsplice_weights = "exprmnt_2025_10_26__14_29_04",  # CL, new corrected mtsplice model, all species, no ASCOT test in train, cl 300 bp intron
-        # mtsplice_weights = "exprmnt_2025_10_25__15_31_32",  # CL, new corrected mtsplice model, all species, no ASCOT test in train
-        # mtsplice_weights = "exprmnt_2025_10_25__14_52_07",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train
+            # intron+exon
+        # mtsplice_weights = "exprmnt_2025_10_26__14_29_04",  # EMPRAICL_MTSplNew_10Aug_300bpIntron_2025_10_26__14_29_04
+        # mtsplice_weights = "exprmnt_2025_11_01__22_12_55",  # EMPRAICL_300bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_12_55
+        # mtsplice_weights = "exprmnt_2025_10_25__15_31_32",  # EMPRAICL_MTSplNew_10Aug_noASCOTTestinTrain_2025_10_25__15_31_32
+        # mtsplice_weights = "exprmnt_2025_11_01__22_06_26",  # EMPRAICL_200bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_06_26
+            # intron only
+        # mtsplice_weights = "exprmnt_2025_11_01__22_43_56",  # EMPRAICL_300bp_10Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_43_56
+        # mtsplice_weights = "exprmnt_2025_11_01__22_43_13",  # EMPRAICL_300bp_5Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_43_13
+        # mtsplice_weights = "exprmnt_2025_11_01__22_44_21",  # EMPRAICL_200bp_10Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_44_21
+        # mtsplice_weights = "exprmnt_2025_11_01__22_44_49",  # EMPRAICL_200bp_5Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_44_49
 
+        
+        # mtsplice_weights = "exprmnt_2025_10_25__14_52_07",  # EMPRAICL_MTSplNew_10Aug_weightedSupCon_noASCOTTestinTrain_2025_10_25__14_52_07
+        # mtsplice_weights = "exprmnt_2025_10_26__14_30_11",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train, cl 300 bp intron
         # mtsplice_weights = "exprmnt_2025_10_23__21_40_25", # CL, new corrected mtsplice model, all species, weighted supcon
         # mtsplice_weights = "exprmnt_2025_10_23__21_17_52", # CL, new corrected mtsplice model, all species
         # mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # CL, new corrected mtsplice model, fixed species

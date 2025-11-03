@@ -2,12 +2,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import os
-
-# Load CSV once
-# csv_path = "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning/"
-# df = pd.read_csv(csv_path)
-# df.set_index("exon_id", inplace=True)
-# tissue_columns = df.columns[10:-3]  # assumes 56 tissue PSI columns
+import numpy as np
 
 class MTSpliceBCELoss(nn.Module):
     def __init__(self, csv_dir):
@@ -52,6 +47,15 @@ class MTSpliceBCELoss(nn.Module):
         psi_true = psi_true.nan_to_num(0.0)
 
         # Add logit(mean_psi) back to delta and apply sigmoid
+
+        logit_mean_psi_numpy = df_batch["logit_mean_psi"].values
+        nan_mask_numpy = np.isnan(logit_mean_psi_numpy)
+        if nan_mask_numpy.any():
+            print("WARNING: 'logit_mean_psi' column contains NaN values!")
+            nan_indices = np.where(nan_mask_numpy)
+            print(f"NaNs found at indices: {nan_indices}")
+
+
         logit_mean_psi = torch.tensor(
             df_batch["logit_mean_psi"].values,
             dtype=torch.float32, device=device

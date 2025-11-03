@@ -48,6 +48,8 @@ class ContrastiveIntronsDataset(Dataset):
         # debug_warning("no exon, so acceptor, donor intron is 400, generally 300.")
         # reset_debug_warning()
         # debug_warning("get padding intronlyONLY, line 151")
+        # reset_debug_warning()
+        # debug_warning("no exon used, instead we just used NNNN line 151")
         
         self.tissue_acceptor_intron = 300
         self.tissue_donor_intron = 300
@@ -144,12 +146,12 @@ class ContrastiveIntronsDataset(Dataset):
                 intron_5p = intronic_sequences[sp]['5p']
                 exon_seq = intronic_sequences[sp]['exon']
                 intron_3p = intronic_sequences[sp]['3p']
-
-                len_exon = len(exon_seq)
-                # full_seq = intron_5p + exon_seq + intron_3p
+                
+                # len_exon = len(exon_seq)
+                # exon_mask = "N" * len_exon  # replace exon with N's
+                # full_seq = intron_5p + exon_mask + intron_3p
                 full_seq = intron_5p + exon_seq + intron_3p
                 
-                # full_seq = intronic_sequences[sp]
 
                 if self.embedder.name_or_path == "MTSplice":
                     

@@ -234,9 +234,9 @@ class MTSpliceBCE(pl.LightningModule):
 
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
 
-        if config.dataset.ascot == True:
-            embed_dim=32
-            out_dim=56
+        if config.dataset.ascot == False:
+            embed_dim=56
+            out_dim=112
         
         self.fc1 = nn.Linear(encoder_output_dim, embed_dim)
         self.bn2 = nn.BatchNorm1d(embed_dim, eps=1e-3, momentum=0.01)
@@ -406,6 +406,10 @@ class MTSpliceBCE(pl.LightningModule):
 
             # log averages if needed
             tissue_name = 'Retina - Eye'
+            for fallback in ['Retina - Eye', 'mast cell']:
+                if not metrics_df.loc[metrics_df["tissue"] == fallback].empty:
+                    tissue_name = fallback
+                    break
             psi_value = metrics_df.loc[metrics_df["tissue"] == tissue_name, "spearman_psi"].iloc[0]
             psi_delta = metrics_df.loc[metrics_df["tissue"] == tissue_name, "spearman_delta"].iloc[0]
             self.log(f"{tissue_name}_spearman_psi", psi_value, prog_bar=True, sync_dist=True)

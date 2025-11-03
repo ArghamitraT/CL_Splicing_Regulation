@@ -537,7 +537,8 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
 
 
     # Parameters #
-    overhang = 200
+    overhang = 300
+   
     # experiment_folder = "exprmnt_2025_10_28__20_12_11" # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_12_58" # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_28_29" # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
@@ -547,12 +548,14 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
     # experiment_folder = "exprmnt_2025_10_30__14_50_31" # EMPRAIPsi_wtdSupCon_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_50_31
     # experiment_folder = "exprmnt_2025_10_30__14_51_54" # EMPRAIPsi_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_51_54
     # experiment_folder = "exprmnt_2025_10_30__14_53_23" # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23
-    
+    # experiment_folder = "exprmnt_2025_11_02__13_03_20" # EMPRAIPsi_200bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_03_20
+    experiment_folder = "exprmnt_2025_11_02__13_04_48" # EMPRAIPsi_300bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_04_48
+
     # after CL sweep
     # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
     # experiment_folder = "exprmnt_2025_11_01__12_33_58" # EMPRAIPsi_300bp_MTCLSwept_5Aug_noExonPad_2025_11_01__12_33_58
     # experiment_folder = "exprmnt_2025_11_01__18_57_08" # EMPRAIPsi_200bp_MTCLSwept_5Aug_noExonPad_2025_11_01__18_57_08
-    experiment_folder = "exprmnt_2025_11_01__18_59_24" # EMPRAIPsi_200bp_MTCLSwept_10Aug_noExonPad_2025_11_01__18_59_24
+    # experiment_folder = "exprmnt_2025_11_01__18_59_24" # EMPRAIPsi_200bp_MTCLSwept_10Aug_noExonPad_2025_11_01__18_59_24
 
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
 
