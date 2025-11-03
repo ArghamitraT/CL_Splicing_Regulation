@@ -82,6 +82,7 @@ python -m scripts.psi_regression_training \
         dataset.train_files.intronexon=$TRAIN_DATA_FILE\
         dataset.val_files.intronexon=$VAL_DATA_FILE\
         dataset.test_files.intronexon=$TEST_DATA_FILE\
+        dataset.ascot=true \
         logger.name="Psi__trial__$(date +%Y%m%d_%H%M%S)" \
         logger.notes="$NOTES"
 
