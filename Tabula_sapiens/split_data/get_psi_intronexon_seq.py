@@ -5,13 +5,14 @@ import time
 import pickle
 
 # === Setup paths ===
-script_path = os.path.abspath(__file__)
-base_dir = script_path.split("Contrastive_Learning")[0] + "Contrastive_Learning"
+# script_path = os.path.abspath(__file__)
+# base_dir = script_path.split("Contrastive_Learning")[0] + "Contrastive_Learning"
+base_dir = "/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/"
 
-csv_file_path = os.path.join(base_dir, "data/ASCOT/train_cassette_exons.csv")
-refseq_path = os.path.join(base_dir, "data/multiz100way/refseq/hg38.fa")
+csv_file_path = os.path.join(base_dir, "test_cassette_exons.csv")
+refseq_path = os.path.join("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/hg38.fa")
 
-output_path = os.path.join(base_dir, "data/final_data/ASCOT_finetuning/")
+output_path = os.path.join(base_dir)
 
 os.makedirs(output_path, exist_ok=True)
 
@@ -81,7 +82,7 @@ for _, row in df.iterrows():
     exon_name = row['exon_id']
     strand = row['exon_strand']
     chrom = row['chromosome']
-    psi_val = row['Retina - Eye']
+    psi_val = row['pericyte']
     start = int(row['exon_location'].split(":")[1].split("-")[0])
     end = int(row['exon_location'].split(":")[1].split("-")[1])
 
@@ -118,14 +119,14 @@ for _, row in df.iterrows():
 
    
 # === Save ===
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_5primeintron_sequences_dict.pkl'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_pericyte_psi_5primeintron_sequences_dict.pkl'), 'wb') as f:
     pickle.dump(dict_5prime, f)
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_3primeintron_sequences_dict.pkl'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_pericyte_psi_3primeintron_sequences_dict.pkl'), 'wb') as f:
     pickle.dump(dict_3prime, f)
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_exon_sequences_dict.pkl'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_pericyte_psi_exon_sequences_dict.pkl'), 'wb') as f:
     pickle.dump(dict_exon, f)
-with open(os.path.join(output_path, f'psi_{prefix}_Retina___Eye_psi_MERGED.pkl'), 'wb') as f:
+with open(os.path.join(output_path, f'psi_{prefix}_pericyte_psi_MERGED.pkl'), 'wb') as f:
     pickle.dump(merged_dict, f)
     
-print("✅ All Retina exon sequences extracted and saved.")
+print("✅ All Tabula Sapiens exon sequences extracted and saved.")
 print("short exons num ", short_exon)
