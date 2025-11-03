@@ -9,7 +9,8 @@ import pickle
 # base_dir = script_path.split("Contrastive_Learning")[0] + "Contrastive_Learning"
 base_dir = "/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/"
 
-csv_file_path = os.path.join(base_dir, "test_cassette_exons.csv")
+split = "test"
+csv_file_path = os.path.join(base_dir, f"{split}_cassette_exons.csv")
 refseq_path = os.path.join("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/refseq/hg38.fa")
 
 output_path = os.path.join(base_dir)
