@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import json
 
 main_dir = '/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/'
 RANDOM_SEED = 124
@@ -48,6 +49,24 @@ print("✅ Splits complete and non-overlapping!")
 print(f"Train: {len(train_df)} ({100* len(train_df)/n_total}%), Val: {len(val_df)} ({100* len(val_df)/n_total}%), Test: {len(test_df)} ({100* len(test_df)/n_total}%)")
 
 # Save splits
+train_df.to_csv(main_dir+"train_cassette_exons_with_logit_mean_psi.csv", index=False)
+val_df.to_csv(main_dir+"val_cassette_exons_with_logit_mean_psi.csv", index=False)
+test_df.to_csv(main_dir+"test_cassette_exons_with_logit_mean_psi.csv", index=False)
+
+# Remove mean PSI and logit mean PSI for later files
+train_df = train_df.drop(columns=["mean_psi", "logit_mean_psi"])
+val_df = val_df.drop(columns=["mean_psi", "logit_mean_psi"])
+test_df = test_df.drop(columns=["mean_psi", "logit_mean_psi"])
+
+# Set NAN to -1
+with open("/gpfs/commons/home/nkeung/tabula_sapiens/completed.json", "r") as f:
+    cell_types = list(json.load(f))
+
+cols = [s.replace("_", " ") for s in cell_types]
+train_df[cols] = train_df[cols].replace("", np.nan).fillna(-1)
+val_df[cols] = val_df[cols].replace("", np.nan).fillna(-1)
+test_df[cols] = test_df[cols].replace("", np.nan).fillna(-1)
+
 train_df.to_csv(main_dir+"train_cassette_exons.csv", index=False)
 val_df.to_csv(main_dir+"val_cassette_exons.csv", index=False)
 test_df.to_csv(main_dir+"test_cassette_exons.csv", index=False)
