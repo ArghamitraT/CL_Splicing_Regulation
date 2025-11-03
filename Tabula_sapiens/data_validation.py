@@ -61,7 +61,23 @@ def sanity_checks(full_df, psi_cols):
         print(f"✅ All rows have at least one numeric PSI value")
 
 
-    # # 5.2 For CSVs with no mean, no NAN values allowed. Must be -1
+    # 5.2 All PSI values must be between 0 and 100 inclusive
+    psi_numeric = full_df[psi_cols].apply(pd.to_numeric, errors='coerce')
+
+    # Mask: True if PSI < 0 or > 100
+    invalid_rows = (psi_numeric < 0) | (psi_numeric > 100)
+
+    num_invalid = invalid_rows.any(axis=1).sum()
+    if num_invalid > 0:
+        print(f"❌ Found {num_invalid} rows with PSI values below 0 or above 100")
+        # Print row indices and PSI values for inspection
+        print(full_df.loc[mask_all_nan, psi_cols])
+        problems += 1
+    else:
+        print(f"✅ All PSI values are between 0 and 100 inclusive")
+    
+
+    # # 5.3 For CSVs with no mean, no NAN values allowed. Must be -1
     # psi_numeric = full_df[psi_cols].apply(pd.to_numeric, errors='coerce')
 
     # # Mask: All rows where PSI is not NA and non-negative OR PSI is -1
