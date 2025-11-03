@@ -235,7 +235,7 @@ class MTSpliceBCE(pl.LightningModule):
             print(f"📏 Inferred encoder output_dim = {encoder_output_dim}")
 
         if config.dataset.ascot == False:
-            embed_dim=56
+            # embed_dim=56
             out_dim=112
         
         self.fc1 = nn.Linear(encoder_output_dim, embed_dim)
@@ -323,7 +323,25 @@ class MTSpliceBCE(pl.LightningModule):
         else:
             loss = self.loss_fn(y_pred, y)
 
-        self.log("val_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+        # self.log("val_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
+        
+        # (AT)
+        # ---- show per-batch loss on the bar + aggregate epoch loss cleanly ----
+        # figure out batch size for proper averaging
+        bs = y.shape[0] if hasattr(y, "shape") else (exon_ids.shape[0] if hasattr(exon_ids, "shape") else None)
+
+        # per-step loss (moves every val batch)
+        self.log("val_loss_step",
+                loss, on_step=True, on_epoch=False,
+                prog_bar=True, sync_dist=True, batch_size=bs)
+
+        # epoch-aggregated loss (one number at end of val loop)
+        self.log("val_loss",
+                loss, on_step=False, on_epoch=True,
+                prog_bar=True, sync_dist=True, batch_size=bs)
+        
+        # (AT)
+        
         for metric_fn in self.metric_fns:
             if self.config.aux_models.mtsplice_BCE:
                 break

@@ -355,7 +355,17 @@ def run_ensemble_test_evaluation(
 @hydra.main(version_base=None, config_path="../configs", config_name="psi_regression.yaml")
 def main(config: OmegaConf):
     
+    
+
+    #TS experiment
+    # experiment_folder = "exprmnt_2025_11_03__15_57_50" # EMPRAIPsi_TblaSpns_noCL_do0.8_300bp_2025_11_03__15_57_50
+    # experiment_folder = "exprmnt_2025_11_03__16_02_02" # EMPRAIPsi_TblaSpns_noCL_do0.4_300bp_2025_11_03__16_02_02
+    experiment_folder = "exprmnt_2025_11_03__16_11_50" # EMPRAIPsi_TblaSpns_noCL_do0.1_300bp_2025_11_03__16_11_50
+    ascot = False
+
     # Parameters (MUST MATCH your first script)
+    # ASCOT
+    # ascot = True
     # experiment_folder = "exprmnt_2025_10_28__20_12_11" # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_12_58" # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_28_29" # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
@@ -366,7 +376,7 @@ def main(config: OmegaConf):
     # experiment_folder = "exprmnt_2025_10_30__14_53_23" # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23
     # experiment_folder = "exprmnt_2025_11_02__13_03_20" # EMPRAIPsi_200bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_03_20
     # experiment_folder = "exprmnt_2025_11_02__13_03_20" # EMPRAIPsi_200bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_03_20
-    experiment_folder = "exprmnt_2025_11_02__13_04_48" # EMPRAIPsi_300bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_04_48
+    # experiment_folder = "exprmnt_2025_11_02__13_04_48" # EMPRAIPsi_300bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_04_48
 
     # after CL sweep
     # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
@@ -437,12 +447,14 @@ def main(config: OmegaConf):
     config.aux_models.eval_weights = None
     config.aux_models.train_mode = "eval"
     config.aux_models.warm_start = False
+    config.dataset.ascot = ascot
+
     # config.dataset.test_files.intronexon = "/home/atalukder/Contrastive_Learning/data/final_data/ASCOT_finetuning/psi_test_Retina___Eye_psi_MERGED.pkl"
     
-    # --- IMPORTANT ---
+    #********** --- IMPORTANT --- **********
     # We *assume* config.dataset.test_files is already the *correct*
     # test file path from your psi_regression.yaml
-    logging.info(f"Using original test files: {config.dataset.test_files}")
+    # logging.info(f"Using original test files: {config.dataset.test_files}")
 
     OmegaConf.set_struct(config, True)
     
@@ -489,7 +501,8 @@ def main(config: OmegaConf):
     #     config.dataset.test_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
     # logging.info("\n--- TEST SET SCRIPT FINISHED ---")
 
-    # (AT) DO NOT ERASE: for variable as we already have the prediction, no need to run the trainer.test
+    # (AT) DO NOT ERASE: for variable or any test file where the model was evaluated by the end of training
+    #  as we already have the prediction, no need to run the trainer.test
     run_ensemble_test_evaluation( # Renamed function
             best_checkpoints, 
             config, 

@@ -14,13 +14,13 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_TblaSpns_300bp_MTCLSwept_10Aug_noExonPad',
+        slurm_file_name = 'Psi_TblaSpns_CLSwpd_300bp',
         task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
-        max_epochs = 25,
+        max_epochs = 15,
         optimizer = "adam",
-        readme_comment = "PSI first tabula sapiense experiment, 300 bp, with 10 augmentations, CL hyperparameters swept\n",
-        wandb_logger_NOTES = "PSI first tabula sapiense experiment 300 bp with 10 augmentations CL hyperparameters swept",
+        readme_comment = "PSI first tabula sapiense experiment, 300 bp, just MTSplice training With CL, CL optimized param\n",
+        wandb_logger_NOTES = "PSI first tabula sapiense experiment 300 bp just MTSplice training With CL CL optimized param",
         new_project_wandb = 1,
         fivep_ovrhang = 300,
         threep_ovrhang = 300,
@@ -70,7 +70,7 @@ def get_experiment_config():
         eval_weights = "exprmnt_2025_08_17__02_17_03",
         run_num = 20,
         val_check_interval = 1.0,
-        dropout_rate = 0.1, # Best Psi: 0.1
+        dropout_rate = 0.4, # Best ASCOT_Psi: 0.1, TS: 0.4
         
         ##### --- pretrained weights ---
         ####### mtsplice weights ##########
@@ -147,6 +147,11 @@ def get_experiment_config():
 # --------------------------------------------------------------------
 def main():
     cfg = get_experiment_config()
+    if not cfg["ascot"]:
+        cfg["dropout_rate"] = 0.4
+    else:
+        cfg["dropout_rate"] = 0.1
+
     paths = setup_paths()
     create_readme(paths["data_dir"], cfg["readme_comment"])
     submit_job(cfg, paths)

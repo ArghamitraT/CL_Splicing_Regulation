@@ -62,9 +62,11 @@ export TRAIN_DATA_FILE="${MAIN_DIR}/${TRAIN_FILE}"
 export VAL_DATA_FILE="${MAIN_DIR}/${VAL_FILE}"
 export TEST_DATA_FILE="${MAIN_DIR}/${TEST_FILE}"
 
+ascot=false
+
 python -m scripts.psi_regression_training \
-        task.global_batch_size=2048\
-        trainer.max_epochs=10\
+        task.global_batch_size=1024\
+        trainer.max_epochs=12\
         trainer.val_check_interval=0.5\
         embedder="mtsplice"\
         tokenizer="onehot_tokenizer"\
@@ -75,7 +77,7 @@ python -m scripts.psi_regression_training \
         optimizer.lr=1e-3 \
         aux_models.freeze_encoder=false\
         aux_models.warm_start=false\
-        aux_models.dropout=0.8\
+        aux_models.dropout=0.1\
         aux_models.mtsplice_weights="exprmnt_2025_10_26__14_30_11"\
         aux_models.mode="mtsplice"\
         aux_models.mtsplice_BCE=1\
@@ -85,7 +87,7 @@ python -m scripts.psi_regression_training \
         dataset.val_files.intronexon=$VAL_DATA_FILE\
         dataset.test_files.intronexon=$TEST_DATA_FILE\
         dataset.ascot=false \
-        logger.name="Psi__trial__$(date +%Y%m%d_%H%M%S)" \
+        logger.name="Psi__TS_Debug_trial__$(date +%Y%m%d_%H%M%S)" \
         logger.notes="$NOTES"
 
             

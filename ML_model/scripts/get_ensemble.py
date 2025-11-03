@@ -538,7 +538,15 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
 
     # Parameters #
     overhang = 300
-   
+
+    #TS experiment
+    # experiment_folder = "exprmnt_2025_11_03__15_57_50" # EMPRAIPsi_TblaSpns_noCL_do0.8_300bp_2025_11_03__15_57_50
+    # experiment_folder = "exprmnt_2025_11_03__16_02_02" # EMPRAIPsi_TblaSpns_noCL_do0.4_300bp_2025_11_03__16_02_02
+    experiment_folder = "exprmnt_2025_11_03__16_11_50" # EMPRAIPsi_TblaSpns_noCL_do0.1_300bp_2025_11_03__16_11_50
+    ascot = False
+
+    # ASCOT
+    # ascot = True
     # experiment_folder = "exprmnt_2025_10_28__20_12_11" # intron ofset 300 bp like MTsplice, CL wtdSupcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_12_58" # intron ofset 300 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
     # experiment_folder = "exprmnt_2025_10_28__20_28_29" # intron ofset 200 bp like MTsplice, CL normal Supcon, MTSplice hyperparameters
@@ -549,7 +557,7 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
     # experiment_folder = "exprmnt_2025_10_30__14_51_54" # EMPRAIPsi_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_51_54
     # experiment_folder = "exprmnt_2025_10_30__14_53_23" # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23
     # experiment_folder = "exprmnt_2025_11_02__13_03_20" # EMPRAIPsi_200bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_03_20
-    experiment_folder = "exprmnt_2025_11_02__13_04_48" # EMPRAIPsi_300bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_04_48
+    # experiment_folder = "exprmnt_2025_11_02__13_04_48" # EMPRAIPsi_300bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_04_48
 
     # after CL sweep
     # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
@@ -607,11 +615,18 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
     config.aux_models.warm_start = False
     config.dataset.fivep_ovrhang = overhang  # how much overhang to include from 5'  intron
     config.dataset.threep_ovrhang = overhang
+    config.dataset.ascot = ascot
 
-    if overhang == 200:
-        config.dataset.train_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_train_Retina___Eye_psi_MERGED.pkl"
-        config.dataset.val_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl"
-        config.dataset.test_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
+    if ascot:
+        if overhang == 200:
+            config.dataset.train_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_train_Retina___Eye_psi_MERGED.pkl"
+            config.dataset.val_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl"
+            config.dataset.test_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
+    else:
+        config.dataset.train_files.intronexon = f"{root_path}/data/final_data/TSCelltype_finetuning/psi_train_pericyte_psi_MERGED.pkl"
+        config.dataset.val_files.intronexon = f"{root_path}/data/final_data/TSCelltype_finetuning/psi_val_pericyte_psi_MERGED.pkl"
+        config.dataset.test_files.intronexon = f"{root_path}/data/final_data/TSCelltype_finetuning/psi_test_pericyte_psi_MERGED.pkl"
+        config.loss.csv_dir = f"{root_path}/data/final_data/TSCelltype_finetuning"
     config.dataset.test_files = config.dataset.val_files
 
     # (AT)

@@ -1,5 +1,5 @@
 _target_: lightning.pytorch.Trainer
-max_epochs: 1
+max_epochs: 20
 callbacks: null
 # devices: ${device_count:} 
 devices: 1 #(AT)
