@@ -32,6 +32,11 @@ def main():
     for i, cell_type in enumerate(all_cell_types):
         csv_file = os.path.join(csv_dir, f"{cell_type}.csv")
         df = pd.read_csv(csv_file)
+        initial_len = len(df)
+        df = df.drop_duplicates(subset=merge_keys)
+        new_len = len(df)
+        if initial_len != new_len:
+            print(f"⚠️ Dropped {new_len - initial_len} duplicate exons in {cell_type}")
         if i == 0:
             original_order = df.columns.tolist()
 
@@ -54,6 +59,12 @@ def main():
             new_idx = df_indexed.index.difference(master_indexed.index)
             new_rows = df_indexed.loc[new_idx].reset_index()
             master_df = pd.concat([master_indexed.reset_index(), new_rows], ignore_index=True)
+
+            merged_init_len = len(master_df)
+            master_df = master_df.drop_duplicates(subset=merge_keys, keep="first")
+            merged_new_len = len(master_df)
+            if merged_init_len != merged_new_len:
+                print(f"⚠️ Dropped {merged_new_len - merged_init_len} while merging {cell_type}")
         
         print(f"Successfully merged {cell_type}.csv")
         processed += 1
@@ -96,7 +107,8 @@ def main():
     )
 
     # Calculate mean PSI
-    master_df["mean_psi"] = psi_vals.mean(axis=1)
+    psi_vals_numeric = master_df[psi_cols].apply(pd.to_numeric, errors='coerce')
+    master_df["mean_psi"] = psi_vals_numeric.mean(axis=1)
     print(f"✅ Calculated mean PSI")
 
     # logit mean PSI
@@ -104,7 +116,7 @@ def main():
     master_df["logit_mean_psi"] = logit(np.clip(master_df["mean_psi"] / 100, eps, 1-eps))
     print(f"✅ Calculated logit mean PSI")
 
-
+    assert master_df["exon_id"].duplicated().sum() == 0
     print(f"Columns: {master_df.columns}")
     
     output_path = os.path.join(main_dir, "psi_data", "final_data", "full_cassette_exons_with_mean_psi.csv")
