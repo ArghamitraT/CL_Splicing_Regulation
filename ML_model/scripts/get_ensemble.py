@@ -539,34 +539,27 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
     # Parameters #
     overhang = 200
 
-    #TS experiment
+    # TS experiment
     # experiment_folder = "exprmnt_2025_11_03__15_57_50" # EMPRAIPsi_TblaSpns_noCL_do0.8_300bp_2025_11_03__15_57_50
-    # experiment_folder = "exprmnt_2025_11_03__16_02_02" # EMPRAIPsi_TblaSpns_noCL_do0.4_300bp_2025_11_03__16_02_02
+    # experiment_folder = "exprmnt_2025_11_03__16_02_02" # EMPRAIPsi_TblaSpns_noCL_do0.4_300bp_2025_11_03__16_02_02 (chosen)
     # experiment_folder = "exprmnt_2025_11_03__16_11_50" # EMPRAIPsi_TblaSpns_noCL_do0.1_300bp_2025_11_03__16_11_50
-    # experiment_folder = "exprmnt_2025_11_03__16_11_50" # EMPRAIPsi_TblaSpns_CLSwpd_300bp_2025_11_03__18_04_57
-    # experiment_folder = "exprmnt_2025_11_03__19_27_49" # EMPRAIPsi_TblaSpns_CLSwpd_200bp_2025_11_03__19_27_49
-    # ascot = False
+    # experiment_folder = "exprmnt_2025_11_04__21_57_15" # EMPRAIPsi_TS_CLSwpd_300bp_10Aug_2025_11_04__21_57_15
+    # experiment_folder = "exprmnt_2025_11_04__21_57_45" # EMPRAIPsi_TS_CLSwpd_300bp_5Aug_2025_11_04__21_57_45
+    experiment_folder = "exprmnt_2025_11_04__21_59_46" # EMPRAIPsi_TS_CLSwpd_200bp_10Aug_2025_11_04__21_59_46
+    # experiment_folder = "exprmnt_2025_11_04__21_59_16" # EMPRAIPsi_TS_CLSwpd_200bp_5Aug_2025_11_04__21_59_16
+    ascot = False
 
     # ASCOT
-    ascot = True
-    
-    # before CL sweep (supcon temp 0.5)
-    # experiment_folder = "exprmnt_2025_10_30__13_01_46" # EMPRAIPsi_300bpIntrons_mtspliceHyperparams_2025_10_30__13_01_46
-    # experiment_folder = "exprmnt_2025_10_30__14_50_31" # EMPRAIPsi_wtdSupCon_300bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_50_31
-    # experiment_folder = "exprmnt_2025_10_30__14_51_54" # EMPRAIPsi_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_51_54
-    # experiment_folder = "exprmnt_2025_10_30__14_53_23" # EMPRAIPsi_wtdSupCon_200bpIntrons_mtspliceHyperparams_noExonPadding_2025_10_30__14_53_23
-    # experiment_folder = "exprmnt_2025_11_03__23_41_24" # EMPRAIPsi_ASCOT_CLnotSwpd_200bp_10aug_5p3pCut_2025_11_03__23_41_24
-    # experiment_folder = "exprmnt_2025_11_02__13_03_20" # EMPRAIPsi_200bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_03_20
-    # experiment_folder = "exprmnt_2025_11_02__13_04_48" # EMPRAIPsi_300bp_MTyesCLnoSwept_5Aug_noExonPad_2025_11_02__13_04_48
-    # experiment_folder = "exprmnt_2025_11_03__23_42_24" # EMPRAIPsi_ASCOT_CLnotSwpd_200bp_5aug_5p3pCut_2025_11_03__23_42_24
-    
+    # ascot = True
     # after CL sweep (supcon temp 0.2)
+    # experiment_folder = "exprmnt_2025_11_04__21_41_39" # EMPRAIPsi_ASCOT_300bp_IplusE_noCL_2025_11_04__21_41_39
     # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
     # experiment_folder = "exprmnt_2025_11_01__12_33_58" # EMPRAIPsi_300bp_MTCLSwept_5Aug_noExonPad_2025_11_01__12_33_58
     # experiment_folder = "exprmnt_2025_11_01__18_57_08" # EMPRAIPsi_200bp_MTCLSwept_5Aug_noExonPad_2025_11_01__18_57_08
+    # experiment_folder = "exprmnt_2025_11_04__21_41_10" # EMPRAIPsi_ASCOT_200bp_IplusE_noCL_2025_11_04__21_41_10
     # experiment_folder = "exprmnt_2025_11_03__23_37_19" # EMPRAIPsi_ASCOT_CLSwpd_200bp_5aug_5p3pCut_2025_11_03__23_37_19
     # experiment_folder = "exprmnt_2025_11_01__18_59_24" # EMPRAIPsi_200bp_MTCLSwept_10Aug_noExonPad_2025_11_01__18_59_24
-    experiment_folder = "exprmnt_2025_11_03__23_40_11" # EMPRAIPsi_ASCOT_CLSwpd_200bp_10aug_5p3pCut_2025_11_03__23_40_11
+    # experiment_folder = "exprmnt_2025_11_03__23_40_11" # EMPRAIPsi_ASCOT_CLSwpd_200bp_10aug_5p3pCut_2025_11_03__23_40_11
 
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
 

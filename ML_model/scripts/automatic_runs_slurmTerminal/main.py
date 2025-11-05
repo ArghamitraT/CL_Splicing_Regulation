@@ -14,16 +14,16 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_ASCOT_CLnotSwpd_200bp_5aug_5p3pCut',
+        slurm_file_name = 'Psi_ASCOT_IntronONLY_CLSwpd_300bp_5aug_5p3pCut',
         task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
         max_epochs = 15,
         optimizer = "adam",
-        readme_comment = "Psi, 5aug, CL not swept, so temp 0.5, previously fine_data_old folder contained exons only present in retina so the result was not apple to apple, solved that problem, now we work with 300bp data for 200 bp we just cut the 5p 3p sequence\n",
-        wandb_logger_NOTES = "PSI ASCOT 200bp 5aug after CL optimized 3p5p cut temp point 5",
+        readme_comment = "Psi, 300bp, 5aug, intronOnly, previously fine_data_old folder contained exons only present in retina so the result was not apple to apple, solved that problem, now we work with 300bp data for 200 bp we just cut the 5p 3p sequence\n",
+        wandb_logger_NOTES = "PSI ASCOT 300bp 5aug intronOnly after CL optimized 3p5p cut",
         new_project_wandb = 1,
-        fivep_ovrhang = 200,
-        threep_ovrhang = 200,
+        fivep_ovrhang = 300,
+        threep_ovrhang = 300,
         learning_rate =  1e-3, # Best Psi, CL: 1e-3
         global_batch_size = 1024, # Best Psi: 1024, CL: 2048
         accumulate_grad_batches = 1, # Best Psi, CL: 1
@@ -83,7 +83,7 @@ def get_experiment_config():
         # mtsplice_weights = "exprmnt_2025_11_01__13_07_53",  # EMPRAICL_afterSweep_aug5_200bp_2025_11_01__13_07_53
             # intron only
         # mtsplice_weights = "exprmnt_2025_11_01__22_56_28",  # EMPRAICL_afterSweep_aug10_300bp_INTRON_SupCon_2025_11_01__22_56_28
-        # mtsplice_weights = "exprmnt_2025_11_01__22_58_09",  # EMPRAICL_afterSweep_aug5_300bp_INTRON_SupCon_2025_11_01__22_58_09
+        mtsplice_weights = "exprmnt_2025_11_01__22_58_09",  # EMPRAICL_afterSweep_aug5_300bp_INTRON_SupCon_2025_11_01__22_58_09
         # mtsplice_weights = "exprmnt_2025_11_01__22_51_48",  # EMPRAICL_afterSweep_aug10_200bp_INTRON_SupCon_2025_11_01__22_51_48
         # mtsplice_weights = "exprmnt_2025_11_01__22_51_25",  # EMPRAICL_afterSweep_aug5_200bp_INTRON_SupCon_2025_11_01__22_51_25
 
@@ -94,7 +94,7 @@ def get_experiment_config():
         # mtsplice_weights = "exprmnt_2025_10_26__14_29_04",  # EMPRAICL_MTSplNew_10Aug_300bpIntron_2025_10_26__14_29_04
         # mtsplice_weights = "exprmnt_2025_11_01__22_12_55",  # EMPRAICL_300bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_12_55
         # mtsplice_weights = "exprmnt_2025_10_25__15_31_32",  # EMPRAICL_MTSplNew_10Aug_noASCOTTestinTrain_2025_10_25__15_31_32
-        mtsplice_weights = "exprmnt_2025_11_01__22_06_26",  # EMPRAICL_200bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_06_26
+        # mtsplice_weights = "exprmnt_2025_11_01__22_06_26",  # EMPRAICL_200bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_06_26
             # intron only
         # mtsplice_weights = "exprmnt_2025_11_01__22_43_56",  # EMPRAICL_300bp_10Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_43_56
         # mtsplice_weights = "exprmnt_2025_11_01__22_43_13",  # EMPRAICL_300bp_5Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_43_13
