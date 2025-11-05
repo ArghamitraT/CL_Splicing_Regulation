@@ -83,23 +83,67 @@ def load_and_align_for_delta_logit(
     merged = pd.merge(gt_use, pred_use, on="exon_id", how="inner", suffixes=("_gt", "_pred"))
     return merged, tissue_cols
 
+def pull_pm1_vectors_from_row_predfilter(row: pd.Series, tissue_cols: list, margin: float = 0.1) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    From a merged row (has <tissue>_gt and <tissue>_pred):
+      - Keep only GT in {0, 1} (ignore -1 and NaN)
+      - For predictions, keep only those where
+            pred > mean_psi + margin  or  pred < mean_psi - margin
+        (i.e. exclude predictions within ±margin band around avg expression)
+      - Return (y_true_bin, y_pred_filtered, mask_idx)
+    """
+    import numpy as np
+    import pandas as pd
+
+    # --- Extract GT and prediction vectors ---
+    g = pd.to_numeric(row[[f"{t}_gt" for t in tissue_cols]], errors="coerce").to_numpy(dtype="float64")
+    p = pd.to_numeric(row[[f"{t}_pred" for t in tissue_cols]], errors="coerce").to_numpy(dtype="float64")
+
+    # --- Base valid mask: finite + GT in {0,1} ---
+    valid = np.isfinite(p) & np.isfinite(g) & ((g == 0) | (g == 1))
+    if not np.any(valid):
+        return np.array([], dtype=int), np.array([], dtype=float), valid
+
+    # --- Filter predictions using ±margin around mean_psi ---
+    psi_bar = None
+    if "mean_psi" in row:
+        psi_bar = float(row["mean_psi"])
+    elif "logit_mean_psi" in row:
+        psi_bar = 1.0 / (1.0 + np.exp(-float(row["logit_mean_psi"])))
+    else:
+        raise KeyError("Row must contain either 'mean_psi' or 'logit_mean_psi'")
+
+    # mask out predictions that fall within the ±margin range
+    pred_filter = (p > psi_bar + margin) | (p < psi_bar - margin)
+    valid &= pred_filter
+
+    if not np.any(valid):
+        return np.array([], dtype=int), np.array([], dtype=float), valid
+
+    # --- Extract filtered values ---
+    y_true_bin = g[valid].astype(int)
+    y_psi = p[valid].astype(float)
+    return y_true_bin, y_psi, valid
 
 def pull_pm1_vectors_from_row(row: pd.Series, tissue_cols: list) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     From a merged row (has <tissue>_gt and <tissue>_pred):
-      - Keep only GT in {-1, +1} (drop 0 and NaN)
+      - Keep only GT in {0, 1} (ignore -1 and NaN)
       - Return (y_true_bin, y_psi, mask_idx)
-        where y_true_bin is 0/1 with (-1 -> 0, +1 -> 1)
+        where y_true_bin is already 0/1
     """
+    import numpy as np
+    import pandas as pd
+
     g = pd.to_numeric(row[[f"{t}_gt" for t in tissue_cols]], errors="coerce").to_numpy(dtype="float64")
     p = pd.to_numeric(row[[f"{t}_pred" for t in tissue_cols]], errors="coerce").to_numpy(dtype="float64")
 
-    # valid where GT is -1 or +1, pred is finite
-    valid = np.isfinite(p) & np.isfinite(g) & ((g == -1) | (g == 1))
+    # valid where GT is 0 or 1, and pred is finite
+    valid = np.isfinite(p) & np.isfinite(g) & ((g == 0) | (g == 1))
     if not np.any(valid):
         return np.array([], dtype=int), np.array([], dtype=float), valid
 
-    y_true_bin = (g[valid] == 1).astype(int)  # +1 -> 1, -1 -> 0
+    y_true_bin = g[valid].astype(int)     # already 0/1
     y_psi = p[valid].astype(float)
     return y_true_bin, y_psi, valid
 

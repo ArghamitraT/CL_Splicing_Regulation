@@ -58,7 +58,7 @@ for t in tissue_cols:
     is_nan = np.isnan(psi_t)
 
     cls = np.where(psi_t > upper,  1,
-        np.where(psi_t < lower, -1, 0)).astype(np.int8)
+        np.where(psi_t < lower, 0, -1)).astype(np.int8)
 
     # Convert to pandas nullable Int8, then mark NaNs as missing (pd.NA)
     cls = pd.Series(cls, dtype="Int8")
@@ -71,7 +71,7 @@ for t in tissue_cols:
 # Guarantee metadata is untouched and column order identical
 class_wide[meta_cols] = df[meta_cols]           # restore metadata verbatim
 class_wide = class_wide.reindex(columns=df.columns)  # keep exact original order
-
+class_wide.to_csv(OUT_WIDE, index=False)
 
 # --- Build long table (exon × tissue × class) ---
 class_long = class_wide.melt(
