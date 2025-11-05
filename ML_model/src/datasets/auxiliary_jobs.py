@@ -76,7 +76,10 @@ class PSIRegressionDataset(Dataset):
         psi_value = entry["psi_val"]
 
         if self.mode == "mtsplice":
-            if self.ascot==False and self.len_3p == 200:
+            # if self.ascot==False and self.len_3p == 200:
+            #     entry["5p"] = entry["5p"][-200:]
+            #     entry["3p"] = entry["3p"][:200]
+            if self.len_3p == 200:
                 entry["5p"] = entry["5p"][-200:]
                 entry["3p"] = entry["3p"][:200]
                 

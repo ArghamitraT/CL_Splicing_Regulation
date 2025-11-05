@@ -217,12 +217,12 @@ def create_prg_header_psi(cfg, paths):
     
     # if ascot dataset
     if cfg['ascot']:
-        if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
-            reset_debug_warning()
-            debug_warning("Using 200bp overhangs; data_dir changed")
-            main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data_old/ASCOT_finetuning/"
-        else:
-            main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"
+        # if cfg["fivep_ovrhang"] == 200 or cfg["threep_ovrhang"] == 200:
+        #     reset_debug_warning()
+        #     debug_warning("Using 200bp overhangs; data_dir changed")
+        #     main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data_old/ASCOT_finetuning/"
+        # else:
+        main_data_dir = paths["server_path"]+"Contrastive_Learning/data/final_data/ASCOT_finetuning/"
 
         # These definitions now correctly use the main_data_dir set by the logic above.
         train_file = main_data_dir + "psi_train_Retina___Eye_psi_MERGED.pkl"
