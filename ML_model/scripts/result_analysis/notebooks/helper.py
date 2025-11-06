@@ -31,6 +31,13 @@ def _standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [c.replace("--", " - ") for c in df.columns]
     return df
 
+def extract_valid_vectors(row, tissue_cols, gt_suffix="_gt", pred_suffix="_pred"):
+    """Return (gt, pred, valid_mask) arrays for a merged exon row."""
+    g = pd.to_numeric(row[[f"{t}{gt_suffix}" for t in tissue_cols]], errors="coerce").to_numpy(float)
+    p = pd.to_numeric(row[[f"{t}{pred_suffix}" for t in tissue_cols]], errors="coerce").to_numpy(float)
+    valid = np.isfinite(g) & np.isfinite(p)
+    return g, p, valid
+
 def _detect_and_scale_predictions(pred: pd.DataFrame) -> pd.DataFrame:
     """Ensure predictions are PSI in [0,1]. If they look like %, divide by 100."""
     if pred.shape[1] <= 1:
