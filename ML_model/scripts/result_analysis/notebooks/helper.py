@@ -155,6 +155,39 @@ def pull_pm1_vectors_from_row(row: pd.Series, tissue_cols: list) -> tuple[np.nda
     return y_true_bin, y_psi, valid
 
 # ---------------- vectorization / masking ----------------
+def pull_vectors_from_row_predFilter(
+    row: pd.Series,
+    tissue_cols: List[str],
+    exon_type: str,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    From a merged *row*, return (y_true, y_psi) masked to finite values.
+    Additionally filters y_psi based on exon_type:
+      - If 'high', remove entries with y_psi > 0.6
+      - If 'low',  remove entries with y_psi < 0.4
+    """
+    import numpy as np
+    import pandas as pd
+
+    # Extract numeric arrays
+    y_true = pd.to_numeric(row[[f"{t}_gt" for t in tissue_cols]], errors="coerce").to_numpy(dtype="float64")
+    y_psi  = pd.to_numeric(row[[f"{t}_pred" for t in tissue_cols]], errors="coerce").to_numpy(dtype="float64")
+
+    # Mask finite values
+    mask = np.isfinite(y_true) & np.isfinite(y_psi)
+
+    # Apply exon-type specific filters
+    if exon_type.lower() == "HIGH":
+        mask &= (y_psi <= 0.6)
+    elif exon_type.lower() == "LOW":
+        mask &= (y_psi >= 0.4)
+
+    # Return filtered vectors
+    return y_true[mask].astype(int), y_psi[mask]
+
+
+
+
 def pull_vectors_from_row(
     row: pd.Series,
     tissue_cols: List[str]
