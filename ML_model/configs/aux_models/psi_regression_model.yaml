@@ -12,7 +12,7 @@ weights_exon: "exprmnt_2025_10_20__01_00_54"
 # 5p_weights: "exprmnt_2025_06_08__20_39_37"
 # 3p_weights: "exprmnt_2025_06_08__20_38_28"
 # # 5p_weights: "exprmnt_2025_05_04__11_29_05"
-mtsplice_weights: "exprmnt_2025_07_30__13_10_26"
+mtsplice_weights: "exprmnt_2025_10_26__14_29_04"
 mtsplice_BCE: 1 # if instead of regression, you would like the auxiliary model to predict the PSI value using BCE loss like mtsplice make the val 1 or 0
 hidden_dim: 512
 output_dim: 1  # Single output for PSI value prediction
