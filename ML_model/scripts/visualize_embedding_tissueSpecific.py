@@ -538,8 +538,8 @@ def main():
 
     print(f"✅ Extracted unique exon IDs per tissue for both high/low sets")
 
-    # data = np.load(f"{root_path}/data/extra/all_ASCOT_Variable_exon_embeddings__2025_11_07__22_56_27.npz", allow_pickle=True) # "exprmnt_2025_10_26__14_29_04"
-    data = np.load(f"{root_path}/data/extra/all_ASCOT_Variable_exon_embeddings_2025_11_08__00_41_13.npz", allow_pickle=True) # "exprmnt_2025_10_25__15_31_32"
+    data = np.load(f"{root_path}/data/extra/all_ASCOT_Variable_exon_embeddings__2025_11_07__22_56_27.npz", allow_pickle=True) # "exprmnt_2025_10_26__14_29_04"
+    # data = np.load(f"{root_path}/data/extra/all_ASCOT_Variable_exon_embeddings_2025_11_08__00_41_13.npz", allow_pickle=True) # "exprmnt_2025_10_25__15_31_32"
     embeddings = data["embeddings"]     # shape (N, D)
     exon_ids   = data["exon_ids"]       # shape (N,)
     embeddings_dict = {eid: emb for eid, emb in zip(exon_ids, embeddings)}
