@@ -49,6 +49,7 @@ import numpy as np
 
 merged_df = pd.read_csv("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/species_exon_counts.csv")
 
+# Sort into subsets for color coding
 subsets = [
     ("Primates", 0, 11),
     ("Euarchontoglires", 12, 25),
@@ -64,9 +65,39 @@ merged_df["subset_name"] = None
 for (subset_name, start, end) in subsets:
     merged_df.loc[start:end, "subset_name"] = subset_name
 
+# Define a set order for each label (for plotting)
+merged_df["subset_name"] = pd.Categorical(merged_df["subset_name"], categories=merged_df["subset_name"].unique(), ordered=True)
+merged_df["common_name"] = pd.Categorical(merged_df["common_name"], categories=merged_df["common_name"], ordered=True)
+
+# Remove species with no exons
 filtered_df = merged_df.dropna(subset=["count"]).copy()
 
+p = (
+    ggplot(filtered_df, aes(x="common_name", y="count", fill="subset_name"))
+    + geom_col()
+    + labs(
+        title="Number of Exons Per Species",
+        x="Species",
+        y="Exon Counts",
+        fill="Multiz Subsets"
+    )
+    + scale_fill_brewer(type="qual", palette="Dark2")
+    + theme_bw()
+    + theme(
+        figure_size=(18,9),
+        plot_title=element_text(size=16),
+        axis_text_x=element_text(rotation=90, hjust=1, size=12),
+        axis_text_y=element_text(size=12),
+        axis_title_x=element_text(size=14),
+        axis_title_y=element_text(size=14),
+        legend_background=element_rect(color="black", fill="white", size=0.5),
+        legend_position=(0.99, 0.89),
+        legend_justification="right",
+        legend_title=element_text(size=14),
+        legend_text=element_text(size=12)
+    )
+)
+
 # Save figure
-plt.tight_layout()
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts.pdf", dpi=300)
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts.png", dpi=300)
+p.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts.pdf", dpi=300)
+p.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts.png", dpi=300)
