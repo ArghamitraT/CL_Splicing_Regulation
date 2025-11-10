@@ -1,28 +1,53 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
-import seaborn as sns
+import pickle
+from plotnine import *
 import numpy as np
 
-df_known = pd.read_csv("/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/knownGene.multiz100way.exonNuc_exon_intron_positions.csv")
-names_df = pd.read_csv("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/species_name_codes.csv")
+# names_df = pd.read_csv("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/species_name_codes.csv")
 
+# # seqs_used_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data"
 
-exon_counts_df = df_known.groupby("Species Name").size().reset_index(name="count")
+# # # Load data
+# # with open(f"{seqs_used_path}/test_merged_filtered_min30Views.pkl", "rb") as f:
+# #     test_dict = pickle.load(f)
+# # with open(f"{seqs_used_path}/train_merged_filtered_min30Views.pkl", "rb") as f:
+# #     train_dict = pickle.load(f)
+# # with open(f"{seqs_used_path}/val_merged_filtered_min30Views.pkl", "rb") as f:
+# #     val_dict = pickle.load(f)
 
-merged_df = names_df.merge(
-    exon_counts_df,
-    left_on="ucsc_code",
-    right_on="Species Name",
-    how="left"
-)
-merged_df = merged_df.drop("Species Name", axis=1)
+# # rows = []
+# # for split, dictionary in {
+# #     "test": test_dict,
+# #     "train": train_dict,
+# #     "val": val_dict
+# # }.items():
+# #     for exon_id, species_dict in dictionary.items():
+# #         for species in species_dict.keys():
+# #             rows.append({
+# #                 "split": split,
+# #                 "transcript_id": exon_id,
+# #                 "species": species
+# #             })
 
-# Add numbering to dataframe for grap
-merged_df = merged_df.reset_index().rename(columns={"index":"num"})
-merged_df["num"] = merged_df["num"] + 1
+# # used_species = pd.DataFrame(rows)
+# # exon_counts_df = used_species.groupby("species").size().reset_index(name="count")
+# # print(exon_counts_df)
 
-merged_df.to_csv("/gpfs/commons/home/nkeung/Contrastive_Learning/code/figures/species_exon_counts.csv", index=False)
+# merged_df = names_df.merge(
+#     exon_counts_df,
+#     left_on="ucsc_code",
+#     right_on="species",
+#     how="left"
+# )
+# merged_df = merged_df.drop("species", axis=1)
+
+# # Add numbering to dataframe
+# merged_df = merged_df.reset_index().rename(columns={"index":"num"})
+# merged_df["num"] = merged_df["num"] + 1
+
+# merged_df.to_csv("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/species_exon_counts.csv", index=False)
+
+merged_df = pd.read_csv("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/species_exon_counts.csv")
 
 subsets = [
     ("Primates", 0, 11),
@@ -34,39 +59,12 @@ subsets = [
     ("Sarcopterygii", 76, 83),
     ("Fish", 84, 99)
 ]
-palette = sns.color_palette("tab20", n_colors=len(subsets))
-colors = np.empty(len(merged_df), dtype=object)
-for i, (clade, start, end) in enumerate(subsets):
-    colors[start:end+1] = [palette[i]] * (end - start + 1)
 
-merged_df["color"] = colors
+merged_df["subset_name"] = None
+for (subset_name, start, end) in subsets:
+    merged_df.loc[start:end, "subset_name"] = subset_name
 
-
-plt.figure(figsize=(12, 30))
-
-# Horizontal bar plot
-plt.barh(
-    y=merged_df["common_name"][::-1],  # species on y-axis
-    width=merged_df["count"][::-1],    # exon counts
-    color=merged_df["color"][::-1]     # precomputed clade color
-)
-plt.ylim(-0.5, len(merged_df) - 0.5)
-plt.xlabel("Exon Counts")
-plt.ylabel("Species")
-plt.title("Number of Exons per Species")
-
-# Legend for clades
-legend_elements = [
-    Patch(facecolor=color, label=clade_name)
-    for (clade_name, _, _), color in zip(subsets, palette)
-]
-plt.legend(
-    handles=legend_elements,
-    title="Multiz Subsets",
-    loc='upper left',
-    bbox_to_anchor=(1.02, 1),
-    borderaxespad=0
-)
+filtered_df = merged_df.dropna(subset=["count"]).copy()
 
 # Save figure
 plt.tight_layout()
