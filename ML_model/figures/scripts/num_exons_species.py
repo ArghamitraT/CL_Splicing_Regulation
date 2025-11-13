@@ -55,7 +55,7 @@ subsets = [
     ("Euarchontoglires", 12, 25),
     ("Laurasiatheria", 26, 50),
     ("Afrotheria", 51, 56),
-    ("Mammal", 57, 61),
+    ("Other Mammals", 57, 61),
     ("Aves", 62, 75),
     ("Sarcopterygii", 76, 83),
     ("Fish", 84, 99)
@@ -72,32 +72,110 @@ merged_df["common_name"] = pd.Categorical(merged_df["common_name"], categories=m
 # Remove species with no exons
 filtered_df = merged_df.dropna(subset=["count"]).copy()
 
-p = (
-    ggplot(filtered_df, aes(x="common_name", y="count", fill="subset_name"))
+# p = (
+#     ggplot(filtered_df, aes(x="common_name", y="count", fill="subset_name"))
+#     + geom_col()
+#     + labs(
+#         title="Number of Exons Per Species",
+#         x="Species",
+#         y="Exon Counts",
+#         fill="Multiz Subsets"
+#     )
+#     + scale_fill_brewer(type="qual", palette="Dark2")
+#     + theme_bw()
+#     + theme(
+#         figure_size=(18,9),
+#             legend_position=(0.99, 1.09),
+#             legend_justification=(1, 1),
+#                 legend_background=element_blank(),
+#                 legend_title=element_blank(),
+#                 legend_text=element_text(size=15),
+#         axis_text_x=element_text(rotation=90, hjust=1, size=15, ha="center", va="top", color="#222222"),
+#         axis_text_y=element_text(size=15, color="#222222"),
+#         axis_title_x=element_text(margin={'t': 8}, size=18, weight="bold"),
+#         axis_title_y=element_text(size=20, weight="bold"),
+#         plot_title=element_text(size=15, weight="bold", ha="center"),
+#         panel_border=element_blank(),
+#         panel_grid_major_y=element_text(color="#dddddd"),
+#         panel_grid_minor_y=element_blank(),
+#         panel_grid_major_x=element_blank(),
+#         panel_grid_minor_x=element_blank(),
+#         axis_line_x=element_text(color="black"),
+#         axis_line_y=element_text(color="black"),
+#     )
+# )
+
+# # Save figure
+# p.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts_long.svg")
+
+# # Plot with horizontal bars
+# p_horizontal = (
+#     ggplot(filtered_df, aes(x="common_name", y="count", fill="subset_name"))
+#     + geom_col()
+#     + coord_flip()
+#     + labs(
+#         title="Number of Exons Per Species",
+#         x="Exon Counts",
+#         y="Species",
+#         fill="Multiz Subsets"
+#     )
+#     + scale_fill_brewer(type="qual", palette="Dark2")
+#     + theme_bw()
+#     + theme(
+#         figure_size=(9,18),
+#             legend_position=(1.09, 0.99),
+#             legend_justification=(1, 1),
+#                 legend_background=element_blank(),
+#                 legend_title=element_blank(),
+#                 legend_text=element_text(size=15),
+#         axis_text_x=element_text(size=15, ha="center", va="top", color="#222222"),
+#         axis_text_y=element_text(size=15, color="#222222"),
+#         axis_title_x=element_text(margin={'t': 8}, size=18, weight="bold"),
+#         axis_title_y=element_text(size=20, weight="bold"),
+#         plot_title=element_text(size=15, weight="bold", ha="center"),
+#         panel_border=element_blank(),
+#         panel_grid_major_y=element_text(color="#dddddd"),
+#         panel_grid_minor_y=element_blank(),
+#         panel_grid_major_x=element_blank(),
+#         panel_grid_minor_x=element_blank(),
+#         axis_line_x=element_text(color="black"),
+#         axis_line_y=element_text(color="black"),
+#     )
+# )
+# p_horizontal.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts_tall.svg")
+
+
+# Save summary figure of just counts among subsets
+subset_df = filtered_df.groupby("subset_name", as_index=False)["count"].sum()
+
+p_subset = (
+    ggplot(subset_df, aes(x="subset_name", y="count", fill="subset_name"))
     + geom_col()
     + labs(
-        title="Number of Exons Per Species",
-        x="Species",
+        title="Number of Exons Per Species Subset",
+        x="Multiz Subset",
         y="Exon Counts",
         fill="Multiz Subsets"
     )
     + scale_fill_brewer(type="qual", palette="Dark2")
     + theme_bw()
     + theme(
-        figure_size=(18,9),
-        plot_title=element_text(size=16),
-        axis_text_x=element_text(rotation=90, hjust=1, size=12),
-        axis_text_y=element_text(size=12),
-        axis_title_x=element_text(size=14),
-        axis_title_y=element_text(size=14),
-        legend_background=element_rect(color="black", fill="white", size=0.5),
-        legend_position=(0.99, 0.89),
-        legend_justification="right",
-        legend_title=element_text(size=14),
-        legend_text=element_text(size=12)
+        figure_size=(6,9),
+        legend_position="none",
+        axis_text_x=element_text(rotation=90, hjust=1, size=15, ha="center", va="top", color="#222222"),
+        axis_text_y=element_text(size=15, color="#222222"),
+        axis_title_x=element_text(margin={'t': 8}, size=18, weight="bold"),
+        axis_title_y=element_text(size=20, weight="bold"),
+        plot_title=element_text(size=15, weight="bold", ha="center"),
+        panel_border=element_blank(),
+        panel_grid_major_y=element_text(color="#dddddd"),
+        panel_grid_minor_y=element_blank(),
+        panel_grid_major_x=element_blank(),
+        panel_grid_minor_x=element_blank(),
+        axis_line_x=element_text(color="black"),
+        axis_line_y=element_text(color="black"),
     )
 )
 
-# Save figure
-p.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts.pdf", dpi=300)
-p.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts.png", dpi=300)
+p_subset.save("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/multiz_exon_counts_subset.svg")
+
