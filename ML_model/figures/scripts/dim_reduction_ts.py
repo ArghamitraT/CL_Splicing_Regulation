@@ -18,6 +18,13 @@ cell_types = ts_df.columns[12:-3].tolist()
 
 psi_vals = ts_df[cell_types].apply(pd.to_numeric, errors="coerce")
 
+orig_len = len(psi_vals)
+# Filter out exons with only one cell type
+psi_vals = psi_vals.dropna(thresh=1, axis=0)
+new_len = len(psi_vals)
+print(f"Kept {new_len} exons out of {orig_len}")
+print(psi_vals)
+
 # !!! Filling missing values with PSI = 0. Change if needed!!!
 # psi_vals = psi_vals.fillna(0)
 
@@ -65,7 +72,8 @@ plt.legend(
     ncol=4
 )
 plt.tight_layout()
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/pca_ts_DRAFT.png", dpi=300)
+# plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/pca_ts_DRAFT.png", dpi=300)
+plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/pca_ts_FILTERED_DRAFT.png", dpi=300)
 
 
 # ========== t-SNE ==========
@@ -101,7 +109,8 @@ plt.legend(
     ncol=4
 )
 plt.tight_layout()
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/tsne_ts_DRAFT.png", dpi=300)
+# plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/tsne_ts_DRAFT.png", dpi=300)
+plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/tsne_ts_FILTERED_DRAFT.png", dpi=300)
 
 
 # ========== UMAP ==========
@@ -142,5 +151,6 @@ plt.legend(
     ncol=4
 )
 plt.tight_layout()
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/umap_ts_DRAFT.png", dpi=300)
+# plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/umap_ts_DRAFT.png", dpi=300)
+plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/umap_ts_FILTERED_DRAFT.png", dpi=300)
 
