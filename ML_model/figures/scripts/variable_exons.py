@@ -100,5 +100,5 @@ g2 = sns.clustermap(
 )
 g2.ax_heatmap.set_xlabel("Exons", fontsize=18)
 g2.cax.set_title("PSI", fontsize=18)
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/psi_heat_map.svg")
+plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/psi_heat_map.png")
 
