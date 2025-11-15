@@ -1,0 +1,39 @@
+exp_name: finetune_${now:%Y_%m_%d_%H_%M_%S}
+output_dir: ${oc.env:CONTRASTIVE_ROOT}/output/${exp_name}
+
+defaults:
+  - _self_
+  - embedder: mtsplice
+  - dataset: psi_dataset  
+  - task: psi_regression_task
+  - trainer: default_trainer
+  - callbacks: default_callbacks
+  - tokenizer: onehot_tokenizer
+  - loss: MTSpliceBCELoss 
+  - model: simclr
+  - aux_models: psi_regression_model 
+  - optimizer: adam
+
+
+hydra:
+  run:
+    dir: ${output_dir}/hydra
+
+  job:
+    chdir: false
+
+wandb:
+  api_key: "NEEDED"
+  dir: ${output_dir}/wandb
+  
+logger:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  name: PSI_${embedder._name_}-${dataset.seq_len}
+  id: ${task._name_}-${.name}
+  project: PSI_REGRESSION
+  group: ${task._name_}
+  notes: ""
+  save_dir: ${wandb.dir}  
+  log_model: false
+  settings:
+    init_timeout: 600

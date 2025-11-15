@@ -1,0 +1,12 @@
+name_or_path: psi_regression
+mode: "mtsplice"  
+mtsplice_weights: "pretrain_2025_11_14_23_12_22"
+mtsplice_BCE: 1 
+hidden_dim: 512
+output_dim: 1 
+freeze_encoder: False  # Set to false for fine-tuning
+warm_start: True
+train_mode: "train" # or eval
+eval_weights: "finetune_2025_11_14_23_46_21"
+dropout: 0.5
+He_Normalinitial: False

@@ -1,0 +1,3 @@
+_target_: src.loss.MTSpliceBCELoss.MTSpliceBCELoss
+csv_dir: ${oc.env:CONTRASTIVE_ROOT}/data/finetune_sample_data/
+

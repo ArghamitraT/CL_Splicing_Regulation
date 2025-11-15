@@ -1,0 +1,13 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=2
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=false
+- aux_models.warm_start=true
+- aux_models.dropout=0.8
+- aux_models.mtsplice_weights=pretrain_2025_11_14_23_12_22
+- aux_models.train_mode=train
+- aux_models.eval_weights=finetune_2025_11_14_23_38_59
+- dataset.fivep_ovrhang=300
+- dataset.threep_ovrhang=300
+- logger.name=Psi__trial__20251114_234553
+- logger.notes=trial

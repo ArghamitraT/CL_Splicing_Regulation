@@ -1,0 +1,13 @@
+- task=introns_cl
+- embedder=mtsplice
+- loss=supcon
+- tokenizer=onehot_tokenizer
+- task.global_batch_size=2048
+- trainer.max_epochs=1
+- optimizer=adam
+- logger.name=cl_trial_20251114_231155
+- logger.notes=try
+- dataset.n_augmentations=2
+- dataset.train_data_file=/mnt/home/at3836/Contrastive_Learning/RECOMB_26/CLADES/data/pretrain_sample_data/train_merged_filtered_min30Views.pkl
+- dataset.val_data_file=/mnt/home/at3836/Contrastive_Learning/RECOMB_26/CLADES/data/pretrain_sample_data/val_merged_filtered_min30Views.pkl
+- dataset.test_data_file=/mnt/home/at3836/Contrastive_Learning/RECOMB_26/CLADES/data/pretrain_sample_data/test_merged_filtered_min30Views.pkl
