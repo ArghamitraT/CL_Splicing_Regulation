@@ -45,6 +45,20 @@ bash pretrain_CLADES.sh
 cd scripts
 python pretrain_CLADES.py
 ```
+The following Hydra overrides are commonly adjusted during CLADES contrastive pretraining:
+
+- **task=introns_cl** — activates CLADES contrastive learning pipeline  
+- **embedder="mtsplice"** — MTSplice-style dual-branch encoder  
+- **tokenizer="onehot_tokenizer"** — one-hot intron boundary tokenization  
+- **loss="supcon"** — supervised contrastive loss  
+- **dataset.n_augmentations** — number of positive species views (default = 2)  
+- **trainer.max_epochs** — total pretraining epochs  
+- **task.global_batch_size** — global batch size across GPUs  
+- **optimizer.lr** — contrastive learning learning rate  
+- **dataset.min_views** — required number of species views per exon (default ≥ 30)  
+- **dataset.fivep_ovrhang**, **dataset.threep_ovrhang** — intron window sizes  
+
+For full details, see: `scripts/pretrain_CLADES.sh`
 
 
 ### 4. Fine-tuning
@@ -60,6 +74,23 @@ bash finetune_CLADES.sh
 cd scripts
 python finetune_CLADES.py
 ```
+
+Important configurable parameters:
+
+- **aux_models.mtsplice_weights** — path to pretrained CLADES encoder
+- **aux_models.eval_weights** — checkpoint for evaluation-only mode
+- **aux_models.freeze_encoder** — freeze encoder (true) or fine-tune (false)
+- **aux_models.warm_start** — initialize from pretrained encoder
+- **optimizer.lr** — learning rate
+- **trainer.max_epochs** — number of epochs
+- **dataset.fivep_ovrhang, dataset.threep_ovrhang** — intron window sizes
+
+For full details, see: `scripts/finetune_CLADES.sh`
+
+### 📂 Sample data
+
+`data/` folder contains sample data for pre-training and finetuning
+
 
 ### 📂 Output Organization
 
@@ -83,22 +114,55 @@ output/<run_name>/
 ### 🗂️ Configuration Layout
 ```bash
 configs/
- ├── aux_models/
- ├── callbacks/
- ├── dataset/
- ├── embedder/
- ├── loss/
- ├── model/
- ├── optimizer/
- ├── task/
- ├── tokenizer/
- ├── trainer/
- ├── pretrain_CLADES.yaml
- └── finetune_CLADES.yaml
+ ├── aux_models/       # Pretrained model weights, MTSplice settings, eval model paths
+ ├── callbacks/        # Lightning callbacks (checkpointing, early stopping, LR schedulers)
+ ├── dataset/          # Dataset parameters (paths, window sizes, species settings)
+ ├── embedder/         # Encoder architecture configs (MTSplice, ResNet, TISFM, etc.)
+ ├── loss/             # Loss function configs (SupCon, NT-Xent, BCE, KL)
+ ├── model/            # Full model assembly (encoder + projection head)
+ ├── optimizer/        # Optimizer and scheduler settings
+ ├── task/             # Task definitions (contrastive training, PSI regression)
+ ├── tokenizer/        # Sequence tokenization settings (one-hot, k-mer, etc.)
+ ├── trainer/          # Lightning Trainer config (devices, precision, epochs)
+ ├── pretrain_CLADES.yaml    # Main config for contrastive pretraining
+ └── finetune_CLADES.yaml    # Main config for PSI regression fine-tuning
+
 
 scripts/
- ├── pretrain_CLADES.sh
- ├── finetune_CLADES.sh
- ├── pretrain_CLADES.py
- └── finetune_CLADES.py
+ ├── pretrain_CLADES.sh   # SLURM/bash wrapper for contrastive pretraining
+ ├── finetune_CLADES.sh   # SLURM/bash wrapper for PSI regression fine-tuning
+ ├── pretrain_CLADES.py   # Python entry point for contrastive pretraining
+ └── finetune_CLADES.py   # Python entry point for PSI regression fine-tuning
+
+ src/
+ ├── datasets/          # Dataset classes for contrastive pretraining & PSI regression
+ │    ├── base.py               # Abstract dataset + shared utilities
+ │    ├── introns_alignment.py  # Loads cross-species intron alignment data
+ │    ├── auxiliary_jobs.py     # Helper preprocessing utilities
+ │    └── lit.py                # LightningDataModule
+ │
+ ├── embedder/          # Encoders (MTSplice, ResNet-style, TISFM, etc.)
+ │    ├── base.py
+ │    ├── utils.py
+ │    └── mtsplice/
+ │
+ ├── loss/              # Loss functions (contrastive + regression)
+ │    ├── MTSPLiceBCELoss.py
+ │    └── supcon.py
+ │
+ ├── model/             # LightningModule model definitions
+ │    ├── lit.py
+ │    ├── simclr.py
+ │    └── MTSpliceBCE.py
+ │
+ ├── tokenizers/        # Sequence tokenizers
+ │    └── onehot_tokenizer.py
+ │
+ ├── trainer/           # Trainer-level utilities
+ │    └── utils.py
+ │
+ └── utils/             # Global project utilities
+      ├── config.py
+      └── utils.py
+
 ```
