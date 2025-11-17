@@ -36,10 +36,25 @@ summary_df = pd.DataFrame(summary)
 summary_df = summary_df.sort_values("N_total", ascending=True)
 
 # === Step 4: Divide tissues into 3 classes (Low / Medium / High) ===
-q1, q2 = summary_df["N_total"].quantile([1/3, 2/3])
-bins = [summary_df["N_total"].min()-1, q1, q2, summary_df["N_total"].max()+1]
-labels = ["Low sample", "Medium sample", "High sample"]
-summary_df["SampleClass"] = pd.cut(summary_df["N_total"], bins=bins, labels=labels)
+# q1, q2 = summary_df["N_total"].quantile([1/3, 2/3])
+# bins = [summary_df["N_total"].min()-1, q1, q2, summary_df["N_total"].max()+1]
+# labels = ["Low sample", "Medium sample", "High sample"]
+# summary_df["SampleClass"] = pd.cut(summary_df["N_total"], bins=bins, labels=labels)
+
+
+# === Step 4: Divide tissues by mean ± std ===
+mean_val = summary_df["N_total"].mean()
+std_val = summary_df["N_total"].std()
+
+# Default: "Medium sample"
+summary_df["SampleClass"] = "Medium sample"
+
+# Below (mean - std): Low
+summary_df.loc[summary_df["N_total"] <= (mean_val - std_val), "SampleClass"] = "Low sample"
+
+# Above (mean + std): High
+summary_df.loc[summary_df["N_total"] >= (mean_val + std_val), "SampleClass"] = "High sample"
+
 
 # === Step 5: Summarize each class ===
 class_summary = (

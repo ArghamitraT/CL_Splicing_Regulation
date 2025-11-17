@@ -18,7 +18,6 @@ print(f"CONTRASTIVE_ROOT set to: {root_path}")
 
 # === Config ===
 division = 'variable'
-MARGIN = 0.10  # your ±0.1 window around mean_psi (in PSI units, not %)
 
 # === I/O ===
 path     = f"{root_path}/data/ASCOT/{division}_cassette_exons_with_binary_labels_ExonBinPsi.csv"

@@ -41,43 +41,51 @@ def summarize_by_sample_size(sota_csv, pred_csv, out_path):
     df_pred["Type"] = "Prediction"
     df = pd.concat([df_sota, df_pred], ignore_index=True)
 
-    # --- Sort by sample size ---
-    df = df.sort_values("n")
 
-    # --- Compute quantile-based bins ---
-    q1, q2 = df["n"].quantile([1/3, 2/3])
-    bins = [df["n"].min()-1, q1, q2, df["n"].max()+1]
-    labels = ["Low (few samples)", "Medium", "High (many samples)"]
-    df["SampleGroup"] = pd.cut(df["n"], bins=bins, labels=labels)
+    # Path to your CSV file (adjust if needed)
+    class_csv = f"/gpfs/commons/home/atalukder/Contrastive_Learning/data/TS_data/tabula_sapiens/final_data/tissue_counts_detailed_ExonBinPsi.csv"
 
-    # --- Aggregate by sample group ---
-    summary = (
-        df.groupby(["Type", "SampleGroup"])[metric_cols + ["n"]]
-          .agg(["mean", "count"])
+    # Load the tissue class mapping
+    class_df = pd.read_csv(class_csv)[["Tissue", "SampleClass"]]
+    class_df.rename(columns={"Tissue": "tissue"}, inplace=True)
+
+    # Merge with your main df (assuming both share a "tissue" column)
+    df = df.merge(class_df, on="tissue", how="left")
+
+    # === Step 5: Summarize each class ===
+    # --- Compute groupwise mean/std for each metric by SampleClass and Type ---
+    class_summary = (
+        df.groupby(["SampleClass", "Type"])[metric_cols]
+        .agg(["mean", "std"])
+        .reset_index()
     )
 
-    # --- Compute sample range per group ---
-    ranges = (
-        df.groupby("SampleGroup")["n"]
-          .agg(["min", "max"])
-          .rename(columns={"min": "Sample_Min", "max": "Sample_Max"})
-    )
+    # --- Step 6: Display results ---
+    print("\n📊 Example tissue-level rows:")
+    print(df.head(10).to_string(index=False))
+
+    print("\n📈 Summary of metrics by sample-size class and model type:")
+    print(class_summary.to_string(index=False))
+    # === Optional: save results ===
+    # summary_df.to_csv(f"{root_path}/sample_size_summary_TS_{mode}.csv", index=False)
+    class_summary.to_csv(f"{root_path}/sample_size_ranges_TS_{mode}.csv", index=False)
+
 
     # --- Save results ---
-    summary_path = os.path.join(out_path, f"sample_size_summary_{mode}.csv")
-    range_path = os.path.join(out_path, f"sample_size_ranges_{mode}.csv")
+    # summary_path = os.path.join(out_path, f"sample_size_summary_TS_{mode}.csv")
+    # range_path = os.path.join(out_path, f"sample_size_ranges_TS_{mode}.csv")
 
-    summary.to_csv(summary_path)
-    ranges.to_csv(range_path)
+    # summary.to_csv(summary_path)
+    # ranges.to_csv(range_path)
 
-    print(f"✅ Saved summary → {summary_path}")
-    print(f"✅ Saved sample ranges → {range_path}")
+    # print(f"✅ Saved summary → {summary_path}")
+    # print(f"✅ Saved sample ranges → {range_path}")
 
     # --- Print quick view ---
-    print("\n📈 Average metrics by sample-size group:")
-    print(summary)
-    print("\n📊 Sample ranges per group:")
-    print(ranges)
+    # print("\n📈 Average metrics by sample-size group:")
+    # print(summary)
+    # print("\n📊 Sample ranges per group:")
+    # print(ranges)
 
 
 # Example usage
@@ -86,12 +94,12 @@ if __name__ == "__main__":
     root_path = "/gpfs/commons/home/atalukder/Contrastive_Learning/files/RECOMB_26/classification/"
     out_path = root_path
 
-    # pred_csv = f"{root_path}TS_CLSwpd_300bp_10Aug_tissue_metrics_triclass_20251106-213156.csv"
-    # sota_csv = f"{root_path}TS_noCL_300bp_rerun_codeChange_tissue_metrics_triclass_20251106-213156.csv"
+    pred_csv = f"{root_path}TS_CLSwpd_300bp_10Aug_tissue_metrics_triclass_20251106-213156.csv"
+    sota_csv = f"{root_path}TS_noCL_300bp_rerun_codeChange_tissue_metrics_triclass_20251106-213156.csv"
 
 
-    pred_csv = f"{root_path}TS_CLSwpd_300bp_10Aug_tissue_metrics_logitdelta_binary_20251106-213156.csv"
-    sota_csv = f"{root_path}TS_noCL_300bp_rerun_codeChange_tissue_metrics_logitdelta_binary_20251106-213156.csv"
+    # pred_csv = f"{root_path}TS_CLSwpd_300bp_10Aug_tissue_metrics_logitdelta_binary_20251106-213156.csv"
+    # sota_csv = f"{root_path}TS_noCL_300bp_rerun_codeChange_tissue_metrics_logitdelta_binary_20251106-213156.csv"
 
 
     summarize_by_sample_size(sota_csv, pred_csv, out_path)
