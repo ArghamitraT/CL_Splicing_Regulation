@@ -88,32 +88,32 @@ df["Row_label"] = df["Row_label"].str.title()
 with open("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/celltype_row_order.tex", "w") as f:
     f.write(df.to_latex(index=False, longtable=True, caption="Cluster ordering for cell type correlation and PSI heat map."))
 
-# # Plot PSI heat map for filtered exons
-# subset_exons = var_psi
-# plot_df = subset_exons.T
-# # Fill NaNs for clustering only
-# plot_df_filled = plot_df.apply(lambda x: x.fillna(x.mean()), axis=1)
+# Plot PSI heat map for filtered exons
+subset_exons = var_psi
+plot_df = subset_exons.T
+# Fill NaNs for clustering only
+plot_df_filled = plot_df.apply(lambda x: x.fillna(x.mean()), axis=1)
 
-# # Cluster columns
-# col_linkage = linkage(plot_df_filled.T, method="ward")
+# Cluster columns
+col_linkage = linkage(plot_df_filled.T, method="ward")
 
 
-# cmap = sns.color_palette("RdBu_r", as_cmap=True)
-# cmap.set_bad(color='lightgray')
+cmap = sns.color_palette("RdBu_r", as_cmap=True)
+cmap.set_bad(color='lightgray')
 
-# g2 = sns.clustermap(
-#     plot_df,
-#     row_linkage=cell_linkage,
-#     col_linkage=col_linkage,
-#     cmap=cmap,
-#     vmin=0, vmax=100,
-#     figsize=(30, 30),
-#     xticklabels=False,
-#     yticklabels=False
-# )
-# pos2 = g2.cax.get_position()
-# g2.cax.set_position([pos2.x0 + 0.03, pos2.y0 - 0.03, pos2.width, pos2.height])
-# g2.cax.set_title("PSI (%)", fontsize=28, pad=20)
-# g2.cax.tick_params(labelsize=24)
-# plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/psi_heat_map.png", dpi=400)
+g2 = sns.clustermap(
+    plot_df,
+    row_linkage=cell_linkage,
+    col_linkage=col_linkage,
+    cmap=cmap,
+    vmin=0, vmax=100,
+    figsize=(30, 30),
+    xticklabels=False,
+    yticklabels=False
+)
+pos2 = g2.cax.get_position()
+g2.cax.set_position([pos2.x0 + 0.03, pos2.y0 - 0.03, pos2.width, pos2.height])
+g2.cax.set_title("PSI (%)", fontsize=28, pad=20)
+g2.cax.tick_params(labelsize=24)
+plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/psi_heat_map.png", dpi=400)
 
