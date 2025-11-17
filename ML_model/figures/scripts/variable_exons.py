@@ -57,7 +57,7 @@ print(corr.min().min(), corr.max().max())
 # Calculate Ward linkage for cell types
 cell_linkage = linkage(corr.values, method='ward')   # corr: your correlation matrix
 
-# Calculate heat map of tissue similarity/clustering
+# Calculate heat map of cell similarity/clustering
 g = sns.clustermap(
     corr,
     cmap="RdBu_r",
@@ -69,36 +69,51 @@ g = sns.clustermap(
     col_cluster=True,
     row_linkage = cell_linkage,
     col_linkage = cell_linkage,
-    xticklabels=True,
-    yticklabels=True
+    xticklabels=False,
+    yticklabels=False
 )
-g.cax.set_title("Pearson Correlation", fontsize=18)
+pos = g.cax.get_position()
+g.cax.set_position([pos.x0 + 0.03, pos.y0 - 0.03, pos.width, pos.height])
+g.cax.set_title("Pearson Correlation", fontsize=28, pad=20)
+g.cax.tick_params(labelsize=24)
 plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/cell_type_corr.svg")
 
-# Plot PSI heat map for filtered exons
-subset_exons = var_psi
-plot_df = subset_exons.T
-# Fill NaNs for clustering only
-plot_df_filled = plot_df.fillna(50)
+row_order = g.dendrogram_row.reordered_ind
+row_labels = corr.index[row_order]
+df = pd.DataFrame({
+    "Row_order": range(1,len(row_labels)+1),
+    "Row_label": row_labels
+})
+df["Row_label"] = df["Row_label"].str.title()
+with open("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/celltype_row_order.tex", "w") as f:
+    f.write(df.to_latex(index=False, longtable=True, caption="Cluster ordering for cell type correlation and PSI heat map."))
 
-# Cluster columns
-col_linkage = linkage(plot_df_filled.T, method="ward")
+# # Plot PSI heat map for filtered exons
+# subset_exons = var_psi
+# plot_df = subset_exons.T
+# # Fill NaNs for clustering only
+# plot_df_filled = plot_df.apply(lambda x: x.fillna(x.mean()), axis=1)
+
+# # Cluster columns
+# col_linkage = linkage(plot_df_filled.T, method="ward")
 
 
-cmap = sns.color_palette("RdBu_r", as_cmap=True)
-cmap.set_bad(color='lightgray')
+# cmap = sns.color_palette("RdBu_r", as_cmap=True)
+# cmap.set_bad(color='lightgray')
 
-g2 = sns.clustermap(
-    plot_df,
-    row_linkage=cell_linkage,
-    col_linkage=col_linkage,
-    cmap=cmap,
-    vmin=0, vmax=100,
-    figsize=(30, 30),
-    xticklabels=False,
-    yticklabels=True
-)
-g2.ax_heatmap.set_xlabel("Exons", fontsize=18)
-g2.cax.set_title("PSI", fontsize=18)
-plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/psi_heat_map.png")
+# g2 = sns.clustermap(
+#     plot_df,
+#     row_linkage=cell_linkage,
+#     col_linkage=col_linkage,
+#     cmap=cmap,
+#     vmin=0, vmax=100,
+#     figsize=(30, 30),
+#     xticklabels=False,
+#     yticklabels=False
+# )
+# pos2 = g2.cax.get_position()
+# g2.cax.set_position([pos2.x0 + 0.03, pos2.y0 - 0.03, pos2.width, pos2.height])
+# g2.cax.set_title("PSI (%)", fontsize=28, pad=20)
+# g2.cax.tick_params(labelsize=24)
+# plt.savefig("/gpfs/commons/home/nkeung/Contrastive_Learning/code/ML_model/figures/recomb_2026/psi_heat_map.png", dpi=400)
 
