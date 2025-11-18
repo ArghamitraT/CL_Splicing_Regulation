@@ -22,6 +22,13 @@ ts_counts = full_df[all_cells].notna().sum()
 ts_counts_df = ts_counts.reset_index()
 ts_counts_df.columns = ["Cell Type", "Count"]
 
+max_exons = ts_counts_df["Count"].max()
+min_exons = ts_counts_df["Count"].min()
+med_num_exons = ts_counts_df["Count"].median()
+print(f"Max: {max_exons}")
+print(f"Min: {min_exons}")
+print(f"Median: {med_num_exons}")
+
 ts_counts_df = ts_counts_df.sort_values("Count", ascending=False).reset_index(drop=True)
 ts_counts_df["Group"] = "Low"
 ts_counts_df.loc[:17, "Group"] = "High"
