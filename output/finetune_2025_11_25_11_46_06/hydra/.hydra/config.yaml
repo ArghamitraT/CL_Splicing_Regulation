@@ -1,0 +1,105 @@
+exp_name: finetune_${now:%Y_%m_%d_%H_%M_%S}
+output_dir: ${oc.env:CONTRASTIVE_ROOT}/output/${exp_name}
+wandb:
+  api_key: 74039ca49d997b68513cb2800f4397b9128a7b54
+  dir: ${output_dir}/wandb
+logger:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  name: PSI_${embedder._name_}-${dataset.seq_len}
+  id: ${task._name_}-${.name}
+  project: PSI_REGRESSION
+  group: ${task._name_}
+  notes: ''
+  save_dir: ${wandb.dir}
+  log_model: false
+  settings:
+    init_timeout: 600
+embedder:
+  _name_: MTSplice
+  name_or_path: MTSplice
+  seq_len: 400
+  maxpooling: true
+  stride: 1
+  pad_motif: 4
+  num_of_response: 1
+dataset:
+  seq_len: 400
+  train_files:
+    intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/finetune_sample_data/psi_train_Retina___Eye_psi_MERGED.pkl
+  val_files:
+    intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/finetune_sample_data/psi_val_Retina___Eye_psi_MERGED.pkl
+  test_files:
+    intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/finetune_sample_data/psi_test_Retina___Eye_psi_MERGED.pkl
+  batch_size_per_device: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}
+    * ${trainer.num_nodes}}}
+  num_workers: 0
+  cache_dir: ../data
+  fivep_ovrhang: 300
+  threep_ovrhang: 300
+  ascot: true
+task:
+  _name_: psi_regression
+  metrics:
+  - r2_score
+  val_check_interval: 0.5
+  global_batch_size: 2048
+trainer:
+  _target_: lightning.pytorch.Trainer
+  max_epochs: 15
+  callbacks: null
+  default_root_dir: ${output_dir}
+  devices: 1
+  log_every_n_steps: 1
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  val_check_interval: 1.0
+  gradient_clip_val: 1.0
+  precision: 16-mixed
+  num_sanity_val_steps: 0
+  num_nodes: 1
+  accumulate_grad_batches: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}
+    * ${dataset.batch_size_per_device} * ${trainer.num_nodes}}}
+callbacks:
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    dirpath: ${output_dir}/checkpoints
+    filename: ${task._name_}/${embedder._name_}/${dataset.seq_len}/best-checkpoint
+    save_top_k: 1
+    save_last: true
+    verbose: true
+    monitor: val_loss
+    mode: min
+  learning_rate_monitor:
+    _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+tokenizer:
+  _target_: src.custom_tokenizers.onehot_tokenizer.FastOneHotPreprocessor
+  seq_len: 400
+  padding: right
+loss:
+  _target_: src.loss.MTSpliceBCELoss.MTSpliceBCELoss
+  csv_dir: ${oc.env:CONTRASTIVE_ROOT}/data/finetune_sample_data/
+model:
+  name_or_path: simclr
+  hidden_dim: 512
+  projection_dim: 128
+aux_models:
+  name_or_path: psi_regression
+  mode: mtsplice
+  mtsplice_weights: pretrain_2025_11_25_11_09_36
+  mtsplice_BCE: 1
+  hidden_dim: 512
+  output_dim: 1
+  freeze_encoder: false
+  warm_start: true
+  train_mode: train
+  eval_weights: finetune_2025_11_14_23_46_21
+  dropout: 0.5
+  He_Normalinitial: false
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+  betas:
+  - 0.9
+  - 0.999
+  eps: 1.0e-07

@@ -10,7 +10,7 @@ from .utility import (
 )
 
 class PSIRegressionDataset(Dataset):
-    def __init__(self, data_file, tokenizer, max_length=201, mode="5p", len_5p=300, len_3p=300, ascot=False):
+    def __init__(self, data_file, tokenizer, max_length=201, mode="5p", len_5p=300, len_3p=300, ascot=False, embedder_name=None):
         """
         Dataset for PSI Regression.
 
@@ -18,9 +18,11 @@ class PSIRegressionDataset(Dataset):
             data_file (str): Path to the pickle file containing PSI values and sequences.
             tokenizer_name (str): Name of the tokenizer to use.
             max_length (int): Max sequence length for padding.
+            embedder_name (str): Name of embedder ('MTSplice' or 'DilatedConv1D')
         """
         
         self.tokenizer = tokenizer
+        self.embedder_name = embedder_name
 
         # Load data from pickle file
         with open(data_file, "rb") as f:
@@ -59,7 +61,15 @@ class PSIRegressionDataset(Dataset):
             seql = self._tokenize(windows['acceptor'])  # acceptor
             seqr = self._tokenize(windows['donor'])     # donor
 
-            return (seql, seqr), torch.tensor(psi_value, dtype=torch.float32), exon_id
+            # For DilatedConv1D, concatenate into single input
+            if self.embedder_name == "DilatedConv1D":
+                # Concatenate and tokenize as single sequence
+                combined_seq = windows['acceptor'] + windows['donor']
+                combined = self._tokenize(combined_seq)
+                return combined, torch.tensor(psi_value, dtype=torch.float32), exon_id
+            else:
+                # MTSplice format: return as tuple
+                return (seql, seqr), torch.tensor(psi_value, dtype=torch.float32), exon_id
 
 
         elif self.mode == "intronexon" or self.mode == "intronOnly":
@@ -123,9 +133,33 @@ class PSIRegressionDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         
-        self.train_set = PSIRegressionDataset(self.train_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
-        self.val_set = PSIRegressionDataset(self.val_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
-        self.test_set = PSIRegressionDataset(self.test_files["intronexon"], self.tokenizer, mode=self.mode,len_5p=self.len_5p, len_3p=self.len_3p, ascot=self.ascot)
+        self.train_set = PSIRegressionDataset(
+            self.train_files["intronexon"], 
+            self.tokenizer, 
+            mode=self.mode,
+            len_5p=self.len_5p, 
+            len_3p=self.len_3p, 
+            ascot=self.ascot,
+            embedder_name=self.config.embedder._name_
+        )
+        self.val_set = PSIRegressionDataset(
+            self.val_files["intronexon"], 
+            self.tokenizer, 
+            mode=self.mode,
+            len_5p=self.len_5p, 
+            len_3p=self.len_3p, 
+            ascot=self.ascot,
+            embedder_name=self.config.embedder._name_
+        )
+        self.test_set = PSIRegressionDataset(
+            self.test_files["intronexon"], 
+            self.tokenizer, 
+            mode=self.mode,
+            len_5p=self.len_5p, 
+            len_3p=self.len_3p, 
+            ascot=self.ascot,
+            embedder_name=self.config.embedder._name_
+        )
 
    
     def train_dataloader(self):
@@ -145,3 +179,4 @@ class PSIRegressionDataModule(pl.LightningDataModule):
         )
 
         
+

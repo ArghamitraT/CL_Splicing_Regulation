@@ -241,3 +241,4 @@ def print_config(
 
         with open(configs_dir / "config.json", "w") as fp:
             json.dump(OmegaConf.to_container(config, resolve=True), fp, indent=4)
+

@@ -21,7 +21,7 @@ hydra:
     chdir: false
 
 wandb:
-  api_key: "NEEDED"
+  api_key: "74039ca49d997b68513cb2800f4397b9128a7b54"
   dir: ${output_dir}/wandb
   
 logger:

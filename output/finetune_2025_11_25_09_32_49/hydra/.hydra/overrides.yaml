@@ -1,0 +1,2 @@
+- trainer.max_epochs=20
+- dataset.num_workers=0

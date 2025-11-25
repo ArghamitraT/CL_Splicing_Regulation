@@ -15,7 +15,6 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
         from torch.utils.data import get_worker_info
         import os
         info = get_worker_info()
-        # print(f"👷 Worker ID: {info.id if info else 'MAIN'}, PID: {os.getpid()}")
 
         batch = [item for item in batch if item is not None]
         if len(batch) == 0:
@@ -45,9 +44,15 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
                 # output = (*views, exon_ids)
                 output = (*views, exon_ids, exon_names)
             else:
-                tokenized_views = [tokenizer(view) for view in view_lists]
-                # output = (*tokenized_views, exon_ids)
-                output = (*tokenized_views, exon_ids, exon_names)
+                # For other embedders (DilatedConv1D, etc), concatenate acceptor+donor sequences
+                views = []
+                for exon_view_group in view_lists:  # loop over each view across all exons
+                    # Concatenate acceptor + donor for each sample
+                    sequences = [view['acceptor'] + view['donor'] for view in exon_view_group]
+                    tokenized = tokenizer(sequences)  # tokenizer expects list of strings
+                    views.append(tokenized)
+                
+                output = (*views, exon_ids, exon_names)
         elif callable(tokenizer):  # HuggingFace-style
             tokenized_views = [
                 tokenizer(view, return_tensors='pt', padding=padding_strategy).input_ids
@@ -125,27 +130,33 @@ class ContrastiveIntronsDataModule(pl.LightningDataModule):
     
         
     def train_dataloader(self):
-        return DataLoader(
-            self.train_set, 
-            batch_size=self.batch_size, 
-            shuffle=True, 
-            num_workers=self.num_workers, 
-            collate_fn=self.collate_fn, 
-            pin_memory=True,
-            prefetch_factor=4,
-            persistent_workers=True
-        )
+        # prefetch_factor and persistent_workers only work when num_workers > 0
+        kwargs = {
+            'batch_size': self.batch_size, 
+            'shuffle': True, 
+            'num_workers': self.num_workers, 
+            'collate_fn': self.collate_fn, 
+            'pin_memory': True,
+        }
+        if self.num_workers > 0:
+            kwargs['prefetch_factor'] = 4
+            kwargs['persistent_workers'] = True
+        
+        return DataLoader(self.train_set, **kwargs)
 
     def val_dataloader(self):
-        return DataLoader(
-            self.val_set, 
-            batch_size=self.batch_size, 
-            num_workers=self.num_workers, 
-            collate_fn=self.collate_fn, 
-            pin_memory=True,
-            prefetch_factor=4,
-            persistent_workers=True
-        )
+        # prefetch_factor and persistent_workers only work when num_workers > 0
+        kwargs = {
+            'batch_size': self.batch_size, 
+            'num_workers': self.num_workers, 
+            'collate_fn': self.collate_fn, 
+            'pin_memory': True,
+        }
+        if self.num_workers > 0:
+            kwargs['prefetch_factor'] = 4
+            kwargs['persistent_workers'] = True
+        
+        return DataLoader(self.val_set, **kwargs)
 
     def test_dataloader(self):
         return DataLoader(

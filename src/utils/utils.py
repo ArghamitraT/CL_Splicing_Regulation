@@ -199,3 +199,4 @@ def debug_warning(message="Using fixed species views! REMEMBER TO REVERT!",
 def reset_debug_warning():
     global _warned_debug
     _warned_debug = False
+

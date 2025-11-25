@@ -1,0 +1,30 @@
+# Dilated 1D Convolutional Neural Network Embedder Configuration
+# Based on IsoCLR framework - efficiently captures long-range dependencies
+# with exponentially growing receptive field and minimal parameter growth
+
+_target_: src.embedder.dilated_conv_1d.DilatedConvEmbedder
+_name_: DilatedConv1D
+
+# Input/Output dimensions
+input_dim: 4  # One-hot encoded DNA (A, C, G, T from FastOneHotPreprocessor)
+embedding_dim: 768  # Output embedding dimension
+seq_len: 200  # Sequence length (for compatibility, not used in computation)
+
+# Architecture parameters
+num_layers: 4  # Number of dilated conv blocks
+base_channels: 64  # Number of channels in conv blocks
+kernel_size: 3  # Convolution kernel size
+
+# Dilation strategy:
+# 'exponential': dilations = [1, 2, 4, 8, 16, ...]
+#   → Receptive field grows exponentially, efficient for long sequences
+# 'linear': dilations = [1, 2, 3, 4, 5, ...]
+#   → Smoother receptive field growth, more gradual
+dilation_strategy: exponential
+
+# Regularization
+dropout: 0.1  # Dropout probability (0 to disable)
+
+# Optional max-pooling stages (gradual sequence length reduction)
+use_max_pooling: false  # Set to true for aggressive compression
+pool_kernel_size: 2  # Only used if use_max_pooling: true

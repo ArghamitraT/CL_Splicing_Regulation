@@ -4,6 +4,7 @@ import lightning.pytorch as pl
 import hydra
 from hydra.utils import instantiate
 from src.model.simclr import get_simclr_model
+from src.utils.training_utils import log_epoch_timing, log_gpu_memory_stats, clear_gpu_cache
 import time
 
 class LitModel(pl.LightningModule):
@@ -37,11 +38,9 @@ class LitModel(pl.LightningModule):
 
     def on_train_epoch_end(self):
         """Called at the end of each training epoch to log the time taken."""
-
-        epoch_time = time.time() - self.epoch_start_time
-        self.log("epoch_time", epoch_time, prog_bar=True, sync_dist=True)
-        print(f"\nEpoch {self.current_epoch} took {epoch_time:.2f} seconds.")
-        torch.cuda.empty_cache()
+        log_epoch_timing(self.log, self.current_epoch, self.epoch_start_time)
+        log_gpu_memory_stats(self.log, self.current_epoch)
+        clear_gpu_cache()
 
     
     def setup(self, stage=None):
@@ -75,7 +74,7 @@ class LitModel(pl.LightningModule):
         # Forward pass for all views
         start_fwd = time.time()
       
-        if self.config.embedder.name_or_path == 'MTSplice':
+        if self.config.embedder._name_ == 'MTSplice':
             z_views = [self.forward(seql, seqr) for (seql, seqr) in views]
         else:
             z_views = [self.forward(view) for view in views]
@@ -135,7 +134,7 @@ class LitModel(pl.LightningModule):
 
         # Forward pass for all views
         start_fwd = time.time()
-        if self.config.embedder.name_or_path == 'MTSplice':
+        if self.config.embedder._name_ == 'MTSplice':
             # MTSpliceEncoder expects a tuple of sequences
             z_views = [self.forward(seql, seqr) for (seql, seqr) in views]
         else:
@@ -186,3 +185,4 @@ def create_lit_model(config):
         config=config,
     )
     return lit_model
+

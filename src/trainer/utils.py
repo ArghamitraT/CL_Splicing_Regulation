@@ -46,3 +46,4 @@ def create_trainer(config: OmegaConf):
         trainer = instantiate(config.trainer, callbacks=callbacks, logger=logger)
            
         return trainer
+

@@ -19,8 +19,12 @@ class SimCLRModule(nn.Module):
     
     def forward(self, seql, seqr=None):
         
-        # seql and seqr already have shape: (B, 4, L)
-        embedding = self.encoder(seql.float(), seqr.float())  
+        # For MTSplice: seql and seqr already have shape: (B, 4, L)
+        # For DilatedConv1D: seql has shape (B, 4, L) and seqr is None
+        if seqr is not None:
+            embedding = self.encoder(seql.float(), seqr.float())
+        else:
+            embedding = self.encoder(seql.float())
         z = self.projection_head(embedding)
         return z
     

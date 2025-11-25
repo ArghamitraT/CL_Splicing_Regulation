@@ -37,3 +37,4 @@ class FastOneHotPreprocessor:
         one_hot = torch.nn.functional.one_hot(indices, num_classes=self.pad_id + 1).movedim(-1, 1)
         return one_hot[:, :-1, :]  # drop padding/UNK channel
 
+

@@ -26,13 +26,23 @@ class MTSpliceBCELoss(nn.Module):
         """
         Args:
             delta_logits (Tensor): (B, 56) - model predicts Δlogit(Ψₑₜ)
-            exon_ids (List[str]): length-B list of exon IDs
+            exon_ids (List[str] or Tensor): length-B list of exon IDs
 
         Returns:
             Scalar loss over valid tissue PSI observations
         """
 
         device = delta_logits.device
+
+        # Convert exon_ids to list if it's a tensor
+        if isinstance(exon_ids, torch.Tensor):
+            exon_ids = exon_ids.cpu().tolist()
+        # Handle single string
+        elif isinstance(exon_ids, str):
+            exon_ids = [exon_ids]
+        # Ensure it's a list (not tuple or other sequence)
+        elif not isinstance(exon_ids, list):
+            exon_ids = list(exon_ids)
 
         # Lookup ground-truth values from DataFrame
         df = self._load_df(split)

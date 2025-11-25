@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
+from src.utils.training_utils import log_epoch_timing, log_gpu_memory_stats, clear_gpu_cache
+from src.utils.metrics_utils import compute_spearman_correlation
 
 
 # --------------------------
@@ -264,8 +266,15 @@ class MTSpliceBCE(pl.LightningModule):
     
     def forward(self, x):
         
-        seql, seqr = x
-        features = self.encoder(seql.float(), seqr.float())
+        # Handle both MTSplice (seql, seqr tuple) and DilatedConv1D (single sequence)
+        if isinstance(x, (tuple, list)) and len(x) >= 2:
+            # MTSplice format: (seql, seqr)
+            seql, seqr = x[0], x[1]
+            features = self.encoder(seql.float(), seqr.float())
+        else:
+            # DilatedConv1D format: single sequence
+            features = self.encoder(x.float())
+        
         x = self.fc1(features)
         x = self.bn2(x)
         x = self.dropout(x)
@@ -395,8 +404,8 @@ class MTSpliceBCE(pl.LightningModule):
 
         if self.config.aux_models.mtsplice_BCE:
 
-            # # Predictions
-            y_pred = torch.cat(self.test_preds, dim=0).cpu().numpy()     # shape: [N, M]
+            # # Predictions - convert to float32 to handle bfloat16 from mixed precision training
+            y_pred = torch.cat(self.test_preds, dim=0).float().cpu().numpy()     # shape: [N, M]
             exon_ids = list(self.test_exon_ids)                           # length N
             N, M = y_pred.shape
 
@@ -462,18 +471,9 @@ class MTSpliceBCE(pl.LightningModule):
         self.epoch_start_time = time.time()
 
     def on_train_epoch_end(self):
-        epoch_time = time.time() - self.epoch_start_time
-        gpu_memory = torch.cuda.memory_allocated(0) / 1e9 if torch.cuda.is_available() else 0
-        reserved_memory = torch.cuda.memory_reserved(0) / 1e9 if torch.cuda.is_available() else 0
-        peak_memory = torch.cuda.max_memory_reserved(0) / 1e9 if torch.cuda.is_available() else 0
-
-        self.log("epoch_time", epoch_time, prog_bar=True, sync_dist=True)
-        self.log("gpu_memory_usage", gpu_memory, prog_bar=True, sync_dist=True)
-        self.log("gpu_reserved_memory", reserved_memory, prog_bar=True, sync_dist=True)
-        self.log("gpu_peak_memory", peak_memory, prog_bar=True, sync_dist=True)
-
-        print(f"\nEpoch {self.current_epoch} took {epoch_time:.2f} seconds.")
-        print(f"GPU Memory Used: {gpu_memory:.2f} GB, Reserved: {reserved_memory:.2f} GB, Peak: {peak_memory:.2f} GB")
+        log_epoch_timing(self.log, self.current_epoch, self.epoch_start_time)
+        log_gpu_memory_stats(self.log, self.current_epoch)
+        clear_gpu_cache()
 
     def setup(self, stage=None):
         if stage == 'fit' or stage is None:

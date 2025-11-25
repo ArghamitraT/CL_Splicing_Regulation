@@ -41,3 +41,4 @@ class NucleotideSequencePairDataset(Dataset):
     
         
         return view0, view1
+

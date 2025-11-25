@@ -1,6 +1,6 @@
 name_or_path: psi_regression
 mode: "mtsplice"  
-mtsplice_weights: "pretrain_2025_11_14_23_12_22"
+mtsplice_weights: "pretrain_2025_11_25_11_09_36"
 mtsplice_BCE: 1 
 hidden_dim: 512
 output_dim: 1 

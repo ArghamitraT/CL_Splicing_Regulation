@@ -1,0 +1,8 @@
+{
+    "name_or_path": "MTSplice",
+    "seq_len": 400,
+    "maxpooling": true,
+    "stride": 1,
+    "pad_motif": 4,
+    "num_of_response": 1
+}

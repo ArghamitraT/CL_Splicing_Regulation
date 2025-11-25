@@ -118,3 +118,4 @@ class MTSpliceEncoder(BaseEmbedder):
         last_dim = output.shape[-1]
         print(f"[MTSpliceEncoder] Last embedding dimension: {last_dim}")
         return last_dim
+

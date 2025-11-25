@@ -5,7 +5,6 @@ import torch
 from pathlib import Path
 from omegaconf import OmegaConf
 
-# Add the parent directory (main) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def find_contrastive_root(start: Path = Path(__file__)) -> Path:
@@ -14,7 +13,6 @@ def find_contrastive_root(start: Path = Path(__file__)) -> Path:
             return parent
     raise RuntimeError("Could not find 'CLADES' directory.")
 
-# Set env var *before* hydra loads config
 root_path = str(find_contrastive_root())
 os.environ["CONTRASTIVE_ROOT"] = root_path
 
@@ -65,16 +63,28 @@ def count_parameters(model):
 def main(config: OmegaConf):
 
     def get_free_gpu():
-        result = subprocess.check_output(
-            "nvidia-smi --query-gpu=memory.used --format=csv,nounits,noheader", shell=True
-        )
-        memory_used = [int(x) for x in result.decode("utf-8").strip().split("\n")]
-        return memory_used.index(min(memory_used))
+        if not torch.cuda.is_available():
+            print("CUDA is not available. Running on CPU.")
+            return None
+        try:
+            # Try using nvidia-smi via full path or direct shell
+            result = subprocess.check_output(
+                "nvidia-smi --query-gpu=memory.used --format=csv,nounits,noheader", 
+                shell=True
+            )
+            memory_used = [int(x) for x in result.decode("utf-8").strip().split("\n")]
+            return memory_used.index(min(memory_used))
+        except Exception as e:
+            print(f"Warning: Could not query nvidia-smi ({e}). Using GPU 0 by default.")
+            return 0
 
     # Choose and set GPU
     free_gpu = get_free_gpu()
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(free_gpu)
-    print(f"Using GPU {free_gpu}: {torch.cuda.get_device_name(0)}")
+    if free_gpu is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(free_gpu)
+        print(f"Using GPU {free_gpu}: {torch.cuda.get_device_name(0)}")
+    else:
+        print("Running on CPU")
 
 
     # Register Hydra resolvers

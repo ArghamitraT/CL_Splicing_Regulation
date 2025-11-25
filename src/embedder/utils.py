@@ -1,9 +1,11 @@
 
 from src.embedder.mtsplice.mtsplice import MTSpliceEncoder 
+from src.embedder.dilated_conv_1d import DilatedConvEmbedder
 
 
 EMBEDDERS = {
-    'MTSplice': MTSpliceEncoder 
+    'MTSplice': MTSpliceEncoder,
+    'DilatedConv1D': DilatedConvEmbedder
 }
 
 
@@ -18,6 +20,5 @@ def get_embedder(config):
     Returns:
         nn.Module: The backbone model.
     """
-    # Get the backbone model
     embedder = EMBEDDERS[config.embedder._name_](**config.embedder)
     return embedder

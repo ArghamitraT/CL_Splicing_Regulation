@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class BaseEmbedder(nn.Module): #rename to BaseEmbedder
+class BaseEmbedder(nn.Module): 
     """
     A class to handle the DNA embedding backbone.
 
@@ -41,24 +41,18 @@ class BaseEmbedder(nn.Module): #rename to BaseEmbedder
             int: The last embedding dimension (i.e., the last dimension of the output tensor).
         """
 
-        # Try to determine the input shape based on the first layer of the model
         for module in self.backbone.modules():
             if isinstance(module, nn.Conv2d):
-                # Assume a common image input size if it's a Conv2d layer
-                input_shape = (3, 224, 224)  # RGB image of size 224x224
+                input_shape = (3, 224, 224)  
                 break
             elif isinstance(module, nn.Linear):
-                # Assume a 1D input size for a fully connected layer
                 input_shape = (module.in_features,)
                 break
             elif isinstance(module, nn.Embedding):
-                # Assume a single index for an Embedding layer
                 input_shape = (64,)
                 break
         else:
             raise ValueError("Unable to determine the input shape automatically.")
-
-        # Generate a random input tensor and move it to GPU
         if isinstance(self.backbone, nn.Sequential):
             DEVICE = next(self.backbone.parameters()).device
         else:
@@ -76,10 +70,9 @@ class BaseEmbedder(nn.Module): #rename to BaseEmbedder
                 
             print(f"Output of the model of shape: {output.shape}")
             
-            #Expted output of shape (batch_size, seq_len, embedding_dim)
-            
         # Get the shape of the output tensor
         last_embedding_dimension = output.shape[-1]
         # Return the last dimension of the output tensor
         print(f"Found a last embedding dimension of {last_embedding_dimension}")
         return last_embedding_dimension
+
