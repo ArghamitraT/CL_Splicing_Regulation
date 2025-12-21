@@ -1,3 +1,0 @@
-- trainer.max_epochs=2
-- dataset.num_workers=0
-- embedder=dilated_conv_1d

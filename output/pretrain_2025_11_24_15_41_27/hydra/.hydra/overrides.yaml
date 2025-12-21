@@ -1,5 +1,0 @@
-- task=introns_cl
-- embedder=MTSplice
-- tokenizer=onehot_tokenizer
-- loss=supcon
-- trainer.max_epochs=1

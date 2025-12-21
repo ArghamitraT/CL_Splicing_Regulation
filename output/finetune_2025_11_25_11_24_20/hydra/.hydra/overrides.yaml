@@ -1,3 +1,0 @@
-- trainer.max_epochs=5
-- dataset.num_workers=0
-- embedder=mtsplice

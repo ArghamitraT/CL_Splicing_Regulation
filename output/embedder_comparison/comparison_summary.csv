@@ -1,6 +1,0 @@
-Metric,MTSplice,DilatedConv1D,Winner
-Mean Spearman PSI,0.9458,0.9459,🤝 Tie
-Mean Spearman Δlogit,0.0081,0.0305,DilatedConv1D ⭐
-PSI Coefficient of Variation,0.0292,0.0292,MTSplice ⭐
-Mean Absolute Error,44.2353,44.1803,DilatedConv1D ⭐
-Max Error,53.7403,53.7457,MTSplice ⭐
