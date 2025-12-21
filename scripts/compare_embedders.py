@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Comprehensive comparison of MTSplice vs DilatedConv1D embedders.
 
