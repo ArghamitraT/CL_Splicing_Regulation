@@ -123,7 +123,7 @@ p = (
     labs(
         x="Δ Logit PSI (All Cell Types)",
         y="Density",
-        title="ASCOT Distribution of Δ Logit PSI Across All Cell Types"
+        title="TS Distribution of Δ Logit PSI Across All Cell Types"
     ) +
     theme_bw() +
     theme(
