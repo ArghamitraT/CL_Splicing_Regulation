@@ -112,7 +112,6 @@ def plot_all_anchors_from_list(config, exon_list, data_module, model, device, sa
 
 
     # --- Define high and low expression exons ---
-    
 
     dataset = data_module.train_dataloader().dataset
     tokenizer = data_module.tokenizer

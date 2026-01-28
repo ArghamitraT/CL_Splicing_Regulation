@@ -12,7 +12,9 @@ import pandas as pd
 from pathlib import Path
 from omegaconf import OmegaConf
 import hydra
+import time
 
+timestamp = time.strftime("_%Y_%m_%d__%H_%M_%S")
 
 # ---------------- root discovery ----------------
 from pathlib import Path
@@ -37,12 +39,13 @@ ANCHOR_EXON_ID   = os.environ.get("ANCHOR_EXON_ID",  "")
 NEGATIVE_EXON_ID = os.environ.get("NEGATIVE_EXON_ID","")
 TISSUE_NAME      = os.environ.get("TISSUE_NAME",     "lung")  # not strictly needed here, but kept for metadata
 SIM_TYPE         = os.environ.get("SIM_TYPE", "cosine")       # "cosine" or "dot"
-RESULT_DIR       = os.environ.get("RESULT_DIR", "exprmnt_2025_10_25__15_31_32")
+RESULT_DIR       = os.environ.get("RESULT_DIR", "exprmnt_2025_11_01__13_07_04") # "exprmnt_2025_10_25__15_31_32"
+comment = "EMPRAICL_afterSweep_aug10_200bp_2025_11_01__13_07_04, with AG...GT"
 
-timestamp = time.strftime("_%Y_%m_%d__%H_%M_%S")
-main_dir = f"{root_path}/code/ML_model"
-os.makedirs(f"{main_dir}/figures", exist_ok=True)
-os.makedirs(f"{main_dir}/arrays",  exist_ok=True)
+# timestamp = time.strftime("_%Y_%m_%d__%H_%M_%S")
+# main_dir = f"{root_path}/code/ML_model"
+# os.makedirs(f"{main_dir}/figures", exist_ok=True)
+# os.makedirs(f"{main_dir}/arrays",  exist_ok=True)
 
 # ---------------- logging ----------------
 def setup_logging(save_dir: Path, filename: str = "contrastive_saliency.log"):
@@ -241,48 +244,6 @@ def plot_saliency_separate_windows(
     exon_end_idx_L = exon_start_idx_L + len_exon_start_real
     exon_start_idx_R = tissue_donor_exon-(len_exon_end_real)
     exon_end_idx_R = tissue_donor_exon
-    
-
-    # # --- 6️⃣ Plot seql ---
-    # plt.figure(figsize=(12, 3))
-    # positions_L = np.arange(len(sal_left_trimmed))
-    # plt.bar(positions_L, sal_left_trimmed, color="dimgray", width=1.0, linewidth=0)
-    # plt.axvspan(0, exon_start_idx_L, color="lightblue", alpha=0.3, label="5′ Intron")
-    # plt.axvspan(exon_start_idx_L, exon_end_idx_L, color="pink", alpha=0.5, label="Exon (true)")
-    # plt.axvspan(exon_end_idx_L, len(sal_left_trimmed), color="red", alpha=0.3, label="Exon (context)")
-    # plt.title(f"5′ Window (seql) — {exon_id}", fontsize=13)
-    # plt.xlabel("Position (5′→Exon start)")
-    # plt.ylabel("Normalized saliency")
-    # plt.legend(frameon=False, loc="upper right")
-    # plt.tight_layout()
-    # plt.savefig(f"{out_prefix}_left.png", dpi=200)
-    # plt.close()
-
-    # # Flip seqr horizontally so 3′ intron is on the right
-    
-    
-    
-    # # --- 7️⃣ Plot seqr ---
-    # plt.figure(figsize=(12, 3))
-    # positions_R = np.arange(len(sal_right_trimmed))
-
-    # plt.bar(positions_R, sal_right_trimmed, color="dimgray", width=1.0, linewidth=0)
-
-    # # Highlight regions (using same start/end indices as before)
-    # plt.axvspan(0, exon_start_idx_R, color="red", alpha=0.3, label="Exon (context)")
-    # plt.axvspan(exon_start_idx_R, exon_end_idx_R, color="pink", alpha=0.5, label="Exon (true)")
-    # plt.axvspan(exon_end_idx_R, len(sal_right_trimmed), color="lightgreen", alpha=0.3, label="3′ Intron")
-
-    # # Reverse the x-axis direction
-    # plt.gca().invert_xaxis()
-
-    # plt.title(f"3′ Window (seqr, reversed axis) — {exon_id}", fontsize=13)
-    # plt.xlabel("Position (3′ intron → Exon end)")
-    # plt.ylabel("Normalized saliency")
-    # plt.legend(frameon=False, loc="upper right")
-    # plt.tight_layout()
-    # plt.savefig(f"{out_prefix}_right_reversed.png", dpi=200)
-    # plt.close()
 
 
     # --- Combined subplot for 5′ and 3′ windows ---
@@ -325,158 +286,8 @@ def plot_saliency_separate_windows(
 
 
 
-# def plot_saliency_dynamic_barplot(
-#     sal_left: np.ndarray,
-#     sal_right: np.ndarray,
-#     seq_entry: dict,
-#     exon_id: str,
-#     out_png: str,
-#     crop_threshold: float = 0.02,
-#     tissue_acceptor_intron: float = 300,
-#     tissue_donor_exon: float = 100,
-# ):
-#     """
-#     Plot saliency as a bar plot across real exon/intron layout derived from seq_entry.
-
-#     Args:
-#         sal_left:  np.ndarray of saliency for acceptor (5′ side)
-#         sal_right: np.ndarray of saliency for donor (3′ side)
-#         seq_entry: dict from data_module.test_set.data[exon_id]
-#                    e.g. {"5p": "...", "3p": "...", "exon": {"start": "...", "end": "..."}}
-#         exon_id:   ID for title
-#         out_png:   Output filename
-#         crop_threshold: cutoff to trim very low saliency regions
-#     """
-
-#     # --- 1️⃣ Extract real sequences ---
-#     seq_5p = seq_entry["5p"]
-#     seq_3p = seq_entry["3p"]
-#     exon_start_seq = seq_entry["exon"].get("start", "")
-#     exon_end_seq = seq_entry["exon"].get("end", "")
-
-#     # Remove artificial Ns used for padding
-#     seq_5p_real = seq_5p.rstrip("N")
-#     seq_3p_real = seq_3p.lstrip("N")
-#     exon_start_real = exon_start_seq.rstrip("N")
-#     exon_end_real = exon_end_seq.lstrip("N")
-
-#     len_5p_real = len(seq_5p_real)
-#     len_3p_real = len(seq_3p_real)
-#     len_exon_start_real = len(exon_start_real)
-#     len_exon_end_real = len(exon_end_real)
-
-#     # --- 2️⃣ Biological slicing of saliency maps ---
-#     sal_left_trimmed = sal_left[
-#         tissue_acceptor_intron - len_5p_real :
-#         tissue_acceptor_intron + len_exon_start_real
-#     ]
-#     # sal_right_trimmed = sal_right[
-#     #     tissue_acceptor_intron - len_exon_end_real :
-#     #     tissue_acceptor_intron + len_3p_real
-#     # ]
-
-#     sal_right_trimmed = sal_right[
-#         tissue_donor_exon - len_exon_end_real :
-#         tissue_donor_exon + len_3p_real
-#     ]
-
-#     combined_sal = np.concatenate([sal_left_trimmed, sal_right_trimmed])
-
-#     combined_sal = (combined_sal - combined_sal.min()) / (combined_sal.max() - combined_sal.min() + 1e-8)
-
-#     total_len = len(combined_sal)
-#     positions = np.arange(total_len)
-
-#     # --- 4️⃣ Mark exon boundaries ---
-#     exon_start_idx = len_5p_real
-#     exon_end_idx = exon_start_idx + len_exon_start_real + len_exon_end_real
-
-#     # --- 5️⃣ Plot ---
-#     plt.figure(figsize=(12, 3))
-#     plt.bar(positions, combined_sal, color="dimgray", width=1.0, linewidth=0)
-
-#     plt.axvspan(0, exon_start_idx, color="lightblue", alpha=0.3, label="5′ Intron")
-#     plt.axvspan(exon_start_idx, exon_end_idx, color="lightgreen", alpha=0.3, label="Exon")
-#     plt.axvspan(exon_end_idx, total_len, color="lightcoral", alpha=0.3, label="3′ Intron")
-
-#     plt.axvline(exon_start_idx, color="k", linestyle="--", linewidth=0.8)
-#     plt.axvline(exon_end_idx, color="k", linestyle="--", linewidth=0.8)
-
-#     plt.title(f"Saliency across exon {exon_id}", fontsize=13)
-#     plt.xlabel("Sequence position (5′→3′)", fontsize=11)
-#     plt.ylabel("Normalized saliency", fontsize=11)
-#     plt.legend(frameon=False, loc="upper right")
-#     plt.tight_layout()
-#     plt.savefig(out_png, dpi=200)
-#     plt.close()
-
-#     print(f"[✅] Saved biological saliency for {exon_id}: {out_png}")
-
-
 import numpy as np
 import matplotlib.pyplot as plt
-
-# def plot_saliency_dynamic_barplot(
-#     sal_left: np.ndarray,
-#     sal_right: np.ndarray,
-#     exon_id: str,
-#     out_png: str,
-#     tissue_acceptor_intron: int = 300,
-#     tissue_donor_exon: int = 100,
-# ):
-#     """
-#     Plot saliency as a single continuous bar plot:
-#     [0–200]   → 5′ intron
-#     [200–400] → exon
-#     [400–600] → 3′ intron
-
-#     Args:
-#         sal_left:  np.ndarray of saliency for acceptor (5′ side)
-#         sal_right: np.ndarray of saliency for donor (3′ side)
-#         exon_id:   ID for title
-#         out_png:   Output filename
-#     """
-
-#     # --- 1️⃣ Normalize saliency ---
-#     sal_left = (sal_left - sal_left.min()) / (sal_left.max() - sal_left.min() + 1e-8)
-#     sal_right = (sal_right - sal_right.min()) / (sal_right.max() - sal_right.min() + 1e-8)
-
-#     # --- 2️⃣ Truncate to expected biological window sizes ---
-#     # sal_left = sal_left[:tissue_acceptor_intron + tissue_donor_exon]   # 5′ intron + exon start
-#     # sal_right = sal_right[:tissue_donor_exon + tissue_acceptor_intron]    # exon end + 3′ intron
-
-#     # --- 3️⃣ Concatenate ---
-#     combined_sal = np.concatenate([sal_left, sal_right])
-#     total_len = len(combined_sal)
-#     positions = np.arange(total_len)
-
-#     # --- 4️⃣ Define boundaries ---
-#     exon_start_idx = tissue_acceptor_intron
-#     exon_end_idx = exon_start_idx + tissue_donor_exon * 2  # start+end = 200 bp exon
-#     intron_end_idx = exon_end_idx + tissue_acceptor_intron
-
-#     # --- 5️⃣ Plot ---
-#     plt.figure(figsize=(12, 3))
-#     plt.bar(positions, combined_sal, color="dimgray", width=1.0, linewidth=0)
-
-#     # Visual annotation of regions
-#     plt.axvspan(0, exon_start_idx, color="lightblue", alpha=0.3, label="5′ Intron")
-#     plt.axvspan(exon_start_idx, exon_end_idx, color="lightgreen", alpha=0.3, label="Exon")
-#     plt.axvspan(exon_end_idx, intron_end_idx, color="lightcoral", alpha=0.3, label="3′ Intron")
-
-#     plt.axvline(exon_start_idx, color="k", linestyle="--", linewidth=0.8)
-#     plt.axvline(exon_end_idx, color="k", linestyle="--", linewidth=0.8)
-
-#     plt.title(f"Saliency across exon {exon_id}", fontsize=13)
-#     plt.xlabel("Position (5′→3′)", fontsize=11)
-#     plt.ylabel("Normalized saliency", fontsize=11)
-#     plt.legend(frameon=False, loc="upper right")
-#     plt.tight_layout()
-#     plt.savefig(out_png, dpi=200)
-#     plt.close()
-
-#     print(f"[✅] Saved simplified saliency map for {exon_id}: {out_png}")
-
 
 
 def fetch_lr_tensors_from_dataset(dataset, exon_id: str, device: torch.device):
@@ -506,84 +317,6 @@ def fetch_lr_tensors_from_dataset(dataset, exon_id: str, device: torch.device):
     x3 = dna_one_hot(s3).unsqueeze(0).to(device)  # (1,4,L)
     x5.requires_grad_(True); x3.requires_grad_(True)
     return x5, x3
-
-
-# def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module, device, main_dir, timestamp):
-
-#     try:
-#         (anchor_batch, iA) = get_exon_batch_by_id(data_module, anchor_id, loader_type="test")
-#     except Exception as e:
-#         logging.warning(f"⚠️ Error fetching exon pair ({anchor_id}, {negative_id}): {e}")
-#         return
-#     (negative_batch, iN) = get_exon_batch_by_id(data_module, negative_id, loader_type="test")
-
-#     (seql_A, seqr_A, psiA, exon_ids_A) = anchor_batch
-#     (seql_N, seqr_N, psiN, exon_ids_N) = negative_batch
-
-#     # tensors
-#     xA_left  = seql_A[iA].unsqueeze(0).float().to(device).requires_grad_(True)
-#     xA_right = seqr_A[iA].unsqueeze(0).float().to(device).requires_grad_(True)
-#     xN_left  = seql_N[iN].unsqueeze(0).float().to(device).requires_grad_(True)
-#     xN_right = seqr_N[iN].unsqueeze(0).float().to(device).requires_grad_(True)
-
-#     # --- Encoder forward ---
-#     zA = encoder(xA_left, xA_right)
-#     zN = encoder(xN_left, xN_right)
-
-#     # --- Similarity and backward ---
-#     sim = compute_similarity(zA, zN, SIM_TYPE)
-#     encoder.zero_grad(set_to_none=True)
-#     for t in (xA_left, xA_right, xN_left, xN_right):
-#         if t.grad is not None:
-#             t.grad.zero_()
-#     sim.backward()
-
-#     # --- Saliency aggregation ---
-#     sal_A_left  = normalize_01(aggregate_saliency(xA_left,  xA_left.grad,  multiply_by_input=True))
-#     sal_A_right = normalize_01(aggregate_saliency(xA_right, xA_right.grad, multiply_by_input=True))
-#     sal_N_left  = normalize_01(aggregate_saliency(xN_left,  xN_left.grad,  multiply_by_input=True))
-#     sal_N_right = normalize_01(aggregate_saliency(xN_right, xN_right.grad, multiply_by_input=True))
-
-#     combo_name = f"{anchor_id}_vs_{negative_id}"
-#     entry_A = data_module.test_set.data[anchor_id]
-
-#     # --- Create output dirs ---
-#     fig_dir = f"{main_dir}/figures/contrast_saliency_random"
-#     arr_dir = fig_dir.replace("/figures/", "/arrays/")
-#     os.makedirs(fig_dir, exist_ok=True)
-#     os.makedirs(arr_dir, exist_ok=True)
-
-#     # --- Plot saliency maps ---
-#     plot_saliency_separate_windows(
-#         sal_A_left, sal_A_right,
-#         seq_entry=entry_A,
-#         exon_id=combo_name,
-#         out_prefix=f"{fig_dir}/saliency_combo_{combo_name}_exon_{anchor_id}"
-#     )
-#     plot_saliency_separate_windows(
-#         sal_N_left, sal_N_right,
-#         seq_entry=entry_A,
-#         exon_id=f"{combo_name}_N",
-#         out_prefix=f"{fig_dir}/saliency_combo_{combo_name}_exon_{negative_id}"
-#     )
-
-#     # --- Save arrays and metadata ---
-#     np.save(f"{arr_dir}/saliency_{combo_name}_{anchor_id}_left.npy",  sal_A_left)
-#     np.save(f"{arr_dir}/saliency_{combo_name}_{anchor_id}_right.npy", sal_A_right)
-#     np.save(f"{arr_dir}/saliency_{combo_name}_{negative_id}_left.npy",  sal_N_left)
-#     np.save(f"{arr_dir}/saliency_{combo_name}_{negative_id}_right.npy", sal_N_right)
-
-#     save_saliency_and_entry(
-#         base_path=arr_dir,
-#         exon_id=combo_name,
-#         sal_left=sal_A_left,
-#         sal_right=sal_A_right,
-#         seq_entry=entry_A
-#     )
-
-#     logging.info(f"✅ Saved saliency for {combo_name} | PSI(A)={psiA[iA].item():.3f}, PSI(N)={psiN[iN].item():.3f}")
-
-
 
 
 def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module, device, main_dir, timestamp):
@@ -616,6 +349,7 @@ def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module,
         xA_right = seqr_A[iA].unsqueeze(0).float().to(device).requires_grad_(True)
         xN_left  = seql_N[iN].unsqueeze(0).float().to(device).requires_grad_(True)
         xN_right = seqr_N[iN].unsqueeze(0).float().to(device).requires_grad_(True)
+        
     except Exception as e:
         logging.warning(f"⚠️ Tensor creation failed for {combo_name}: {e}")
         return
@@ -630,7 +364,7 @@ def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module,
         for t in (xA_left, xA_right, xN_left, xN_right):
             if t.grad is not None:
                 t.grad.zero_()
-        sim.backward()
+        (-sim).backward()
     except Exception as e:
         logging.warning(f"⚠️ Encoder forward/backward failed for {combo_name}: {e}")
         return
@@ -650,10 +384,15 @@ def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module,
     if entry_A is None:
         logging.warning(f"⚠️ Skipping {combo_name}: no entry for anchor {anchor_id} in dataset.")
         return
+    entry_N = data_module.test_set.data.get(negative_id, None)
+    if entry_N is None:
+        logging.warning(f"⚠️ Skipping {combo_name}: no entry for negative {negative_id} in dataset.")
+        return
 
     # --- 6️⃣ Output dirs ---
-    fig_dir = f"{main_dir}/figures/contrast_saliency_random"
-    arr_dir = fig_dir.replace("/figures/", "/arrays/")
+    
+    fig_dir = f"{main_dir}/figures"
+    arr_dir = f"{main_dir}/arrays"
     os.makedirs(fig_dir, exist_ok=True)
     os.makedirs(arr_dir, exist_ok=True)
 
@@ -667,7 +406,7 @@ def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module,
         )
         plot_saliency_separate_windows(
             sal_N_left, sal_N_right,
-            seq_entry=entry_A,
+            seq_entry=entry_N,
             exon_id=f"{combo_name}_N",
             out_prefix=f"{fig_dir}/saliency_combo_{combo_name}_exon_{negative_id}"
         )
@@ -682,13 +421,13 @@ def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module,
         np.save(f"{arr_dir}/saliency_{combo_name}_{negative_id}_left.npy",  sal_N_left)
         np.save(f"{arr_dir}/saliency_{combo_name}_{negative_id}_right.npy", sal_N_right)
 
-        save_saliency_and_entry(
-            base_path=arr_dir,
-            exon_id=combo_name,
-            sal_left=sal_A_left,
-            sal_right=sal_A_right,
-            seq_entry=entry_A
-        )
+        # save_saliency_and_entry(
+        #     base_path=arr_dir,
+        #     exon_id=combo_name,
+        #     sal_left=sal_A_left,
+        #     sal_right=sal_A_right,
+        #     seq_entry=entry_A
+        # )
 
         logging.info(f"✅ Saved saliency for {combo_name} | PSI(A)={psiA[iA].item():.3f}, PSI(N)={psiN[iN].item():.3f}")
     except Exception as e:
@@ -701,7 +440,10 @@ def compute_and_save_saliency_pair(anchor_id, negative_id, encoder, data_module,
 @hydra.main(version_base=None, config_path="../configs", config_name="psi_regression.yaml")
 def main(config: OmegaConf):
     # logging
-    out_dir = Path(f"{root_path}/files/results/{RESULT_DIR}/contrastive_saliency")
+
+    out_dir = f"{root_path}/data/extra/contrast_saliency_random/f_{timestamp}"
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     setup_logging(out_dir)
 
     # resolvers
@@ -717,7 +459,7 @@ def main(config: OmegaConf):
     OmegaConf.set_struct(config, False)
     # Point to your PSI pkl for the chosen tissue
     # (You had Retina/Eye here; keep or override via Hydra/ENV as you prefer)
-    config.dataset.test_files.intronexon = f"{root_path}/data/final_data_old/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
+    config.dataset.test_files.intronexon = f"{root_path}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl"
     config.dataset.fivep_ovrhang = 200
     config.dataset.threep_ovrhang = 200
     config.aux_models.mtsplice_weights = RESULT_DIR
@@ -727,39 +469,17 @@ def main(config: OmegaConf):
     OmegaConf.set_struct(config, True)
 
     print_config(config, resolve=True)
+    logging.info(f"🎯 CL_weight: {RESULT_DIR}")
+    logging.info(f"{comment}")
 
     # --- Data ---
     data_module = PSIRegressionDataModule(config)
     data_module.setup()
     logging.info(f"Dataset size (test): {len(data_module.test_set)}; keys available: {len(getattr(data_module.test_set,'data',{}))}")
-
-    # ANCHOR_EXON_ID = "GT_42556"   # your given exon id,
-    # NEGATIVE_EXON_ID = "GT_55024" # your given exon id
-    # # --- Use your existing function EXACTLY as-is to fetch batches containing the IDs ---
-    # # --- Use your existing function as-is ---
-    # (anchor_batch, iA) = get_exon_batch_by_id(data_module, ANCHOR_EXON_ID, loader_type="test")
-    # (negative_batch, iN) = get_exon_batch_by_id(data_module, NEGATIVE_EXON_ID, loader_type="test")
-
-    # # Each batch is ((seql, seqr), psi_vals, exon_ids)
-    # (seql_A, seqr_A, psiA, exon_ids_A) = anchor_batch
-    # (seql_N, seqr_N, psiN, exon_ids_N) = negative_batch
-
-    # # --- Extract just the tokenized tensors for that exon ---
-    # xA_left  = seql_A[iA].unsqueeze(0).float().to(device).requires_grad_(True)
-    # xA_right = seqr_A[iA].unsqueeze(0).float().to(device).requires_grad_(True)
-
-    # xN_left  = seql_N[iN].unsqueeze(0).float().to(device).requires_grad_(True)
-    # xN_right = seqr_N[iN].unsqueeze(0).float().to(device).requires_grad_(True)
-
-    # print(f"✅ Anchor exon: {exon_ids_A[iA]}, PSI = {psiA[iA].item():.3f}")
-    # print(f"✅ Negative exon: {exon_ids_N[iN]}, PSI = {psiN[iN].item():.3f}")
-
  
     encoder_full = initialize_encoders_and_model(config, root_path)
     encoder = encoder_full.encoder  # 🔥 take only encoder submodule
     encoder = encoder.to(device).float().eval()
-
-
 
     # --- Load high/low exons CSV ---
     common_csv = f"{root_path}/data/extra/common_high_low_exons.csv"
@@ -769,15 +489,25 @@ def main(config: OmegaConf):
 
     # --- Randomly select 3 high and 3 low ---
     # random.seed(42)
-    high_sample = random.sample(high_exons, min(15, len(high_exons)))
-    low_sample  = random.sample(low_exons,  min(15, len(low_exons)))
+    # high_sample = random.sample(high_exons, min(20, len(high_exons)))
+    # low_sample  = random.sample(low_exons,  min(20, len(low_exons)))
+
+    high_sample = ['GT_62125', 'GT_34667', 'GT_05391', 'GT_24765', 'GT_30881', 'GT_53818', 'GT_42813', 'GT_56990', 'GT_25156', 'GT_77786', 'GT_43914', 'GT_28682', 'GT_04544', 'GT_11538', 'GT_70831', 'GT_14195', 'GT_33825', 'GT_73433', 'GT_19230', 'GT_02570']
+    low_sample  = ['GT_09591', 'GT_58515', 'GT_53963', 'GT_71001', 'GT_45119', 'GT_20109', 'GT_21527', 'GT_06314', 'GT_19466', 'GT_25036', 'GT_79749', 'GT_29902', 'GT_38954', 'GT_43067', 'GT_68350', 'GT_05383', 'GT_53279', 'GT_76431', 'GT_27762', 'GT_57800']
+
+
+    # --- Randomly select 3 high and 3 low ---
+    # random.seed(42)
+    # high_sample = ['GT_03764']
+    # low_sample  = ['GT_23158']
     logging.info(f"🎯 Selected high exons: {high_sample}")
     logging.info(f"🎯 Selected low exons:  {low_sample}")
 
+
+    # saliency_combo__vs_GT_23158_exon_GT_03764_both
    
     # --- Perform all 3×3 combinations ---
-    fig_dir = f"{root_path}/data/extra/figures/contrast_saliency_random"
-    timestamp = "time"
+    
     for h in high_sample:
         for l in low_sample:
             compute_and_save_saliency_pair(
@@ -786,74 +516,12 @@ def main(config: OmegaConf):
                 encoder=encoder,
                 data_module=data_module,
                 device=device,
-                main_dir=fig_dir,
+                main_dir=out_dir,
                 timestamp=timestamp
             )
 
     logging.info("✅ Completed all contrastive saliency combinations.")
 
-    
-    # # --- 3) Encoder-only forward to get embeddings (features) ---
-    # zA = encoder(xA_left, xA_right)  # shape: (1, D)
-    # zN = encoder(xN_left, xN_right)  # shape: (1, D)
-
-    # # --- 4) Similarity and backprop to inputs ---
-    # sim = compute_similarity(zA, zN, SIM_TYPE)  # "cosine" or "dot"
-    # encoder.zero_grad(set_to_none=True)
-    # for t in (xA_left, xA_right, xN_left, xN_right):
-    #     if t.grad is not None: t.grad.zero_()
-    # sim.backward()
-
-    # # --- 5) Aggregate per-position saliency and save ---
-    # sal_A_left  = normalize_01(aggregate_saliency(xA_left,  xA_left.grad,  multiply_by_input=True))
-    # sal_A_right = normalize_01(aggregate_saliency(xA_right, xA_right.grad, multiply_by_input=True))
-    # sal_N_left  = normalize_01(aggregate_saliency(xN_left,  xN_left.grad,  multiply_by_input=True))
-    # sal_N_right = normalize_01(aggregate_saliency(xN_right, xN_right.grad, multiply_by_input=True))
-
-    # baseA = f"{main_dir}/figures/contrast_saliency_MTSplice_A{timestamp}"
-    # baseN = f"{main_dir}/figures/contrast_saliency_MTSplice_N{timestamp}"
-    # # plot_saliency(sal_A_left,  f"Anchor A ({exon_ids_A[iA]}) 5′ window",  baseA+"_left.png")
-    # # plot_saliency(sal_A_right, f"Anchor A ({exon_ids_A[iA]}) 3′ window",  baseA+"_right.png")
-    # # plot_saliency(sal_N_left,  f"Negative N ({exon_ids_N[iN]}) 5′ window", baseN+"_left.png")
-    # # plot_saliency(sal_N_right, f"Negative N ({exon_ids_N[iN]}) 3′ window", baseN+"_right.png")
-    # entry = data_module.test_set.data[ANCHOR_EXON_ID]
-    
-    # # plot_saliency_dynamic_barplot(
-    # #     sal_A_left, sal_A_right,
-    # #     seq_entry=entry,
-    # #     exon_id="GT_44593",
-    # #     out_png=f"{main_dir}/figures/saliency_3_{ANCHOR_EXON_ID}.png"
-    # # )
-    # plot_saliency_separate_windows(
-    #     sal_A_left, sal_A_right,
-    #     seq_entry=entry,
-    #     exon_id=ANCHOR_EXON_ID,
-    #     out_prefix=f"{main_dir}/figures/saliency_{ANCHOR_EXON_ID}"
-    # )
-    # plot_saliency_separate_windows(
-    #     sal_N_left, sal_N_right,
-    #     seq_entry=entry,
-    #     exon_id=NEGATIVE_EXON_ID,
-    #     out_prefix=f"{main_dir}/figures/saliency_{NEGATIVE_EXON_ID}"
-    # )
-    # # plot_saliency_dynamic_barplot(
-    # #     sal_A_left, sal_A_right,
-    # #     exon_id="GT_44593",
-    # #     out_png=f"{main_dir}/figures/saliency_3_{ANCHOR_EXON_ID}.png"
-    # # )
-    # array_dir = baseA.replace("/figures/", "/arrays/")
-    # os.makedirs(array_dir, exist_ok=True)
-
-    # array_dir = baseA.replace("/figures/", "/arrays/")
-    # save_saliency_and_entry(
-    #     base_path=array_dir,
-    #     exon_id=ANCHOR_EXON_ID,
-    #     sal_left=sal_A_left,
-    #     sal_right=sal_A_right,
-    #     seq_entry=entry  # from data_module.test_set.data[exon_id]
-    # )
-
-    # logging.info(f"✅ Contrastive saliency done:\n  A: {exon_ids_A[iA]} (PSI {psiA[iA].item():.3f})\n  N: {exon_ids_N[iN]} (PSI {psiN[iN].item():.3f})")
 
 
 if __name__ == "__main__":

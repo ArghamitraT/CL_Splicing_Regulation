@@ -33,7 +33,7 @@ SIM_TYPE         = os.environ.get("SIM_TYPE", "cosine")       # "cosine" or "dot
 RESULT_DIR       = os.environ.get("RESULT_DIR", "exprmnt_2025_10_25__15_31_32")
 
 timestamp = time.strftime("_%Y_%m_%d__%H_%M_%S")
-main_dir = f"{root_path}/code/ML_model"
+main_dir = f"{root_path}/data/extra"
 os.makedirs(f"{main_dir}/figures", exist_ok=True)
 os.makedirs(f"{main_dir}/arrays",  exist_ok=True)
 
@@ -371,66 +371,6 @@ def plot_saliency_separate_windows(
 import numpy as np
 import matplotlib.pyplot as plt
 
-# def plot_saliency_dynamic_barplot(
-#     sal_left: np.ndarray,
-#     sal_right: np.ndarray,
-#     exon_id: str,
-#     out_png: str,
-#     tissue_acceptor_intron: int = 300,
-#     tissue_donor_exon: int = 100,
-# ):
-#     """
-#     Plot saliency as a single continuous bar plot:
-#     [0–200]   → 5′ intron
-#     [200–400] → exon
-#     [400–600] → 3′ intron
-
-#     Args:
-#         sal_left:  np.ndarray of saliency for acceptor (5′ side)
-#         sal_right: np.ndarray of saliency for donor (3′ side)
-#         exon_id:   ID for title
-#         out_png:   Output filename
-#     """
-
-#     # --- 1️⃣ Normalize saliency ---
-#     sal_left = (sal_left - sal_left.min()) / (sal_left.max() - sal_left.min() + 1e-8)
-#     sal_right = (sal_right - sal_right.min()) / (sal_right.max() - sal_right.min() + 1e-8)
-
-#     # --- 2️⃣ Truncate to expected biological window sizes ---
-#     # sal_left = sal_left[:tissue_acceptor_intron + tissue_donor_exon]   # 5′ intron + exon start
-#     # sal_right = sal_right[:tissue_donor_exon + tissue_acceptor_intron]    # exon end + 3′ intron
-
-#     # --- 3️⃣ Concatenate ---
-#     combined_sal = np.concatenate([sal_left, sal_right])
-#     total_len = len(combined_sal)
-#     positions = np.arange(total_len)
-
-#     # --- 4️⃣ Define boundaries ---
-#     exon_start_idx = tissue_acceptor_intron
-#     exon_end_idx = exon_start_idx + tissue_donor_exon * 2  # start+end = 200 bp exon
-#     intron_end_idx = exon_end_idx + tissue_acceptor_intron
-
-#     # --- 5️⃣ Plot ---
-#     plt.figure(figsize=(12, 3))
-#     plt.bar(positions, combined_sal, color="dimgray", width=1.0, linewidth=0)
-
-#     # Visual annotation of regions
-#     plt.axvspan(0, exon_start_idx, color="lightblue", alpha=0.3, label="5′ Intron")
-#     plt.axvspan(exon_start_idx, exon_end_idx, color="lightgreen", alpha=0.3, label="Exon")
-#     plt.axvspan(exon_end_idx, intron_end_idx, color="lightcoral", alpha=0.3, label="3′ Intron")
-
-#     plt.axvline(exon_start_idx, color="k", linestyle="--", linewidth=0.8)
-#     plt.axvline(exon_end_idx, color="k", linestyle="--", linewidth=0.8)
-
-#     plt.title(f"Saliency across exon {exon_id}", fontsize=13)
-#     plt.xlabel("Position (5′→3′)", fontsize=11)
-#     plt.ylabel("Normalized saliency", fontsize=11)
-#     plt.legend(frameon=False, loc="upper right")
-#     plt.tight_layout()
-#     plt.savefig(out_png, dpi=200)
-#     plt.close()
-
-#     print(f"[✅] Saved simplified saliency map for {exon_id}: {out_png}")
 
 
 
