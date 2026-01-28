@@ -97,27 +97,6 @@ class SupConLoss(nn.Module):
         logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
         logits = anchor_dot_contrast - logits_max.detach()
 
-        # CUDA was going OOM in this line so detached gradient of logits_max
-        # tile mask
-        # mask = mask.repeat(anchor_count, contrast_count)
-        # # mask-out self-contrast cases
-        # logits_mask = torch.scatter(
-        #     torch.ones_like(mask),
-        #     1,
-        #     torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
-        #     0
-        # )
-        # mask = mask * logits_mask
-
-
-        reset_debug_warning()
-        debug_warning("check supcon loss GPU: remove later")
-        # --- DEBUG: GPU memory --- (AT): erase
-        torch.cuda.synchronize()
-        alloc = torch.cuda.memory_allocated(device) / 1e9
-        rsvd  = torch.cuda.memory_reserved(device) / 1e9
-        print(f"[DEBUG] After logits: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
-
 
         with torch.no_grad():
             mask = mask.repeat(anchor_count, contrast_count)
@@ -126,12 +105,7 @@ class SupConLoss(nn.Module):
             logits_mask[idx, idx] = 0
             mask = mask * logits_mask  # both constant now
 
-        # --- GPU memory again --- (AT): erase
-        torch.cuda.synchronize()
-        alloc = torch.cuda.memory_allocated(device) / 1e9
-        rsvd  = torch.cuda.memory_reserved(device) / 1e9
-        print(f"[DEBUG] After mask build: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
-
+        
 
         # compute log_prob
         exp_logits = torch.exp(logits) * logits_mask
@@ -158,12 +132,5 @@ class SupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size).mean()
-
-        # --- GPU memory again --- (AT): erase
-        torch.cuda.synchronize()
-        alloc = torch.cuda.memory_allocated(device) / 1e9
-        rsvd  = torch.cuda.memory_reserved(device) / 1e9
-        print(f"[DEBUG] After loss compute: allocated={alloc:.2f} GB | reserved={rsvd:.2f} GB")
-
 
         return loss

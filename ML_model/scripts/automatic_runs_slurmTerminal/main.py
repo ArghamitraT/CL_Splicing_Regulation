@@ -14,13 +14,13 @@ def get_experiment_config():
     """Return all experiment-level parameters (edit here only)."""
 
     cfg = dict(
-        slurm_file_name = 'Psi_ASCOT_IntronONLY_CLSwpd_300bp_5aug_5p3pCut',
+        slurm_file_name = 'Psi_ASCOT_300bp_MTCLSwept_10Aug_testdata',
         task = "psi_regression_task", # "psi_regression_task" or "introns_cl"
         maxpooling = True,
         max_epochs = 15,
         optimizer = "adam",
-        readme_comment = "Psi, 300bp, 5aug, intronOnly, previously fine_data_old folder contained exons only present in retina so the result was not apple to apple, solved that problem, now we work with 300bp data for 200 bp we just cut the 5p 3p sequence\n",
-        wandb_logger_NOTES = "PSI ASCOT 300bp 5aug intronOnly after CL optimized 3p5p cut",
+        readme_comment = "Psi, 300bp, intron and exon, on test data not variable exon\n",
+        wandb_logger_NOTES = "PSI ASCOT 300bp MTCL Swept 10Aug testdata",
         new_project_wandb = 1,
         fivep_ovrhang = 300,
         threep_ovrhang = 300,
@@ -35,12 +35,6 @@ def get_experiment_config():
         nthred = 8,          # CPUs
 
         ##### --- embedder specific
-        # embedder = "ntv2",
-        # tokenizer = "hf_tokenizer",
-        # tokenizer_seq_len = 201,
-        # embedder = "resnet",
-        # tokenizer = "custom_tokenizer",
-        # tokenizer_seq_len = 201,
         embedder = "mtsplice",
         tokenizer = "onehot_tokenizer",
         tokenizer_seq_len = 400,
@@ -54,8 +48,6 @@ def get_experiment_config():
         TRAIN_FILE="train_merged_filtered_min30Views.pkl",
         VAL_FILE="val_merged_filtered_min30Views.pkl",    
         TEST_FILE="test_merged_filtered_min30Views.pkl",
-
-        
         ################### --- CL specific parameters ################### 
 
         ################### --- psi specific parameters ################### 
@@ -63,7 +55,7 @@ def get_experiment_config():
         warm_start = True,
         ascot = True, # if ASCOT dataset the true, if Tabula Sapiens false     
         psi_loss_name = "MTSpliceBCELoss",
-        PSI_TEST_FILE = "psi_variable_Retina___Eye_psi_MERGED.pkl",
+        PSI_TEST_FILE = "psi_test_Retina___Eye_psi_MERGED.pkl",
         mtsplice_BCE = 1,
         mode = "mtsplice", # mode: or "3p", "5p", "intronOnly", "intronexon", "mtsplice"
         train_mode = "train",
@@ -77,64 +69,21 @@ def get_experiment_config():
         
         # after CL hyperparameter sweep
              # intron+exon
-        # mtsplice_weights = "exprmnt_2025_11_01__12_08_52",  # CL swept, 300bp, no exon pad, 10 aug
+        mtsplice_weights = "exprmnt_2025_11_01__12_08_52",  # CL swept, 300bp, no exon pad, 10 aug
         # mtsplice_weights = "exprmnt_2025_11_01__12_16_52",  # CL swept, 300bp, no exon pad, 5 aug
         # mtsplice_weights = "exprmnt_2025_11_01__13_07_04",  # EMPRAICL_afterSweep_aug10_200bp_2025_11_01__13_07_04
         # mtsplice_weights = "exprmnt_2025_11_01__13_07_53",  # EMPRAICL_afterSweep_aug5_200bp_2025_11_01__13_07_53
             # intron only
         # mtsplice_weights = "exprmnt_2025_11_01__22_56_28",  # EMPRAICL_afterSweep_aug10_300bp_INTRON_SupCon_2025_11_01__22_56_28
-        mtsplice_weights = "exprmnt_2025_11_01__22_58_09",  # EMPRAICL_afterSweep_aug5_300bp_INTRON_SupCon_2025_11_01__22_58_09
+        # mtsplice_weights = "exprmnt_2025_11_01__22_58_09",  # EMPRAICL_afterSweep_aug5_300bp_INTRON_SupCon_2025_11_01__22_58_09
         # mtsplice_weights = "exprmnt_2025_11_01__22_51_48",  # EMPRAICL_afterSweep_aug10_200bp_INTRON_SupCon_2025_11_01__22_51_48
         # mtsplice_weights = "exprmnt_2025_11_01__22_51_25",  # EMPRAICL_afterSweep_aug5_200bp_INTRON_SupCon_2025_11_01__22_51_25
-
-            
-
-        # before CL hyperparameter sweep
-            # intron+exon
-        # mtsplice_weights = "exprmnt_2025_10_26__14_29_04",  # EMPRAICL_MTSplNew_10Aug_300bpIntron_2025_10_26__14_29_04
-        # mtsplice_weights = "exprmnt_2025_11_01__22_12_55",  # EMPRAICL_300bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_12_55
-        # mtsplice_weights = "exprmnt_2025_10_25__15_31_32",  # EMPRAICL_MTSplNew_10Aug_noASCOTTestinTrain_2025_10_25__15_31_32
-        # mtsplice_weights = "exprmnt_2025_11_01__22_06_26",  # EMPRAICL_200bp_5Aug_SupCon_NOToptmzdHprPrms_2025_11_01__22_06_26
-            # intron only
-        # mtsplice_weights = "exprmnt_2025_11_01__22_43_56",  # EMPRAICL_300bp_10Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_43_56
-        # mtsplice_weights = "exprmnt_2025_11_01__22_43_13",  # EMPRAICL_300bp_5Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_43_13
-        # mtsplice_weights = "exprmnt_2025_11_01__22_44_21",  # EMPRAICL_200bp_10Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_44_21
-        # mtsplice_weights = "exprmnt_2025_11_01__22_44_49",  # EMPRAICL_200bp_5Aug_INTRON_SupCon_NOToptmzdHprPrms_2025_11_01__22_44_49
-
-        
-        # mtsplice_weights = "exprmnt_2025_10_25__14_52_07",  # EMPRAICL_MTSplNew_10Aug_weightedSupCon_noASCOTTestinTrain_2025_10_25__14_52_07
-        # mtsplice_weights = "exprmnt_2025_10_26__14_30_11",  # CL, new corrected mtsplice model, all species, weighted supcon, no ASCOT test in train, cl 300 bp intron
-        # mtsplice_weights = "exprmnt_2025_10_23__21_40_25", # CL, new corrected mtsplice model, all species, weighted supcon
-        # mtsplice_weights = "exprmnt_2025_10_23__21_17_52", # CL, new corrected mtsplice model, all species
-        # mtsplice_weights = "exprmnt_2025_10_22__19_42_17", # CL, new corrected mtsplice model, fixed species
-        # mtsplice_weights = "exprmnt_2025_09_23__00_38_41", # ASCOT weighted CL, 10 aug
-
-        # mtsplice_weights = "exprmnt_2025_07_30__13_10_26", #2 aug intronexon
-        # mtsplice_weights = "exprmnt_2025_08_16__22_30_50", #2 aug intron
-        # mtsplice_weights = "exprmnt_2025_08_16__20_42_52", #10 aug intronexon
-        # mtsplice_weights = "exprmnt_2025_08_23__20_30_33", #10 aug intron
 
         ####### ntv2 weights for 5', 3' and exon ##########
         weight_3p = "exprmnt_2025_10_20__00_59_06",
         weight_5p = "exprmnt_2025_10_20__01_00_10",
         weight_exon = "exprmnt_2025_10_20__01_00_54",
 
-        ####### resnet weights for 5', 3' and exon ##########
-
-        # 10 aug, all data weighted CL
-        # weight_5p = "exprmnt_2025_10_15__00_47_32",
-        # weight_3p = "exprmnt_2025_10_15__00_46_22",
-        # weight_exon = "exprmnt_2025_10_15__00_45_15",
-
-        # 2 aug
-        # weight_5p = "exprmnt_2025_06_01__21_15_08",
-        # weight_3p = "exprmnt_2025_06_01__21_16_19",
-        # weight_exon = "exprmnt_2025_06_08__21_34_21",
-
-        # 10 aug
-        # weight_5p = "exprmnt_2025_08_23__21_14_26",
-        # weight_3p = "exprmnt_2025_07_08__20_39_38",
-        # weight_exon = "exprmnt_2025_08_23__21_20_33",
        ################### --- psi specific parameters ################### 
         )
     return cfg

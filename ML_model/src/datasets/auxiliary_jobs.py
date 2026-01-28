@@ -89,8 +89,7 @@ class PSIRegressionDataset(Dataset):
             # full_seq = entry["5p"] + ("N" * (len(entry["exon"]["start"]) + len(entry["exon"]["end"]))) + entry["3p"]
 
             windows = get_windows_with_padding(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
-            # windows = get_windows_with_padding_intronOnly(self.tissue_acceptor_intron, self.tissue_donor_intron, self.tissue_acceptor_exon, self.tissue_donor_exon, full_seq, overhang = (self.len_3p, self.len_5p))
-
+            
             # Tokenize acceptor and donor
             seql = self._tokenize(windows['acceptor'])  # acceptor
             seqr = self._tokenize(windows['donor'])     # donor

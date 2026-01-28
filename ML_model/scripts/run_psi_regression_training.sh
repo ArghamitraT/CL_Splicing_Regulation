@@ -34,7 +34,7 @@ python -m scripts.psi_regression_training \
         aux_models.freeze_encoder=false\
         aux_models.warm_start=false\
         aux_models.dropout=0.8\
-        aux_models.mtsplice_weights="exprmnt_2025_10_26__14_30_11"\
+        aux_models.mtsplice_weights="exprmnt_2025_11_01__12_08_52"\
         aux_models.mode="mtsplice"\
         aux_models.mtsplice_BCE=1\
         dataset.fivep_ovrhang=300 \

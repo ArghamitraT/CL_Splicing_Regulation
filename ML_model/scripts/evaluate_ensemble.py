@@ -355,33 +355,38 @@ def run_ensemble_test_evaluation(
 @hydra.main(version_base=None, config_path="../configs", config_name="psi_regression.yaml")
 def main(config: OmegaConf):
     
-    
-
-    # TS experiment
+    # Parameters #
+    overhang = 200
+    # ################################### TS experiment  ###################################
     # experiment_folder = "exprmnt_2025_11_03__15_57_50" # EMPRAIPsi_TblaSpns_noCL_do0.8_300bp_2025_11_03__15_57_50
-    # experiment_folder = "exprmnt_2025_11_03__16_02_02" # EMPRAIPsi_TblaSpns_noCL_do0.4_300bp_2025_11_03__16_02_02
+    # experiment_folder = "exprmnt_2025_11_03__16_02_02" # EMPRAIPsi_TblaSpns_noCL_do0.4_300bp_2025_11_03__16_02_02 (chosen)
     # experiment_folder = "exprmnt_2025_11_03__16_11_50" # EMPRAIPsi_TblaSpns_noCL_do0.1_300bp_2025_11_03__16_11_50
-    # experiment_folder = "exprmnt_2025_11_04__21_57_15" # EMPRAIPsi_TS_CLSwpd_300bp_10Aug_2025_11_04__21_57_15
-    # experiment_folder = "exprmnt_2025_11_04__21_57_45" # EMPRAIPsi_TS_CLSwpd_300bp_5Aug_2025_11_04__21_57_45
-    experiment_folder = "exprmnt_2025_11_04__21_59_46" # EMPRAIPsi_TS_CLSwpd_200bp_10Aug_2025_11_04__21_59_46
-    # experiment_folder = "exprmnt_2025_11_04__21_59_16" # EMPRAIPsi_TS_CLSwpd_200bp_5Aug_2025_11_04__21_59_16
-    ascot = False
+    # experiment_folder = "exprmnt_2025_11_05__01_50_41" # EMPRAIPsi_TS_noCL_300bp_rerun_codeChange_2025_11_05__01_50_41
+    # experiment_folder = "exprmnt_2025_11_05__01_52_25"  # EMPRAIPsi_TS_CLSwpd_300bp_10Aug_rerun_codeChange_2025_11_05__01_52_25
+    # experiment_folder = "exprmnt_2025_11_05__01_55_12"  # EMPRAIPsi_TS_CLSwpd_200bp_10Aug_rerun_codeChange_2025_11_05__01_55_12
+    # experiment_folder = "exprmnt_2025_11_05__01_55_58" # EMPRAIPsi_TS_noCL_200bp_rerun_codeChange_2025_11_05__01_55_58
+    # ascot = False
 
-
-    # Parameters (MUST MATCH your first script)
-    # ASCOT
-    # ascot = True 
-    # after CL sweep (supcon temp 0.2)
+    ################################### ASCOT  ###################################
+    ascot = True
+    # after CL sweep (supcon temp 0.2) INTRON+EXON
     # experiment_folder = "exprmnt_2025_11_04__21_41_39" # EMPRAIPsi_ASCOT_300bp_IplusE_noCL_2025_11_04__21_41_39
-    # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
     # experiment_folder = "exprmnt_2025_11_01__12_33_58" # EMPRAIPsi_300bp_MTCLSwept_5Aug_noExonPad_2025_11_01__12_33_58
-    # experiment_folder = "exprmnt_2025_11_01__18_57_08" # EMPRAIPsi_200bp_MTCLSwept_5Aug_noExonPad_2025_11_01__18_57_08
+    # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
     # experiment_folder = "exprmnt_2025_11_04__21_41_10" # EMPRAIPsi_ASCOT_200bp_IplusE_noCL_2025_11_04__21_41_10
     # experiment_folder = "exprmnt_2025_11_03__23_37_19" # EMPRAIPsi_ASCOT_CLSwpd_200bp_5aug_5p3pCut_2025_11_03__23_37_19
-    # experiment_folder = "exprmnt_2025_11_01__18_59_24" # EMPRAIPsi_200bp_MTCLSwept_10Aug_noExonPad_2025_11_01__18_59_24
     # experiment_folder = "exprmnt_2025_11_03__23_40_11" # EMPRAIPsi_ASCOT_CLSwpd_200bp_10aug_5p3pCut_2025_11_03__23_40_11
+    # after CL sweep (supcon temp 0.2) INTRON ONLY
+    # experiment_folder = "exprmnt_2025_11_05__01_03_35" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_300bp_5aug_5p3pCut_2025_11_05__01_03_35
+    # experiment_folder = "exprmnt_2025_11_05__01_02_08" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_300bp_10aug_5p3pCut_2025_11_05__01_02_08
+    # experiment_folder = "exprmnt_2025_11_05__00_59_03" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_200bp_5aug_5p3pCut_2025_11_05__00_59_03
+    # experiment_folder = "exprmnt_2025_11_05__01_00_26" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_200bp_10aug_5p3pCut_2025_11_05__01_00_26
+    # experiment_folder = "exprmnt_2025_11_07__00_21_05" # EMPRAIPsi_ASCOT_IntronONLY_NoCL_200bp_3p5pCut_2025_11_07__00_21_05
+    # experiment_folder = "exprmnt_2025_11_07__00_20_33" # EMPRAIPsi_ASCOT_IntronONLY_NoCL_300bp_3p5pCut_2025_11_07__00_20_33
 
-    
+    experiment_folder = "exprmnt_2025_11_14__12_19_18" # EMPRAIPsi_ASCOT_300bp_MTCLSwept_10Aug_testdata_2025_11_14__12_19_18
+     
+
     # This is the directory where the .pkl file is saved
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
 

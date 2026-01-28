@@ -1,24 +1,39 @@
-# import pickle
 
-# file = 'filtered_HiLow_exons_by_tissue'
-# path = f"/gpfs/commons/home/atalukder/Contrastive_Learning/data/extra/{file}.pkl"
-# with open(path, "rb") as f:
-#     data = pickle.load(f)
 
-# print(data)
 
-import pandas as pd
+import pickle
+import random
+import os
 
-in_csv = "/mnt/home/at3836/Contrastive_Learning/data/final_data/TSCelltype_finetuning/test_cassette_exons_with_logit_mean_psi.csv"  # update
-out_csv = "/mnt/home/at3836/Contrastive_Learning/data/final_data/TSCelltype_finetuning/test_cassette_exons_with_logit_mean_psi_dedup.csv"  # update
+# === Paths ===
+main_dir = "/mnt/home/at3836/Contrastive_Learning/data/final_data/ASCOT_finetuning"
+file = "psi_val_Retina___Eye_psi_MERGED.pkl"
+path = f"{main_dir}/{file}"
 
-df = pd.read_csv(in_csv)
-df.columns = df.columns.str.strip()
-df["exon_id"] = df["exon_id"].astype(str).str.strip()  # just in case
+# === Output directory ===
+out_dir = "/mnt/home/at3836/Contrastive_Learning/RECOMB_26/CLADES/data/finetune_sample_data"
+os.makedirs(out_dir, exist_ok=True)
 
-before = len(df)
-df_dedup = df.drop_duplicates(subset=["exon_id"], keep="first")
-after = len(df_dedup)
+out_file = f"{out_dir}/{file}"
 
-df_dedup.to_csv(out_csv, index=False)
-print(f"Removed {before - after} duplicate rows; saved → {out_csv}")
+# === Load original data ===
+with open(path, "rb") as f:
+    data = pickle.load(f)
+
+# print("Total exons:", len(data))
+
+# === Sample 1% of exon IDs ===
+keys = list(data.keys())
+n = max(1, int(len(keys) * 0.01))  # at least 1
+sampled_keys = random.sample(keys, n)
+
+# === Create new dictionary ===
+sampled_data = {k: data[k] for k in sampled_keys}
+
+# print("Sampled exons:", len(sampled_data))
+
+# === Save ===
+with open(out_file, "wb") as f:
+    pickle.dump(sampled_data, f)
+
+print(f"Saved 1% sample to: {out_file}")
