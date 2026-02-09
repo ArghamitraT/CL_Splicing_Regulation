@@ -46,9 +46,11 @@ class ResidualBlock(nn.Module):
         bn_output = self.bn_block(residual_connection)
         return bn_output, convBlock_output
 
-
+# reset_debug_warning()
+# debug_warning("Number of CNN blocks line 53.")
 class MTSpliceBranch(nn.Module):
     def __init__(self, seq_len, in_channels=4, hidden_channels=64, num_blocks=8, spline_kwargs={}):
+    # def __init__(self, seq_len, in_channels=4, hidden_channels=64, num_blocks=6, spline_kwargs={}):
         super().__init__()
 
         # First conv + BN to initialize

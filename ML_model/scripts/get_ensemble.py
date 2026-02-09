@@ -1,3 +1,36 @@
+"""
+Ensemble forward-selection evaluation for PSI regression checkpoints (Hydra/Lightning).
+
+What this script does (high level):
+1) Locates the project root (Contrastive_Learning) and sets CONTRASTIVE_ROOT for consistent imports/paths.
+2) Loads the base Hydra config (psi_regression.yaml), then merges in an `ensemble` block that points to:
+   - an experiment folder containing multiple trained runs (run_*/.../best-checkpoint.ckpt)
+   - an output directory where per-run predictions + ensemble outputs will be written
+3) Builds the PSIRegressionDataModule and runs inference on the VALIDATION split for each checkpoint via
+   `trainer.test(ckpt_path=...)`. Each run writes a raw TSV containing per-tissue predictions.
+4) From each run’s TSV, extracts only the per-tissue *predicted delta-logit* columns
+   (columns ending with `_pred_delta_logit`), aligns them by exon_id, and stores them in-memory.
+5) Sorts models by their individual validation loss (from Lightning test metrics) and performs
+   greedy/forward selection:
+      - start with the best single model
+      - iteratively add the next best model, average delta-logits across the current ensemble,
+        and evaluate the averaged ensemble using the configured loss function (config.loss)
+      - stop when adding a model no longer improves the ensemble loss
+6) Saves the best ensemble’s averaged VALIDATION delta-logit predictions to TSV and also writes a pickle
+   containing (best_k, sorted checkpoint list) so the same chosen ensemble can be reused later on TEST.
+
+Key implementation notes:
+- Checkpoints are expected under:
+    {results_base}/{experiment_folder}/weights/checkpoints/run_*/{task}/{embedder}/{seq_len}/best-checkpoint.ckpt
+  where {task, embedder, seq_len} are taken from the Hydra config.
+- The ensemble averaging is performed in *delta-logit space* (per tissue), keyed by exon_id.
+- GPU selection is optional; it picks the least-used GPU by querying nvidia-smi and sets CUDA_VISIBLE_DEVICES.
+- For this script’s run, training is disabled (max_epochs=1, no logger, no checkpointing); we only do inference.
+"""
+
+
+
+
 import sys
 import os
 import subprocess
@@ -547,22 +580,38 @@ def main(config: OmegaConf): # Config is loaded by Hydra based on psi_regression
 
     ################################### ASCOT  ###################################
     ascot = True
-    # after CL sweep (supcon temp 0.2) INTRON+EXON
+                        # after CL sweep (supcon temp 0.2) INTRON+EXON
     # experiment_folder = "exprmnt_2025_11_04__21_41_39" # EMPRAIPsi_ASCOT_300bp_IplusE_noCL_2025_11_04__21_41_39
     # experiment_folder = "exprmnt_2025_11_01__12_33_58" # EMPRAIPsi_300bp_MTCLSwept_5Aug_noExonPad_2025_11_01__12_33_58
     # experiment_folder = "exprmnt_2025_11_01__12_32_21" # EMPRAIPsi_300bp_MTCLSwept_10Aug_noExonPad_2025_11_01__12_32_21
     # experiment_folder = "exprmnt_2025_11_04__21_41_10" # EMPRAIPsi_ASCOT_200bp_IplusE_noCL_2025_11_04__21_41_10
     # experiment_folder = "exprmnt_2025_11_03__23_37_19" # EMPRAIPsi_ASCOT_CLSwpd_200bp_5aug_5p3pCut_2025_11_03__23_37_19
     # experiment_folder = "exprmnt_2025_11_03__23_40_11" # EMPRAIPsi_ASCOT_CLSwpd_200bp_10aug_5p3pCut_2025_11_03__23_40_11
-    # after CL sweep (supcon temp 0.2) INTRON ONLY
+                        # after CL sweep (supcon temp 0.2) INTRON ONLY
     # experiment_folder = "exprmnt_2025_11_05__01_03_35" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_300bp_5aug_5p3pCut_2025_11_05__01_03_35
     # experiment_folder = "exprmnt_2025_11_05__01_02_08" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_300bp_10aug_5p3pCut_2025_11_05__01_02_08
     # experiment_folder = "exprmnt_2025_11_05__00_59_03" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_200bp_5aug_5p3pCut_2025_11_05__00_59_03
     # experiment_folder = "exprmnt_2025_11_05__01_00_26" # EMPRAIPsi_ASCOT_IntronONLY_CLSwpd_200bp_10aug_5p3pCut_2025_11_05__01_00_26
     # experiment_folder = "exprmnt_2025_11_07__00_21_05" # EMPRAIPsi_ASCOT_IntronONLY_NoCL_200bp_3p5pCut_2025_11_07__00_21_05
     # experiment_folder = "exprmnt_2025_11_07__00_20_33" # EMPRAIPsi_ASCOT_IntronONLY_NoCL_300bp_3p5pCut_2025_11_07__00_20_33
+    # experiment_folder = "exprmnt_2025_11_14__12_19_18" # EMPRAIPsi_ASCOT_300bp_MTCLSwept_10Aug_testdata_2025_11_14__12_19_18
+                        # after RECOMB review experiments (embedding layer ablation)
+    # experiment_folder = "exprmnt_2026_01_29__16_37_12" # EMPRAIPsi_ASCOT_afterReview_CNN2L_testExon_noCL_2026_01_29__16_37_12
+    # experiment_folder = "exprmnt_2026_01_29__16_38_00" # EMPRAIPsi_ASCOT_afterReview_CNN2L_testExon_yesCL_2026_01_29__16_38_00
+    # experiment_folder = "exprmnt_2026_01_29__16_35_18" # EMPRAIPsi_ASCOT_afterReview_CNN2L_varExon_noCL_2026_01_29__16_35_18
+    # experiment_folder = "exprmnt_2026_01_29__16_34_43" # EMPRAIPsi_ASCOT_afterReview_CNN2L_varExon_yesCL_2026_01_29__16_34_43
     
-    experiment_folder = "exprmnt_2025_11_14__12_19_18" # EMPRAIPsi_ASCOT_300bp_MTCLSwept_10Aug_testdata_2025_11_14__12_19_18
+    # experiment_folder = "exprmnt_2026_01_29__16_31_50" # EMPRAIPsi_ASCOT_afterReview_CNN4L_testExon_noCL_2026_01_29__16_31_50
+    # experiment_folder = "exprmnt_2026_01_29__16_32_53" # EMPRAIPsi_ASCOT_afterReview_CNN4L_testExon_yesCL_2026_01_29__16_32_53
+    # experiment_folder = "exprmnt_2026_01_29__16_30_52" # EMPRAIPsi_ASCOT_afterReview_CNN4L_varExon_noCL_2026_01_29__16_30_52
+    # experiment_folder = "exprmnt_2026_01_29__16_30_04" # EMPRAIPsi_ASCOT_afterReview_CNN4L_varExon_yesCL_2026_01_29__16_30_04
+    
+    # experiment_folder = "exprmnt_2026_01_29__16_24_34" # EMPRAIPsi_ASCOT_afterReview_CNN6L_testExon_noCL_2026_01_29__16_24_34
+    # experiment_folder = "exprmnt_2026_01_29__16_26_50" # EMPRAIPsi_ASCOT_afterReview_CNN6L_testExon_yesCL_2026_01_29__16_26_50
+    # experiment_folder = "exprmnt_2026_01_29__16_23_20" # EMPRAIPsi_ASCOT_afterReview_CNN6L_varExon_noCL_2026_01_29__16_23_20
+    experiment_folder = "exprmnt_2026_01_29__16_22_45" # EMPRAIPsi_ASCOT_afterReview_CNN6L_varExon_yesCL_2026_01_29__16_22_45
+    
+    
     
     
     output_subdir = f"{root_path}/files/results/{experiment_folder}/ensemble_evaluation_from_valdiation"
