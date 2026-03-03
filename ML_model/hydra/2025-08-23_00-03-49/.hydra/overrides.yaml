@@ -1,0 +1,17 @@
+- task=introns_cl
+- embedder=resnet
+- loss=supcon
+- tokenizer=onehot_tokenizer
+- tokenizer.seq_len=524288
+- task.global_batch_size=2048
+- trainer.max_epochs=2
+- trainer.val_check_interval=1.0
+- optimizer=sgd
+- trainer.devices=1
+- logger.name=resnet101_supcon_sgd_2_20250823_000330
+- embedder.maxpooling=True
+- logger.notes=resnet test supcon 2 aug sgd
+- dataset.n_augmentations=2
+- dataset.train_data_file=/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/train_ExonSeq_filtered.pkl
+- dataset.val_data_file=/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/val_ExonSeq_filtered.pkl
+- dataset.test_data_file=/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/test_ExonSeq_filtered.pkl

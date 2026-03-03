@@ -6,10 +6,24 @@ defaults:
   - trainer: default_trainer
   - callbacks: default_callbacks
   - tokenizer: onehot_tokenizer
-  - loss: MTSpliceBCELoss  # Custom loss for PSI regression
+  - loss: MTSpliceBCELoss # multitissue_MSE  # Custom loss for PSI regression
   - model: simclr
   - aux_models: psi_regression_model 
-  - optimizer: sgd
+  - optimizer: adam
+
+
+# defaults:
+#   - _self_
+#   - embedder: ntv2
+#   - dataset: psi_dataset  # Custom dataset for PSI regression
+#   - task: psi_regression_task
+#   - trainer: default_trainer
+#   - callbacks: default_callbacks
+#   - tokenizer: hf_tokenizer
+#   - loss: MTSpliceBCELoss # multitissue_MSE  # Custom loss for PSI regression
+#   - model: simclr
+#   - aux_models: psi_regression_model 
+#   - optimizer: sgd
 
 hydra:
   run:
@@ -30,6 +44,6 @@ logger:
   group: ${task._name_}
   notes: ""
   save_dir: ${wandb.dir}  
-  log_model: true
+  log_model: false
   settings:
     init_timeout: 600

@@ -24,7 +24,7 @@ def is_list(x):
 
 # def find_contrastive_root(start_path: Path = Path(__file__)) -> Path:
 #     for parent in start_path.resolve().parents:
-#         if parent.name == "Contrastive_Learnings":
+#         if parent.name == "Contrastive_Learning":
 #             return parent
 #     raise RuntimeError("Could not find 'Contrastive_Learning' directory.")
 

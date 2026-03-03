@@ -1,0 +1,11 @@
+- task=introns_cl
+- task.global_batch_size=8192
+- trainer.max_epochs=5
+- trainer.val_check_interval=1.0
+- tokenizer=custom_tokenizer
+- embedder=resnet
+- embedder.maxpooling=true
+- optimizer=sgd
+- trainer.devices=1
+- logger.name=cl_20250511_210649
+- logger.notes=interpretable encoder trial

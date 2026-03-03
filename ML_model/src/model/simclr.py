@@ -16,20 +16,17 @@ class SimCLRModule(nn.Module):
             hidden_dim=self.hidden_dim ,
             output_dim=self.projection_dim,
         )
-
-    # def forward(self, x):
-    #     features = self.encoder(x)
-    #     embedding = features.mean(dim=1)
-    #     z = self.projection_head(embedding)
-    #     return z
     
     def forward(self, seql, seqr=None):
         if self.encoder.__class__.__name__ == "MTSpliceEncoder":
             # seql and seqr already have shape: (B, 4, L)
-            embedding = self.encoder(seql, seqr)
+            embedding = self.encoder(seql.float(), seqr.float())
         else:
             # For other encoders, seql is the full input
             embedding = self.encoder(seql)
+            if type(self.encoder).__name__ == "NTv2Embedder":
+                # NTv2Embedder returns (B, L, D), we take mean over L
+                embedding = embedding.mean(dim=1)
             # embedding = features.mean(dim=1)
         z = self.projection_head(embedding)
         return z

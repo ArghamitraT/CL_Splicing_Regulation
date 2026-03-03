@@ -1,0 +1,16 @@
+- task=introns_cl
+- embedder=resnet
+- loss=supcon
+- tokenizer=custom_tokenizer
+- task.global_batch_size=8192
+- trainer.max_epochs=5
+- trainer.val_check_interval=1.0
+- optimizer=sgd
+- trainer.devices=1
+- logger.name=cl_supconAllaug20250707_211041
+- embedder.maxpooling=True
+- logger.notes=try
+- dataset.n_augmentations=all
+- dataset.train_data_file=/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/train_3primeIntron_filtered.pkl
+- dataset.val_data_file=/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/val_3primeIntron_filtered.pkl
+- dataset.test_data_file=/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/test_3primeIntron_filtered.pkl

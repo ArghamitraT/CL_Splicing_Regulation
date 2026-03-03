@@ -102,7 +102,10 @@ class PSIRegressionModel(pl.LightningModule):
         # # Filter out invalid values
         # y_pred = y_pred[valid_mask]
         # y = y[valid_mask]
+        
         loss = self.loss_fn(y_pred, y)
+        
+        
         # print(f"batch {batch_idx}, loss {loss}")
         self.log("train_loss", loss, on_epoch=True, on_step=True, prog_bar=True, sync_dist=True)
         for metric_fn in self.metric_fns:

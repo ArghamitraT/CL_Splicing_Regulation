@@ -1,0 +1,15 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=5
+- trainer.val_check_interval=0.5
+- dataset.seq_len=1000
+- dataset.data_file=/home/atalukder/mnt_NYGC/data/fine_tuning/Psi_values/psi_Lung_exon_sequences_dict_50to1000bp.pkl
+- tokenizer=custom_tokenizer
+- embedder=resnet
+- embedder.maxpooling=true
+- optimizer=sgd
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=false
+- aux_models.warm_start=false
+- trainer.devices=1
+- logger.name=Psi_exon_20250412_171630
+- logger.notes=intron filtered training

@@ -1,0 +1,111 @@
+wandb:
+  api_key: 6c6c3f0e63c48c1d9b78f03948c5eb5a4f828a66
+  dir: ./wandb/
+logger:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  name: Psi__trial__20251022_171937
+  id: ${task._name_}-${.name}
+  project: PSI_REGRESSION
+  group: ${task._name_}
+  notes: mtspliceBCEresnet variable
+  save_dir: ${wandb.dir}
+  log_model: false
+  settings:
+    init_timeout: 600
+embedder:
+  _name_: MTSplice
+  name_or_path: MTSplice
+  seq_len: 400
+  motif_path: ${oc.env:CONTRASTIVE_ROOT}/data/motifs/cisBP_mouse.meme
+  maxpooling: true
+  stride: 1
+  pad_motif: 4
+  num_of_response: 1
+dataset:
+  seq_len: 201
+  train_files:
+    3p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+    5p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_5primeintron_sequences_dict.pkl
+    exon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_exon_sequences_dict.pkl
+    intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_train_Retina___Eye_psi_MERGED.pkl
+  val_files:
+    3p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+    5p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_5primeintron_sequences_dict.pkl
+    exon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_exon_sequences_dict.pkl
+    intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_val_Retina___Eye_psi_MERGED.pkl
+  test_files:
+    3p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_3primeintron_sequences_dict.pkl
+    5p: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psiWmean_intron_sequences_dict.pkl
+    exon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_exon_sequences_dict.pkl
+    intronexon: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/psi_variable_Retina___Eye_psi_MERGED.pkl
+  batch_size_per_device: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}
+    * ${trainer.num_nodes}}}
+  num_workers: ${optimal_workers:}
+  cache_dir: ../data
+task:
+  _name_: psi_regression
+  metrics:
+  - r2_score
+  val_check_interval: 0.5
+  global_batch_size: 2048
+  pretraining_weights: ''
+trainer:
+  _target_: lightning.pytorch.Trainer
+  max_epochs: 20
+  callbacks: null
+  devices: 1
+  log_every_n_steps: 1
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  val_check_interval: 0.5
+  gradient_clip_val: 1.0
+  precision: 16-mixed
+  num_sanity_val_steps: 0
+  num_nodes: 1
+  accumulate_grad_batches: ${div_up:${task.global_batch_size}, ${eval:${trainer.devices}
+    * ${dataset.batch_size_per_device} * ${trainer.num_nodes}}}
+callbacks:
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    dirpath: checkpoints/
+    filename: ${task._name_}/${embedder._name_}/${dataset.seq_len}/best-checkpoint
+    save_top_k: 1
+    save_last: true
+    verbose: true
+    monitor: val_loss
+    mode: min
+  learning_rate_monitor:
+    _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+tokenizer:
+  _target_: src.tokenizers.onehot_tokenizer.FastOneHotPreprocessor
+  seq_len: 400
+  padding: right
+loss:
+  _target_: src.loss.MTSpliceBCELoss.MTSpliceBCELoss
+  csv_dir: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/ASCOT_finetuning/
+model:
+  name_or_path: simclr
+  hidden_dim: 512
+  projection_dim: 128
+aux_models:
+  name_or_path: psi_regression
+  mode: mtsplice
+  weights_threeprime: exprmnt_2025_10_20__00_59_06
+  weights_fiveprime: exprmnt_2025_10_20__01_00_10
+  weights_exon: exprmnt_2025_10_20__01_00_54
+  mtsplice_weights: exprmnt_2025_07_30__13_10_26
+  mtsplice_BCE: 1
+  hidden_dim: 512
+  output_dim: 1
+  freeze_encoder: false
+  warm_start: false
+  train_mode: train
+  eval_weights: ''
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+  betas:
+  - 0.9
+  - 0.999
+  eps: 1.0e-07

@@ -1,4 +1,4 @@
 _target_: torch.optim.Adam
-lr: 1e-2  # Initial learning rate
-# weight_decay: 0.0  # Weight decay for adam|lamb; should use AdamW instead if desired
-betas: [0.9, 0.999]
+lr: 1e-3          # <-- MUST CHANGE: Was 1e-2, now 1e-3
+betas: [0.9, 0.999] # <-- This was correct
+eps: 1e-7

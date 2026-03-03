@@ -1,0 +1,4 @@
+- task=introns_cl
+- embedder=resnet
+- loss=supcon
+- tokenizer=onehot_tokenizer

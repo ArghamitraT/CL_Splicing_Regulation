@@ -49,16 +49,13 @@ class weightedSupConLoss(nn.Module):
             
             # name_to_global_idx = {name: i for i, name in enumerate(all_exon_names)} #given each exon name an index
             num_total_exons = len(all_exon_names)
-            # Only want the alternate exons, ignore constitutive
             alt_exon_names = weight_matrix_df.index.tolist() # a list of all alternate exon names in the current division from weight matrix
 
-            # MAD is a square matrix comparing MAD of PSI between exons i and j, averaged across all species
             mad_tensor = torch.from_numpy(
                 weight_matrix_df.drop(columns=['D_score']).values
             ).float() # drops the D_score column and converts the rest to a tensor
             alt_d_scores = torch.from_numpy(weight_matrix_df['D_score'].values).float()
 
-            # Initialize a tensor of all zeros for the constitutive exons, add the D_score for alt exons
             global_d = torch.zeros(num_total_exons)
             alt_global_indices = torch.tensor([name_to_global_idx.get(name) for name in alt_exon_names])
             global_d[alt_global_indices] = alt_d_scores #global d is the MAD to constitutive exons from alternating exons arranged as alt index 

@@ -1,0 +1,13 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=15
+- trainer.val_check_interval=0.5
+- embedder=resnet101
+- tokenizer=custom_tokenizer
+- embedder.maxpooling=true
+- optimizer=sgd
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=false
+- aux_models.warm_start=true
+- aux_models.mode=3p
+- logger.name=Psi_supcon2augAllrestnet101__20250721_203508
+- logger.notes=supcon loss 2 aug resnet 101

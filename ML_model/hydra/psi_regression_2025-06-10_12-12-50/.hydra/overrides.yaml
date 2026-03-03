@@ -1,0 +1,13 @@
+- task.global_batch_size=2048
+- trainer.max_epochs=1
+- trainer.val_check_interval=0.5
+- embedder=resnet
+- tokenizer=custom_tokenizer
+- embedder.maxpooling=true
+- optimizer=sgd
+- optimizer.lr=1e-3
+- aux_models.freeze_encoder=true
+- aux_models.warm_start=true
+- aux_models.mode=intronexon
+- logger.name=Psi_3p__20250610_121240
+- logger.notes=try

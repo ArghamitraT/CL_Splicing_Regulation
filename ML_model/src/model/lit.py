@@ -39,17 +39,17 @@ class LitModel(pl.LightningModule):
         """Called at the end of each training epoch to log the time taken."""
         epoch_time = time.time() - self.epoch_start_time
         # Log memory usage
-        cpu_memory = torch.cuda.memory_reserved(0) / 1e9 if torch.cuda.is_available() else 0  # GPU memory in GB
-        gpu_memory = torch.cuda.memory_allocated(0) / 1e9 if torch.cuda.is_available() else 0  # GPU memory in GB
-        total_cpu_memory = torch.cuda.max_memory_reserved(0) / 1e9 if torch.cuda.is_available() else 0  # Peak GPU memory
+        # cpu_memory = torch.cuda.memory_reserved(0) / 1e9 if torch.cuda.is_available() else 0  # GPU memory in GB
+        # gpu_memory = torch.cuda.memory_allocated(0) / 1e9 if torch.cuda.is_available() else 0  # GPU memory in GB
+        # total_cpu_memory = torch.cuda.max_memory_reserved(0) / 1e9 if torch.cuda.is_available() else 0  # Peak GPU memory
 
         self.log("epoch_time", epoch_time, prog_bar=True, sync_dist=True)
-        self.log("gpu_memory_usage", gpu_memory, prog_bar=True, sync_dist=True)
-        self.log("gpu_reserved_memory", cpu_memory, prog_bar=True, sync_dist=True)
-        self.log("gpu_peak_memory", total_cpu_memory, prog_bar=True, sync_dist=True)
+        # self.log("gpu_memory_usage", gpu_memory, prog_bar=True, sync_dist=True)
+        # self.log("gpu_reserved_memory", cpu_memory, prog_bar=True, sync_dist=True)
+        # self.log("gpu_peak_memory", total_cpu_memory, prog_bar=True, sync_dist=True)
 
         print(f"\nEpoch {self.current_epoch} took {epoch_time:.2f} seconds.")
-        print(f"GPU Memory Used: {gpu_memory:.2f} GB, Reserved: {cpu_memory:.2f} GB, Peak: {total_cpu_memory:.2f} GB")
+        # print(f"GPU Memory Used: {gpu_memory:.2f} GB, Reserved: {cpu_memory:.2f} GB, Peak: {total_cpu_memory:.2f} GB")
         torch.cuda.empty_cache()
 
     
@@ -76,18 +76,11 @@ class LitModel(pl.LightningModule):
     ## (AT) dynamic view code
     def training_step(self, batch, batch_idx):
 
-        # import os
-        # print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
-        # print("torch.cuda.device_count():", torch.cuda.device_count())
-        # if torch.cuda.is_available():
-        #     print("Using logical cuda:0 →", torch.cuda.get_device_name(0))
-
-
         import time
         start = time.time()
 
         # Unpack all views and exon_names from batch
-        *views, exon_names = batch
+        *views, exon_ids, exon_names = batch
         # print(f"[Batch {batch_idx}] Number of views: {len(views)}")
 
 
@@ -102,10 +95,16 @@ class LitModel(pl.LightningModule):
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
-        if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+        loss_func_name = self.loss_fn.__class__.__name__
+        if 'SupConLoss' in loss_func_name:
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
-            exon_ids = torch.tensor(exon_names, device=features.device)
-            loss = self.loss_fn(features)
+            # exon_names = torch.tensor(exon_names, device=features.device)
+            if loss_func_name == 'weightedSupConLoss':
+                division = 'train'
+                loss = self.loss_fn(features, exon_names, division)
+            else:
+                loss = self.loss_fn(features)
         else:
             if len(z_views) != 2:
                 raise ValueError(
@@ -126,6 +125,20 @@ class LitModel(pl.LightningModule):
         step_time = time.time() - start
         # print(f"⏱️ Batch {batch_idx}: {step_time:.2f}s")
 
+        # DO NOT ERASE (AT)
+        # --- GPU memory logging every N batches ---
+        # if batch_idx % 50 == 0 and torch.cuda.is_available():
+        #     torch.cuda.synchronize()
+        #     allocated = torch.cuda.memory_allocated(0) / (1024**3)
+        #     reserved  = torch.cuda.memory_reserved(0) / (1024**3)
+        #     peak_alloc = torch.cuda.max_memory_allocated(0) / (1024**3)
+        #     peak_reserved = torch.cuda.max_memory_reserved(0) / (1024**3)
+        #     print(f"[Batch {batch_idx}] "
+        #         f"Allocated: {allocated:.2f} GiB | "
+        #         f"Reserved: {reserved:.2f} GiB | "
+        #         f"PeakAlloc: {peak_alloc:.2f} GiB | "
+        #         f"PeakReserved: {peak_reserved:.2f} GiB")
+
         return loss
 
 
@@ -135,7 +148,8 @@ class LitModel(pl.LightningModule):
         start = time.time()
 
         # Unpack all views and exon_names from batch
-        *views, exon_names = batch
+        # *views, exon_names = batch
+        *views, exon_ids, exon_names = batch
 
         # Forward pass for all views
         start_fwd = time.time()
@@ -147,10 +161,21 @@ class LitModel(pl.LightningModule):
         # print(f"🧠 Forward pass took {time.time() - start_fwd:.2f}s")
 
         # Loss computation and safety checks
-        if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
+        #     features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
+        #     exon_ids = torch.tensor(exon_names, device=features.device)
+        #     loss = self.loss_fn(features)
+        # Loss computation and safety checks
+        loss_func_name = self.loss_fn.__class__.__name__
+        if 'SupConLoss' in loss_func_name:
+        # if str(self.loss_fn) == 'SupConLoss()' or self.loss_fn.__class__.__name__ == 'SupConLoss':
             features = torch.stack(z_views, dim=1)  # [batch, n_views, emb_dim]
-            exon_ids = torch.tensor(exon_names, device=features.device)
-            loss = self.loss_fn(features)
+            # exon_names = torch.tensor(exon_names, device=features.device)
+            if loss_func_name == 'weightedSupConLoss':
+                division = 'val'
+                loss = self.loss_fn(features, exon_names, division)
+            else:
+                loss = self.loss_fn(features)
         else:
             if len(z_views) != 2:
                 raise ValueError(

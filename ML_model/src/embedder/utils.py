@@ -6,7 +6,6 @@ from src.embedder.resnet101 import ResNet1D101
 from src.embedder.InterpretableEncoder import InterpretableEncoder1D  
 from src.embedder.tisfm import TISFMEncoder
 from src.embedder.mtsplice.mtsplice import MTSpliceEncoder # (AT)
-from src.embedder.borzoi import BorzoiEmbedder
 
 
 EMBEDDERS = {
@@ -15,8 +14,7 @@ EMBEDDERS = {
     'ResNet1D101': ResNet1D101,
     'InterpretableEncoder1D': InterpretableEncoder1D,
     'TISFM': TISFMEncoder,
-    'MTSplice': MTSpliceEncoder, # (AT)
-    'BorzoiEmbedder': BorzoiEmbedder
+    'MTSplice': MTSpliceEncoder # (AT)
 }
 
 

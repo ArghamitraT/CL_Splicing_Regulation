@@ -1,0 +1,9 @@
+{
+    "name_or_path": "MTSplice",
+    "seq_len": 400,
+    "motif_path": "/mnt/home/at3836/Contrastive_Learning/data/motifs/cisBP_mouse.meme",
+    "maxpooling": true,
+    "stride": 1,
+    "pad_motif": 4,
+    "num_of_response": 1
+}
