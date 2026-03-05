@@ -42,9 +42,8 @@ def create_prg_file(prg_file_path):
             loss={loss_name} \\
             embedder.maxpooling={maxpooling} \\
             optimizer={optimizer} \\
-            dataset.train_data_file={train_file} \\
-            dataset.val_data_file={val_file} \\
-            dataset.test_data_file={test_file} \\
+            dataset={dataset}
+            dataset.n_augmentations={augmentations}
             ++wandb.dir="'{wandb_dir}'"\\
             ++logger.name="'{server_name}{slurm_file_name}{trimester}'"\\
             ++callbacks.model_checkpoint.dirpath="'{checkpoint_dir}'"\\
@@ -113,7 +112,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'Test-CLSupcon2augOne'
+slurm_file_name = 'CLADES_full_run'
 loss_name = "supcon"
 gpu_num = 1
 hour=1
@@ -121,28 +120,33 @@ memory=100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
 val_check_interval = 0.5
-global_batch_size = 8192
-embedder="resnet"
-tokenizer="custom_tokenizer"
-max_epochs = 2
+global_batch_size = 2048
+dataset = "introns"
+augmentations = 10
+embedder="mtsplice"
+tokenizer="onehot_tokenizer"
+max_epochs = 25
 maxpooling = True
-optimizer = "sgd"
-TRAIN_FILE="train_3primeIntron_filtered.pkl"
-VAL_FILE="val_3primeIntron_filtered.pkl"
-TEST_FILE="test_3primeIntron_filtered.pkl"
+optimizer = "adam"
+# TRAIN_FILE="train_3primeIntron_filtered.pkl"
+# VAL_FILE="val_3primeIntron_filtered.pkl"
+# TEST_FILE="test_3primeIntron_filtered.pkl"
 # TRAIN_FILE="train_ExonSeq_filtered.pkl"
 # VAL_FILE="val_ExonSeq_filtered.pkl"
 # TEST_FILE="test_ExonSeq_filtered.pkl"
 readme_comment = (
-    "Test Run: SupCon, 2 augmentation trial, one mode, 3p intron"
+    "CLADES re-run. Test with 10 augmentations, all 25 epochs"
 )
-wandb_logger_NOTES="test run SupCon one mode two aug" ## do NOT use any special character or new line
+wandb_logger_NOTES="Test CLADES run 10 aug 25 epochs" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
-train_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
-val_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
-test_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
+# Use to choose specific dataset, otherwise, stick with default for introns.yaml and psi_dataset.yaml
+# Remember to update create_prg_file() as well
+
+# train_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
+# val_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
+# test_file = "/gpfs/commons/home/atalukder/"+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
 
 
 name = slurm_file_name
