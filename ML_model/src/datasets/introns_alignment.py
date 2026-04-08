@@ -179,6 +179,6 @@ class ContrastiveIntronsDataset(Dataset):
             augmentations = [intronic_sequences[sp] for sp in species_sample]
 
 
-        return augmentations, exon_id, exon_name  # return exon_name for debugging
+        return augmentations, exon_id, exon_name, species_sample  # return exon_name and species list
 
 

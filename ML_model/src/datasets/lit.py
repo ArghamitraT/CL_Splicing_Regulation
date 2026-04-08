@@ -24,6 +24,7 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
 
         exon_ids = [item[1] for item in batch]
         exon_names = [item[2] for item in batch]  # for debugging
+        species_list = [item[3] for item in batch] # for species weighting
         min_n_views = min(len(item[0]) for item in batch)
         # For each sample, take only the first min_n_views augmentations
         # exon_ids = [item[1] for item in batch]
@@ -44,7 +45,7 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
                     views.append((seql, seqr))  # keep view-wise grouping
                 
                 # output = (*views, exon_ids)
-                output = (*views, exon_ids, exon_names)
+                output = (*views, exon_ids, exon_names, species_list)
 
                     # tokenized_views = [
                     # [ (tokenizer(view['acceptor']), tokenizer(view['donor'])) for view in view_list ]
@@ -53,17 +54,17 @@ def make_collate_fn(tokenizer, padding_strategy, embedder_name):
             else:
                 tokenized_views = [tokenizer(view) for view in view_lists]
                 # output = (*tokenized_views, exon_ids)
-                output = (*tokenized_views, exon_ids, exon_names)
+                output = (*tokenized_views, exon_ids, exon_names, species_list)
         elif callable(tokenizer):  # HuggingFace-style
             tokenized_views = [
                 tokenizer(view, return_tensors='pt', padding=padding_strategy).input_ids
                 for view in view_lists
             ]
             # output = (*tokenized_views, exon_ids)
-            output = (*tokenized_views, exon_ids, exon_names)
+            output = (*tokenized_views, exon_ids, exon_names, species_list)
         else:
             # output = (*view_lists, exon_ids)
-            output = (*view_lists, exon_ids, exon_names)       
+            output = (*view_lists, exon_ids, exon_names, species_list)       
         
         # print(f"👷 Worker {info.id if info else 'MAIN'}: Collate time = {time.time() - start:.2f}s")
         # token_time = time.time() - token_start
