@@ -80,7 +80,7 @@ class LitModel(pl.LightningModule):
         start = time.time()
 
         # Unpack all views and exon_names from batch
-        *views, exon_ids, exon_names = batch
+        *views, exon_ids, exon_names, species_list = batch
         # print(f"[Batch {batch_idx}] Number of views: {len(views)}")
 
 
@@ -103,6 +103,9 @@ class LitModel(pl.LightningModule):
             if loss_func_name == 'weightedSupConLoss':
                 division = 'train'
                 loss = self.loss_fn(features, exon_names, division)
+            elif loss_func_name == 'hierSupConLoss':
+                division = 'train'
+                loss = self.loss_fun(features, exon_names, division, species_list)
             else:
                 loss = self.loss_fn(features)
         else:
@@ -149,7 +152,7 @@ class LitModel(pl.LightningModule):
 
         # Unpack all views and exon_names from batch
         # *views, exon_names = batch
-        *views, exon_ids, exon_names = batch
+        *views, exon_ids, exon_names, species_list = batch
 
         # Forward pass for all views
         start_fwd = time.time()
@@ -174,6 +177,9 @@ class LitModel(pl.LightningModule):
             if loss_func_name == 'weightedSupConLoss':
                 division = 'val'
                 loss = self.loss_fn(features, exon_names, division)
+            elif loss_func_name == 'hierSupConLoss':
+                division = 'val'
+                loss = self.loss_fn(features, exon_names, division, species_list)
             else:
                 loss = self.loss_fn(features)
         else:
