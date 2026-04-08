@@ -1,4 +1,4 @@
-seq_len: 199  
+seq_len: 400  
 # train_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/ASCOT_data/train_ASCOT_merged_filtered_min30Views.pkl
 # val_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/ASCOT_data/val_ASCOT_merged_filtered_min30Views.pkl
 # test_data_file: ${oc.env:CONTRASTIVE_ROOT}/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/ASCOT_data/test_ASCOT_merged_filtered_min30Views.pkl
