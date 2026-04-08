@@ -9,13 +9,13 @@ import torch.nn as nn
 import pickle
 import pandas as pd
 
-class weightedSupConLoss(nn.Module):
+class hierSupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
     def __init__(self, temperature=0.07, contrast_mode='one',
                  base_temperature=0.07, correlation_dir=None,
                  debug_mode = False):
-        super(weightedSupConLoss, self).__init__()
+        super(hierSupConLoss, self).__init__()
         self.temperature = temperature
         self.contrast_mode = contrast_mode
         self.base_temperature = base_temperature
@@ -117,7 +117,7 @@ class weightedSupConLoss(nn.Module):
         self.is_alternate_masks["train"] = is_alt_mask.to(self.device)
 
 
-    def forward(self, features, exon_name, division,labels=None, mask=None):
+    def forward(self, features, exon_name, division, species_list, labels=None, mask=None):
         """Compute loss for model. If both `labels` and `mask` are None,
         it degenerates to SimCLR unsupervised loss:
         https://arxiv.org/pdf/2002.05709.pdf
@@ -586,7 +586,7 @@ class weightedSupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         loss = loss.view(anchor_count, batch_size).mean()
-        print(f"🦀 weightedSupConLoss: {loss.item():.4f}")
+        print(f"🦀 hierSupConLoss: {loss.item():.4f}")
 
         return loss
             
