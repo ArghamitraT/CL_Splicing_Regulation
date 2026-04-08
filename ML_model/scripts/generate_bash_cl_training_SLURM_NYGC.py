@@ -29,7 +29,8 @@ def create_prg_file(prg_file_path):
     set -e
     cd $HOME
     source ~/.bashrc
-    conda activate cl_splicing_regulation3
+    conda activate cl_splicing_regulation4
+    nvidia-smi
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.cl_training \\
@@ -122,7 +123,7 @@ task = "introns_cl"
 val_check_interval = 0.5
 global_batch_size = 2048
 dataset = "introns"
-augmentations = 10
+augmentations = 2
 embedder="mtsplice"
 tokenizer="onehot_tokenizer"
 max_epochs = 25
@@ -135,9 +136,9 @@ optimizer = "adam"
 # VAL_FILE="val_ExonSeq_filtered.pkl"
 # TEST_FILE="test_ExonSeq_filtered.pkl"
 readme_comment = (
-    "CLADES re-run. Test with 10 augmentations, all 25 epochs"
+    "CLADES re-run. Test with 2 augmentations, all 25 epochs"
 )
-wandb_logger_NOTES="Test CLADES run 10 aug 25 epochs" ## do NOT use any special character or new line
+wandb_logger_NOTES="Test CLADES run 2 aug 25 epochs" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
