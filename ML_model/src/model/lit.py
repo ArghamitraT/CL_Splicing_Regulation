@@ -105,7 +105,7 @@ class LitModel(pl.LightningModule):
                 loss = self.loss_fn(features, exon_names, division)
             elif loss_func_name == 'hierSupConLoss':
                 division = 'train'
-                loss = self.loss_fun(features, exon_names, division, species_list)
+                loss = self.loss_fn(features, exon_names, division, species_list)
             else:
                 loss = self.loss_fn(features)
         else:
