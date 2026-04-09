@@ -137,12 +137,21 @@ class hierSupConLoss(nn.Module):
         # MODIFICATION FOR HIERARCHICAL WEIGHTED LOSS STARTS HERE
         ################################################################
 
-        # Outer loop: loop through all species in current batch species_list
-        #   Inner loop: repeat this anchor_count times
-        # Ex. For anchor_count = 2, anchor_species = ["hg38", "hg38", "mm10", "mm10", "panTro4", "panTro4"]
-        anchor_species = [sp for sp in species_list for _ in range(anchor_count)]
+        # species_list is a list of lists
+        # For each batch, there are groupings of views (pairs)
+        # Ex. [ ["hg38", "mm10"], ["hg38", "panTro4"], ["hg38", "oryLat2"] ]
         
-        contrast_species = [sp for sp in species_list for _ in range(contrast_count)]
+        # Collect contrasitve species
+        # For each grouping (sp_list), take each species to serve as a contrastive sample
+        contrast_species = [sp_list[i] for sp_list in species_list for i in range(contrast_count)]
+        
+        # Collect list of anchor species
+        if self.contrast_mode == 'one':
+            # Always just view 0
+            anchor_species = [sp_list[0] for sp_list in species_list]
+        elif self.contrast_mode == 'all':
+            anchor_species = [sp for sp_list in species_list for sp in sp_list]
+        
         weights = self.compute_weights(anchor_species, contrast_species)
 
 
