@@ -127,7 +127,9 @@ if __name__ == "__main__":
 
     
     # Metadata After Dropping
+    
     print("\n\n\n")
     print_basic_metadata(tm_clean)
 
-    tm.to_csv("/gpfs/commons/home/nkeung/tabula_muris_data/bam_paths.csv", index=False)
+    tm_clean = tm_clean.drop(columns=["run_date", "has_bam"])
+    tm_clean.to_csv("/gpfs/commons/home/nkeung/tabula_muris_data/bam_paths.csv", index=False)
