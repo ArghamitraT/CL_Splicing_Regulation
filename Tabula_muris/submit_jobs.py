@@ -12,12 +12,18 @@ hour = 2        # Modified in main. See below
 memory = 128
 nthred = 8
 
-data_dir = "/gpfs/commons/home/nkeung/tabula_sapiens"
-metadata_file = os.path.join(data_dir, "bam_paths.tsv")
-cell_counts_file = os.path.join(data_dir, "cell_counts.tsv")
-slurm_dir = os.path.join(data_dir, "jobs")
+data_dir = "/gpfs/commons/home/nkeung/tabula_muris_data"
+metadata_file = os.path.join(data_dir, "bam_paths.csv")
+cell_counts_file = os.path.join(data_dir, "cell_counts.csv")
 
-code_dir = "/gpfs/commons/home/nkeung/Contrastive_Learning/code/Tabula_sapiens"
+slurm_dir = os.path.join(data_dir, "jobs")
+if not os.path.exists(slurm_dir):
+    os.makedirs(slurm_dir)
+rmats_results_dir = os.path.join(data_dir, "rmats")
+if not os.path.exists(rmats_results_dir):
+    os.makedirs(rmats_results_dir)
+
+code_dir = "/gpfs/commons/home/nkeung/Contrastive_Learning/code/Tabula_muris"
 
 # -------------------- CHECK PROGRESS --------------------
 
@@ -46,7 +52,7 @@ def create_prg(cell_type):
     WORKDIR={code_dir}
     cd $WORKDIR
     echo "Running compile_txt.py"
-    python compile_txt.py --cell_type "{cell_type}" --metadata {metadata_file} --main_dir {data_dir}
+    python compile_txt.py --cell_type "{cell_type}" --metadata {metadata_file} --main_dir {rmats_results_dir}
     echo "compile_txt.py finished  with exit code $? at $(date)"
     conda deactivate
 
@@ -54,7 +60,7 @@ def create_prg(cell_type):
     echo "Starting rMATS at $(date)"
     source $HOME/miniconda3/etc/profile.d/conda.sh
     conda activate rmats_testing
-    WORKDIR={os.path.join(data_dir, cell_type.replace(" ", "_"))}
+    WORKDIR={os.path.join(rmats_results_dir, cell_type.replace(" ", "_"))}
     cd $WORKDIR
     rmats.py --gtf "/gpfs/commons/home/nkeung/gene_annotations/gencode.v45.primary_assembly.annotation.gtf" \\
         --b1 b1.txt \\
@@ -70,7 +76,7 @@ def create_prg(cell_type):
     echo "Starting post_process.py"
     WORKDIR={code_dir}
     cd $WORKDIR
-    python post_process.py --cell_type "{cell_type}" --main_dir {data_dir}
+    python post_process.py --cell_type "{cell_type}" --main_dir {rmats_results_dir}
     echo "Job done"
     """
 
@@ -115,22 +121,26 @@ def submit_job(cell):
                     
 
 def main():
-    ts = pd.read_csv(metadata_file, sep="\t")
-    cells = ts["cell_type"].unique().tolist()
+    ts = pd.read_csv(metadata_file)
+    cells = ts["cell_ontology_class"].unique().tolist()
 
-    counts = pd.read_csv(cell_counts_file, sep="\t")
+    counts = pd.read_csv(cell_counts_file)
     for cell in cells:
 
         safe_cell = cell.replace(" ", "_")
-        if safe_cell in completed_cells or cell not in counts['cell_type'].values:
+        if safe_cell in completed_cells or cell not in counts['cell_ontology_class'].values:
             continue
 
         minutes_per_cell = 54 / 569  # runtime per cell in minutes
-        num_cells = counts.loc[counts['cell_type'] == cell, 'count'].iloc[0]
+        num_cells = counts.loc[counts['cell_ontology_class'] == cell, 'count'].iloc[0]
         estimated_minutes = int(num_cells * minutes_per_cell * 1.2)  # add 20% buffer
         global hour
         hour = max(1, estimated_minutes // 60 + 1)  # round up to hours, min 1h
 
+        # Make dir for scripts if it does not exist
+        script_path = os.path.join(slurm_dir, "scripts")
+        if not os.path.exists(script_path):
+            os.makedirs(script_path)
 
         submit_job(cell)
 

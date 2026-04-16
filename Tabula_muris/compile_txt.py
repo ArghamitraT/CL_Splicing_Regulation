@@ -14,13 +14,13 @@ def main():
 
     # Tabula Sapiens metadata
     metadata_file = args.metadata   # "/gpfs/commons/home/nkeung/tabula_sapiens/bam_paths.tsv"
-    ts = pd.read_csv(metadata_file, sep="\t")
+    ts = pd.read_csv(metadata_file)
     # Set cell type
     cell_type = args.cell_type                    # "pericyte"
     safe_cell = cell_type.replace(" ", "_")         # safe cell name for directories
 
     # Filter only cell_types of type "pericyte"
-    ts = ts[(ts["cell_type"] == cell_type) & (ts["path_exists"])]
+    ts = ts[(ts["cell_ontology_class"] == cell_type)]
     paths = ts["bam_path"].tolist()
     num_cells = len(paths)
     print(f"{num_cells} to process for {cell_type}\n")
