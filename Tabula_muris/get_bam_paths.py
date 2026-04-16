@@ -69,7 +69,9 @@ def pick_latest_date(bam_df):
 if __name__ == "__main__":
 
     DATA_DIR = "/gpfs/commons/projects/knowles_singlecell_splicing/TabulaSenis/data/AWS/"
-    tm = pd.read_csv(os.path.join(DATA_DIR, "metadata", "tabula-muris-senis-facs-official-raw-obj__cell-metadata__cleaned_ids.csv"))
+    tm = pd.read_csv(os.path.join(DATA_DIR, "metadata", "tabula-muris-senis-facs-official-raw-obj__cell-metadata__cleaned_ids.csv"),
+                     dtype={5:str})
+    # Read "cell_ontology_id" as a string and save it like that
 
     # Initial metadata about dataset
     print_basic_metadata(tm)
@@ -112,8 +114,12 @@ if __name__ == "__main__":
 
     
     # Drop rows with missing BAM paths
-    print("---------- After Dropping Missing Cells ----------")
+    print("\nDropping rows with missing BAM")
     tm_clean = tm[tm["bam_path"].notna()].copy()
+
+    # Drop rows with missing cell ontology classes
+    print("\nDropping rows with missing cell ontology classes")
+    tm_clean = tm_clean[tm_clean["cell_ontology_class"].notna()]
 
     # Final sanity checks
     dup_check = tm_clean["clean_cell_id"].duplicated().sum()
