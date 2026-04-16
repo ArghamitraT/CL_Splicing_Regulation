@@ -1,39 +1,49 @@
-"""
-Checks the sequence length of the first line in each BAM file for every BAM file in the dataset.
-"""
-
-import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 import pandas as pd
+import pysam
 
-df = pd.read_csv("/gpfs/commons/home/nkeung/tabula_sapiens/bam_paths.tsv", sep="\t")
-df = df[df["path_exists"]]
-
+df = pd.read_csv("/gpfs/commons/home/nkeung/tabula_muris_data/bam_paths.csv")
 paths = df["bam_path"].tolist()
 
 def get_read_length(path):
     try:
-        cmd = f"samtools view {path} | head -n 1 | awk '{{print length($10)}}'"
-        length = int(subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode().strip())
-        return length
-    except subprocess.CalledProcessError:
+        with pysam.AlignmentFile(path, "rb") as bam:
+            for read in bam:
+                return read.query_length
+    except:
         return None
 
-read_lengths = set()
-terminate_flag = False
-
 with ThreadPoolExecutor(max_workers=6) as executor:
-    future_to_bam = {executor.submit(get_read_length, bam): bam for bam in paths}
-    for future in as_completed(future_to_bam):
-        length = future.result()
-        if length is not None:
-            read_lengths.add(length)
-            if length != 100:
-                print(f"Variable read length detected in {future_to_bam[future]} -> {length}")
-                break
+    futures = set()
+    future_to_path = {}
+    
+    for path in paths:
+        future = executor.submit(get_read_length, path)
+        futures.add(future)
+        future_to_path[future] = path
+        
+        if len(futures) >= 12:
+            done, futures = wait(futures, return_when=FIRST_COMPLETED)
+            
+            for future in done:
+                length = future.result()
+                path = future_to_path[future]
+                
+                if length is None:
+                    continue
+                
+                if length != 100:
+                    raise RuntimeError(f"Mismatch detected in {path}: {length}")
 
-# Optional: check if all are 100
-if read_lengths == {100}:
-    print(f"✅ First lengths of all files is 100")
-else:
-    print(f"⚠️ Unexpected read length found: {read_lengths}")
+    # Drain remaining futures
+    for future in futures:
+        length = future.result()
+        path = future_to_path[future]
+        
+        if length is None:
+            continue
+        
+        if length != 100:
+            raise RuntimeError(f"Mismatch detected in {path}: {length}")
+
+print("✅ All read lengths are 100")
