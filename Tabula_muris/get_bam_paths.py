@@ -2,11 +2,6 @@ import pandas as pd
 import os
 
 
-# # Check if all IDs match the same pattern
-# def check_id_pattern(x):
-#     # Extract everything before the first dot (or adjust if dots aren't consistent)
-#     return re.split(r'\.', x)[0].count('_')
-
 def map_path_names(path):
     """
     Searches a directory for all BAM files in a given path. Constructs and returns a Pandas dataframe with these paths
