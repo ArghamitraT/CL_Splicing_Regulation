@@ -2,6 +2,25 @@ import pandas as pd
 import os
 
 
+def print_basic_metadata(tm):
+    """
+    Checks and prints basic information about mouse dataset
+    """
+    print("----- TABULA MURIS SENIS METADATA -----\n")
+
+    print(f"Total cells: {len(tm)}")
+    print(f"Total specimens: {len(tm['mouse.id'].unique())}")
+    print(f"Specimen IDs: {tm['mouse.id'].unique()}\n")
+
+    print(f"Cell Types with over 30 cells:")
+    counts = tm['cell_ontology_class'].value_counts()
+    common_cell_types = counts[counts > 30]
+    print(f"{len(common_cell_types)} out of {len(counts)} classes have at least 30 cells observed\n")
+    print(common_cell_types)
+
+
+    print(f"\n----------------------------------------\n")
+
 def map_path_names(path):
     """
     Searches a directory for all BAM files in a given path. Constructs and returns a Pandas dataframe with these paths
@@ -27,8 +46,8 @@ def pick_latest_date(bam_df):
     """
 
     # Sanity checks
-    print("Original BAMs:", len(bam_df))
-    print("Unique cells:", bam_df["clean_cell_id"].nunique())
+    # print("Original BAMs:", len(bam_df))
+    # print("Unique cells:", bam_df["clean_cell_id"].nunique())
 
     bam_df["run_date"] = bam_df["bam_path"].str.extract(r"/(\d{6})_A00111")
     bam_df["run_date"] = bam_df["run_date"].astype(int)
@@ -40,8 +59,8 @@ def pick_latest_date(bam_df):
     )
 
     # Sanity checks
-    print("Cells retained:", len(bam_df))
-    print("Date used:", bam_df["run_date"].value_counts())
+    # print("Cells retained:", len(bam_df))
+    # print("Date used:", bam_df["run_date"].value_counts())
     
     return bam_df
     
@@ -52,22 +71,8 @@ if __name__ == "__main__":
     DATA_DIR = "/gpfs/commons/projects/knowles_singlecell_splicing/TabulaSenis/data/AWS/"
     tm = pd.read_csv(os.path.join(DATA_DIR, "metadata", "tabula-muris-senis-facs-official-raw-obj__cell-metadata__cleaned_ids.csv"))
 
-    # Info about dataset
-    print("----- TABULA MURIS SENIS METADATA -----\n")
-
-    print(f"Total cells: {len(tm)}")
-    print(f"Total specimens: {len(tm['mouse.id'].unique())}")
-    print(f"Specimen IDs: {tm['mouse.id'].unique()}\n")
-
-    print(f"Cell Types with over 30 cells:")
-    counts = tm['cell_ontology_class'].value_counts()
-    common_cell_types = counts[counts > 30]
-    print(f"{len(common_cell_types)} out of {len(counts)} classes have at least 30 cells observed\n")
-    print(common_cell_types)
-
-
-    print(f"\n----------------------------------------\n")
-
+    # Initial metadata about dataset
+    print_basic_metadata(tm)
 
     print("Searching all BAM files in directory...\n")
     bam_df = map_path_names(os.path.join(DATA_DIR, "Plate_seq"))
@@ -95,5 +100,34 @@ if __name__ == "__main__":
     )
 
     print(f"Length of new dataframe after merge: {len(tm)}")
+
+    # Account for missing BAM files
+    # Check for bias
+    tm["has_bam"] = tm["bam_path"].notna()
+
+    # Check cell ontology classes
+    print("Cell Ontology:", tm.groupby("cell_ontology_class")["has_bam"].mean().sort_values())
+    # Check age
+    print("Age:", tm.groupby("age")["has_bam"].mean())
+
+    
+    # Drop rows with missing BAM paths
+    print("---------- After Dropping Missing Cells ----------")
+    tm_clean = tm[tm["bam_path"].notna()].copy()
+
+    # Final sanity checks
+    dup_check = tm_clean["clean_cell_id"].duplicated().sum()
+    print("Duplicate cells in metadata:", dup_check)
+
+    bam_dupes = bam_df["clean_cell_id"].duplicated().sum()
+    print("Duplicate BAM mappings:", bam_dupes)
+
+    print("Cells with BAM:", tm_clean["bam_path"].notna().sum())
+    print("Total cells:", len(tm_clean))
+
+    
+    # Metadata After Dropping
+    print("\n\n\n")
+    print_basic_metadata(tm_clean)
 
     tm.to_csv("/gpfs/commons/home/nkeung/tabula_muris_data/bam_paths.csv", index=False)
