@@ -19,14 +19,31 @@ def map_path_names(path):
     bam_df = pd.DataFrame(bam_paths, columns=["clean_cell_id", "bam_path"])
     return bam_df
 
-def safe_exists(path):
+def pick_latest_date(bam_df):
     """
-    Safe implementation of os.path.exists to account for None values (ex. for TSP30)
+    Function to remove re-runs of the same cell. Specifically only works on experiments 180813_A00111_0188_AH7G2FDSXX and 
+    180831_A00111_0201_BH7WGCDSXX. Will always pick 180831_A00111_0201_BH7WGCDSXX because it is the re-run, and BAM sizes
+    are generally larger
     """
-    if path:
-        return os.path.exists(path)
-    else:
-        return False
+
+    # Sanity checks
+    print("Original BAMs:", len(bam_df))
+    print("Unique cells:", bam_df["clean_cell_id"].nunique())
+
+    bam_df["run_date"] = bam_df["bam_path"].str.extract(r"/(\d{6})_A00111")
+    bam_df["run_date"] = bam_df["run_date"].astype(int)
+
+    # Sort cells by their cell IDs and their run dates. Then drop the later one
+    bam_df = (
+    bam_df.sort_values(["clean_cell_id", "run_date"], ascending=[True, False])
+          .drop_duplicates("clean_cell_id", keep="first")
+    )
+
+    # Sanity checks
+    print("Cells retained:", len(bam_df))
+    print("Date used:", bam_df["run_date"].value_counts())
+    
+    return bam_df
     
 
     
@@ -39,11 +56,13 @@ if __name__ == "__main__":
     print("----- TABULA MURIS SENIS METADATA -----\n")
 
     print(f"Total cells: {len(tm)}")
-    print(f"Total specimens: {len(tm['mouse.id'].unique())}\n")
+    print(f"Total specimens: {len(tm['mouse.id'].unique())}")
+    print(f"Specimen IDs: {tm['mouse.id'].unique()}\n")
 
     print(f"Cell Types with over 30 cells:")
     counts = tm['cell_ontology_class'].value_counts()
     common_cell_types = counts[counts > 30]
+    print(f"{len(common_cell_types)} out of {len(counts)} classes have at least 30 cells observed\n")
     print(common_cell_types)
 
 
@@ -54,7 +73,11 @@ if __name__ == "__main__":
     bam_df = map_path_names(os.path.join(DATA_DIR, "Plate_seq"))
     print(f"Total files found: {len(bam_df)}\n")
 
-    # Check for duplicate cell IDs found
+    # ---------- Check for duplicate cell IDs ----------
+
+    # Eliminate re-runs from 180813 and 180831
+    bam_df = pick_latest_date(bam_df)
+
     dupes = bam_df["clean_cell_id"].value_counts()
     dupes = dupes[dupes > 1]
 
@@ -62,6 +85,7 @@ if __name__ == "__main__":
         print("Duplicate BAMs found!")
         print(dupes.head(20))
         raise ValueError("Fix duplicates before continuing")
+    print(f"\nSuccessfully handled duplicates\n")
 
     # Merge tables and save new dataframe
     tm = tm.merge(
