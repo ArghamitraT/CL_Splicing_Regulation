@@ -28,7 +28,7 @@ code_dir = "/gpfs/commons/home/nkeung/Contrastive_Learning/code/Tabula_muris"
 # -------------------- CHECK PROGRESS --------------------
 
 # Track completed rMATS jobs in JSON
-json_file = os.path.join(data_dir, "completed.json")
+json_file = os.path.join(data_dir, "rmats", "completed.json")
 if os.path.exists(json_file):
     with open(json_file, "r") as f:
         completed_cells = set(json.load(f))
@@ -133,7 +133,7 @@ def main():
 
         minutes_per_cell = 54 / 569  # runtime per cell in minutes
         num_cells = counts.loc[counts['cell_ontology_class'] == cell, 'count'].iloc[0]
-        estimated_minutes = int(num_cells * minutes_per_cell * 1.2)  # add 20% buffer
+        estimated_minutes = int(num_cells * minutes_per_cell * 2)  # add 2x buffer
         global hour
         hour = max(1, estimated_minutes // 60 + 1)  # round up to hours, min 1h
 
