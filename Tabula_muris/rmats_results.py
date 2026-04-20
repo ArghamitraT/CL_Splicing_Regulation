@@ -127,14 +127,14 @@ def process_cell_type(cell_type, main_dir):
 def main():
     parser = argparse.ArgumentParser(description="Calculate PSI and save in ASCOT format")
     parser.add_argument("--cell_type", default=None, help="Run a single cell type; otherwise run all")
-    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")
+    parser.add_argument("--main_dir", required=True, help="File path to Tabula Muris directory")
     args = parser.parse_args()
 
     # Set working directory
     main_dir = args.main_dir
     
     # Load all completed cell types
-    with open(os.path.join(main_dir, "completed.json"), "r") as f:
+    with open(os.path.join(main_dir, "rmats", "completed.json"), "r") as f:
         all_cell_types = json.load(f)
 
     if args.cell_type:
