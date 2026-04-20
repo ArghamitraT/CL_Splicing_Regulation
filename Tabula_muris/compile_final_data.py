@@ -13,7 +13,7 @@ def main():
 
     main_dir = args.main_dir
     
-    with open(os.path.join(main_dir, "completed.json"), "r") as f:
+    with open(os.path.join(main_dir, "rmats", "completed.json"), "r") as f:
         all_cell_types = list(json.load(f))
     # all_cell_types = ["pericyte", "mesenchymal_stem_cell_of_adipose_tissue", "ltf+_epithelial_cell"]    # Test set chosen at random
     all_cells_set = set([name.replace("_", " ") for name in all_cell_types])
@@ -119,7 +119,10 @@ def main():
     assert master_df["exon_id"].duplicated().sum() == 0
     print(f"Columns: {master_df.columns}")
     
-    output_path = os.path.join(main_dir, "psi_data", "final_data", "full_cassette_exons_with_mean_psi.csv")
+    output_dir = os.path.join(main_dir, "psi_data", "final_data")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    output_path = os.path.join(output_dir, "full_cassette_exons_with_mean_psi.csv")
     master_df.to_csv(output_path, sep=",", index=False)
     if os.path.exists(output_path):
         print(f"✅ Successfully saved full dataframe in {output_path}")

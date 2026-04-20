@@ -104,6 +104,10 @@ def process_cell_type(cell_type, main_dir):
             "chromosome": final_df["chr"]
         })
 
+        psi_data_dir = os.path.join(main_dir, "psi_data")
+        if not os.path.exists(psi_data_dir):
+            os.makedirs(psi_data_dir)
+
         csv_name = os.path.join(f"{main_dir}", "psi_data", f"{cell_type}.csv")
         mini_df.to_csv(csv_name, sep=",", index=False)
         if os.path.exists(csv_name):
