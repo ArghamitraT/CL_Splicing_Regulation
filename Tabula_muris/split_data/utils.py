@@ -14,8 +14,8 @@ def remove_allOther_species_multiz(df: pd.DataFrame) -> pd.DataFrame:
     Load exon coordinate file (species-based).
     """
     # return pd.read_csv(file_path)
-    df = df[df["Species Name"] == "hg38"].reset_index(drop=True)
-    print(f"Loaded {len(df)} exons for hg38 from Multiz data.")
+    df = df[df["Species Name"] == "mm10"].reset_index(drop=True)
+    print(f"Loaded {len(df)} exons for mm10 from Multiz data.")
     return df
 
 def load_csv(file_path: str) -> pd.DataFrame:

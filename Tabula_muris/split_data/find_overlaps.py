@@ -45,8 +45,8 @@ if __name__ == "__main__":
     
     file_name = "full"
     file_multiz = '/gpfs/commons/home/atalukder/Contrastive_Learning/data/multiz100way/alignment/ncbiRefSeq.multiz100way.exonNuc_exon_intron_positions.csv'
-    file_ascot = f'/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/{file_name}_cassette_exons_with_mean_psi.csv'
-    output_file = f'/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/{file_name}_cassette_exons_with_mean_psi_NO_MULTIZ_OVERLAPS.csv'
+    file_ascot = f'/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/{file_name}_cassette_exons_with_mean_psi.csv'
+    output_file = f'/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/{file_name}_cassette_exons_with_mean_psi_NO_MULTIZ_OVERLAPS.csv'
 
     # file = pd.read_csv('/gpfs/commons/home/atalukder/Contrastive_Learning/data/ASCOT/gtex_psi.csv')
     # print(len(file))
