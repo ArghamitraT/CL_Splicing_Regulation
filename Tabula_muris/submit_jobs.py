@@ -62,7 +62,7 @@ def create_prg(cell_type):
     conda activate rmats_testing
     WORKDIR={os.path.join(rmats_results_dir, cell_type.replace(" ", "_"))}
     cd $WORKDIR
-    rmats.py --gtf "/gpfs/commons/home/nkeung/gene_annotations/gencode.v45.primary_assembly.annotation.gtf" \\
+    rmats.py --gtf "/gpfs/commons/home/nkeung/gene_annotations/gencode.vM25.primary_assembly.annotation.gtf" \\
         --b1 b1.txt \\
         --od output \\
         --tmp data \\
