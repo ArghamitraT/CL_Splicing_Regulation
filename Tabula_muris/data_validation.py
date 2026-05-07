@@ -77,19 +77,19 @@ def sanity_checks(full_df, psi_cols):
         print(f"✅ All PSI values are between 0 and 100 inclusive")
     
 
-    # # 5.3 For CSVs with no mean, no NAN values allowed. Must be -1
-    # psi_numeric = full_df[psi_cols].apply(pd.to_numeric, errors='coerce')
+    # 5.3 For CSVs with no mean, no NAN values allowed. Must be -1
+    psi_numeric = full_df[psi_cols].apply(pd.to_numeric, errors='coerce')
 
-    # # Mask: All rows where PSI is not NA and non-negative OR PSI is -1
-    # mask_invalid = ~( (psi_numeric.notna()) & ((psi_numeric >= 0) | (psi_numeric == -1)) ).any(axis=1)
+    # Mask: All rows where PSI is not NA and non-negative OR PSI is -1
+    mask_invalid = ~( (psi_numeric.notna()) & ((psi_numeric >= 0) | (psi_numeric == -1)) ).any(axis=1)
 
-    # num_invalid = mask_invalid.sum()
-    # if num_invalid > 0:
-    #     print(f"❌ Found {num_invalid} rows where all PSI values are invalid (NaN or < -1)")
-    #     # Optionally print these rows for inspection
-    #     print(full_df.loc[mask_invalid, psi_cols])
-    # else:
-    #     print(f"✅ All rows have at least one valid PSI value (-1 or >=0)")
+    num_invalid = mask_invalid.sum()
+    if num_invalid > 0:
+        print(f"❌ Found {num_invalid} rows where all PSI values are invalid (NaN or < -1)")
+        # Optionally print these rows for inspection
+        print(full_df.loc[mask_invalid, psi_cols])
+    else:
+        print(f"✅ All rows have at least one valid PSI value (-1 or >=0)")
 
 
     # 6. Mean PSI and Logit Mean PSI should not be NAN or empty
@@ -162,15 +162,18 @@ def generate_plots(train_df, val_df, test_df, output_dir):
 
 def main():
     # full_ascot_file = "/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/full_cassette_exons_with_mean_psi.csv"
-    final_train_data = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/TSCelltype_finetuning/train_cassette_exons_with_logit_mean_psi.csv"
-    final_validation_data = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/TSCelltype_finetuning/val_cassette_exons_with_logit_mean_psi.csv"
-    final_test_data = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/TSCelltype_finetuning/test_cassette_exons_with_logit_mean_psi.csv"
+    # final_train_data = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/TSCelltype_finetuning/train_cassette_exons_with_logit_mean_psi.csv"
+    # final_validation_data = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/TSCelltype_finetuning/val_cassette_exons_with_logit_mean_psi.csv"
+    # final_test_data = "/gpfs/commons/home/atalukder/Contrastive_Learning/data/final_data/TSCelltype_finetuning/test_cassette_exons_with_logit_mean_psi.csv"
+    final_train_data = "/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/train_cassette_exons_with_logit_mean_psi.csv"
+    final_validation_data = "/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/val_cassette_exons_with_logit_mean_psi.csv"
+    final_test_data = "/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/test_cassette_exons_with_logit_mean_psi.csv"
 
     train_df = pd.read_csv(final_train_data)
     val_df = pd.read_csv(final_validation_data)
     test_df = pd.read_csv(final_test_data)
 
-    with open("/gpfs/commons/home/nkeung/tabula_sapiens/completed.json", "r") as f:
+    with open("/gpfs/commons/home/nkeung/tabula_muris_data/rmats/completed.json", "r") as f:
         cells = list(json.load(f))
         psi_cols = [x.replace("_", " ") for x in cells]
     # psi_cols = ["pericyte", "mesenchymal stem cell of adipose tissue", "ltf+ epithelial cell"]    # For subset exons
@@ -193,6 +196,8 @@ def main():
     print()
 
     output_dir = "/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/figures"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     generate_plots(train_df, val_df, test_df, output_dir)
     
 if __name__ == "__main__":

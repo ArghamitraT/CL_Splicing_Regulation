@@ -8,7 +8,7 @@ from scipy.special import logit
 
 def main():
     parser = argparse.ArgumentParser(description="Combine intermediate tables to final data")
-    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")  # "/gpfs/commons/home/nkeung/tabula_sapiens"
+    parser.add_argument("--main_dir", required=True, help="File path to Tabula Sapiens directory")  # "/gpfs/commons/home/nkeung/tabula_muris_data"
     args = parser.parse_args()
 
     main_dir = args.main_dir
@@ -103,7 +103,7 @@ def main():
     master_df.insert(
         0,
         "exon_id", 
-        [f"TS_{i:06d}" for i in range(1, len(master_df)+1)]
+        [f"TM_{i:06d}" for i in range(1, len(master_df)+1)]
     )
 
     # Calculate mean PSI

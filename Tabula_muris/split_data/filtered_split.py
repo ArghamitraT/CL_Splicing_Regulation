@@ -10,6 +10,9 @@ import os
 main_dir = '/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/'
 output_path = "/gpfs/commons/home/nkeung/tabula_muris_data/filtered_psi/"
 
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
+
 # Load full dataset
 full_df = pd.read_csv(main_dir+"full_cassette_exons_with_mean_psi.csv")
 # Only keep cassette exons

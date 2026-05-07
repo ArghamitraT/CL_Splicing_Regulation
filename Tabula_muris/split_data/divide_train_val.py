@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 
-main_dir = '/gpfs/commons/home/nkeung/tabula_sapiens/psi_data/final_data/'
+main_dir = '/gpfs/commons/home/nkeung/tabula_muris_data/psi_data/final_data/'
 RANDOM_SEED = 124
 rng = np.random.default_rng(RANDOM_SEED)
 
@@ -20,7 +20,7 @@ n_train = n_total - n_test - n_val
 allowed_list = pd.read_csv(main_dir+"full_cassette_exons_with_mean_psi_NO_MULTIZ_OVERLAPS.csv")
 allowed_list = allowed_list.drop_duplicates(subset=["ascot_exon_id"])
 
-# Filtering Tabula Sapiens data
+# Filtering Tabula Muris data
 # Theta join full_df and allowed_list where full_df["exon_id"] == allowed_list["ascot_exon_id"]
 safe_df = full_df.merge(
     allowed_list[["ascot_exon_id", "Exon Name"]],
@@ -61,7 +61,7 @@ val_df = val_df.drop(columns=["mean_psi", "logit_mean_psi"])
 test_df = test_df.drop(columns=["mean_psi", "logit_mean_psi"])
 
 # Set NAN to -1
-with open("/gpfs/commons/home/nkeung/tabula_sapiens/completed.json", "r") as f:
+with open("/gpfs/commons/home/nkeung/tabula_muris_data/rmats/completed.json", "r") as f:
     cell_types = list(json.load(f))
 
 cols = [s.replace("_", " ") for s in cell_types]
