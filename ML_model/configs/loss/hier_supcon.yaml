@@ -1,3 +1,4 @@
 _target_: src.loss.hier_supcon.hierSupConLoss
 temperature: 0.5
 correlation_dir: /gpfs/commons/home/nkeung/Contrastive_Learning/data/phylo_dist
+weight_mode: adaptive
