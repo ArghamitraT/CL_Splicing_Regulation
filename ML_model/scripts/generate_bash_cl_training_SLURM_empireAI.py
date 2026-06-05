@@ -117,16 +117,16 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 """ Parameters: **CHANGE (AT)** """
 slurm_file_name = 'Test-EmpireAI-CLSupcon2augOne'
 gpu_num = 1
-hour = 1
+hour = 8
 memory = 100 # GB
 nthred = 8 # number of CPU
 task = "introns_cl" 
-val_check_interval = 1.0
+val_check_interval = 0.5
 global_batch_size = 8196
-embedder = "resnet"
-tokenizer = "custom_tokenizer"
+embedder = "mtsplice"
+tokenizer = "onehot_tokenizer"
 loss_name = "supcon"
-max_epochs = 2
+max_epochs = 30
 n_augmentations = 2
 maxpooling = True
 optimizer = "sgd"
@@ -140,9 +140,9 @@ VAL_FILE="val_merged_filtered_min30Views.pkl"
 TEST_FILE="test_merged_filtered_min30Views.pkl"
 
 readme_comment = (
-     "Test Run: supcon, 2 augmentation trial, One mode, 3p intron, resnet, lastlayer 64"
+     "Test Run: supcon, 2 aug, merged data, mtsplice"
 )
-wandb_logger_NOTES="test run empireai supcon resnet one 2 aug last layer 64" ## do NOT use any special character or new line
+wandb_logger_NOTES="test run empireai supcon mtsplice one 2 aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
