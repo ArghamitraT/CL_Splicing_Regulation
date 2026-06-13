@@ -83,9 +83,9 @@ def get_server_paths():
     server_path = os.path.dirname(base_path) + os.sep
     folder_before = os.path.basename(os.path.normpath(server_path))
 
-    if folder_before == "atalukder":
+    if folder_before == "nkeung":
         server_name = "NYGC"
-    elif folder_before == "at3836":
+    elif folder_before == "nlk2136":
         server_name = "EMPRAI"
 
     
@@ -133,6 +133,7 @@ def create_prg_header_cl(cfg, paths):
     cd $HOME
     source ~/.bashrc
     conda activate cl_splicing_regulation3
+    nvidia-smi
     WORKDIR={paths["data_dir"]}
     cd $WORKDIR
     python -m scripts.cl_training \\
@@ -186,9 +187,9 @@ def create_slurm_header_cl(cfg, paths):
         f"#SBATCH --time={cfg['hour']}:45:00              #Set the wall clock limit \n" + \
         f"#SBATCH --mem={cfg['memory']}G              \n" + \
         f"#SBATCH --cpus-per-task={cfg['nthred']}                   \n" + \
-        "#SBATCH --mail-type=END,FAIL    \n" + \
+        "#SBATCH --mail-type=BEGIN,END,FAIL    \n" + \
         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      #Send stdout/err to\n" + \
-        "#SBATCH --mail-user=at3836@columbia.edu                    \n" + \
+        "#SBATCH --mail-user=nkeung@nygenome.org                    \n" + \
          f"{paths['prg_file_path']}"
     
     elif paths['server_name'] == "NYGC":
@@ -201,9 +202,9 @@ def create_slurm_header_cl(cfg, paths):
         f"#SBATCH --time={cfg['hour']}:45:00              #Set the wall clock limit \n" + \
         f"#SBATCH --mem={cfg['memory']}G              \n" + \
         f"#SBATCH --cpus-per-task={cfg['nthred']}                   \n" + \
-        "#SBATCH --mail-type=END,FAIL    \n" + \
+        "#SBATCH --mail-type=BEGIN,END,FAIL    \n" + \
         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      #Send stdout/err to\n" + \
-        "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
+        "#SBATCH --mail-user=nkeung@nygenome.org                    \n" + \
         f"{paths['prg_file_path']}"
 
 
@@ -245,6 +246,7 @@ def create_prg_header_psi(cfg, paths):
     cd $HOME
     source ~/.bashrc
     conda activate cl_splicing_regulation3
+    nvidia-smi
     : "${{RUN_IDX:=1}}"
     : "${{NEW_WANDB_PROJECT:=0}}"    # 1 => one new W&B project for ALL runs in this job
     PROJECT_NAME="{paths["server_name"]}{cfg["slurm_file_name"]}{trimester}"   # no _run_ suffix
@@ -319,7 +321,7 @@ def create_slurm_header_psi(cfg, paths):
         f"#SBATCH --mem={cfg['memory']}G\n"
         "#SBATCH --mail-type=END,FAIL\n"
         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      # job-wide stdout/err\n"
-        "#SBATCH --mail-user=at3836@columbia.edu\n"
+        "#SBATCH --mail-user=nkeung@nygenome.org\n"
         "\n"
         f"RUNS={cfg['run_num']}\n"
         f"NEW_WANDB_PROJECT={cfg['new_project_wandb']}\n"   # set once; all runs share one project if =1
@@ -348,9 +350,9 @@ def create_slurm_header_psi(cfg, paths):
             f"#SBATCH --time={cfg['hour']}:45:00\n"
             f"#SBATCH --mem={cfg['memory']}G\n"
             f"#SBATCH --cpus-per-task={cfg['nthred']}\n"
-            "#SBATCH --mail-type=END,FAIL\n"
+            "#SBATCH --mail-type=BEGIN,END,FAIL\n"
             f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j\n"
-            "#SBATCH --mail-user=atalukder@nygenome.org\n"
+            "#SBATCH --mail-user=nkeung@nygenome.org\n"
             "\n"
             f"RUNS={cfg['run_num']}\n"
             f"NEW_WANDB_PROJECT={cfg['new_project_wandb']}\n"   # set once; all runs share one project if =1
