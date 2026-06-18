@@ -5,6 +5,8 @@ import torch
 from pathlib import Path
 from omegaconf import OmegaConf
 
+PRETRAIN_SEQ_LEN = 400
+
 # Add the parent directory (main) to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -107,7 +109,7 @@ def main(config: OmegaConf):
         config.aux_models.warm_start = False
         model = initialize_encoders_and_model(config, root_path)
         print(f"[Eval] Loading checkpoint: {ckpt_path}")
-        ckpt_path = f"{root_path}/files/results/{ckpt_path}/weights/checkpoints/{config.task._name_}/{config.embedder._name_}/201/best-checkpoint.ckpt"
+        ckpt_path = f"{root_path}/files/results/{ckpt_path}/weights/checkpoints/{config.task._name_}/{config.embedder._name_}/PRETRAIN_SEQ_LEN/best-checkpoint.ckpt"
         trainer = create_trainer(config)   
         trainer.test(model=model, ckpt_path=ckpt_path, datamodule=data_module)
         return

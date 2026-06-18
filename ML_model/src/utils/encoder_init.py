@@ -7,6 +7,8 @@ from src.model import MTSpliceBCE, MTSpliceWresnet_bothIntronExon
 import torch.nn as nn
 
 
+PRETRAIN_SEQ_LEN = 400
+
 ############# DEBUG Message ###############
 import inspect
 import os
@@ -50,7 +52,7 @@ def load_encoder(config, root_path, result_dir):
         # simclr_model.load_state_dict(torch.load("checkpoints/introns_cl/NTv2/199/best-checkpoint.ckpt")["state_dict"], strict=False)
         # simclr_ckpt = "/mnt/home/at3836/Contrastive_Learning/files/results/exprmnt_2025_05_04__11_29_05/weights/checkpoints/introns_cl/ResNet1D/199/best-checkpoint.ckpt"
         
-        simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/199/best-checkpoint.ckpt"
+        simclr_ckpt = f"{root_path}/files/results/{result_dir}/weights/checkpoints/introns_cl/{config.embedder._name_}/PRETRAIN_SEQ_LEN/best-checkpoint.ckpt"
      
         if torch.cuda.is_available():
             ckpt = torch.load(simclr_ckpt)  # load normally on GPU
