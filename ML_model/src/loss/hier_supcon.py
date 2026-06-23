@@ -21,6 +21,7 @@ class FIREDistanceBias(nn.Module):
             nn.Linear(1, fire_hidden_size, bias=False),
             nn.SiLU(),
             nn.Linear(fire_hidden_size, 1, bias=False),
+            nn.Softplus(),
         )
         self.max_dist = max_dist
 
@@ -28,7 +29,7 @@ class FIREDistanceBias(nn.Module):
         """
         dist: [bsz, bsz]
         """
-        c = self.c.clamp(min=0)
+        c = self.c.clamp(min=1e-9)
         dist_norm = torch.log(c * dist + 1) / torch.log(c * self.max_dist + 1)
         return self.mlp(dist_norm.unsqueeze(-1)).squeeze(-1)
 
@@ -89,8 +90,14 @@ class hierSupConLoss(nn.Module):
             return dist
         elif self.weight_mode == "adaptive":
             dist = self.dist_matrix[anchor_idx[:, None], contrast_idx[None, :]]
+            # Only pass unique values through MLP to minimize computation from large batch sizes
+            # For 10 species, there are at most 45 unique values in a symmetric matrix
+            unique_dist, inverse_idx = torch.unique(dist, inverse_indices=True)
+
             # Apply MLP
-            return self.fire_bias(dist)
+            unique_weights = self.fire_bias(unique_dist.unsqueeze(-1)).squeeze(-1)
+            # Reshape
+            return unique_weights[inverse_idx].reshape(dist.shape)
         else:
             raise ValueError(f"Unknown weight mode: {self.weight_mode}")
     
@@ -115,7 +122,7 @@ class hierSupConLoss(nn.Module):
             raise ValueError('`features` needs to be [bsz, n_views, ...],'
                              'at least 3 dimensions are required')
         if len(features.shape) > 3:
-            features = features.view(features.shape[0], features.shape[1], -1)
+            features = features.view(features.shape[0], features.shape[1], -1)  # [bsz, n_views, -1]
 
         batch_size = features.shape[0]
         if labels is not None and mask is not None:
