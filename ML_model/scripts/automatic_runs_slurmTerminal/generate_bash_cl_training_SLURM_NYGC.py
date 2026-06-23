@@ -29,7 +29,8 @@ def create_prg_file(prg_file_path):
     set -e
     cd $HOME
     source ~/.bashrc
-    conda activate cl_splicing_regulation3
+    conda activate cl_splicing_regulation4
+    nvidia-smi
     WORKDIR={data_dir}
     cd $WORKDIR
     python -m scripts.cl_training \\
@@ -80,7 +81,7 @@ def create_slurm_file(prg_file_path, job_name, slurm_file_path):
     f"#SBATCH --cpus-per-task={nthred}                   \n" + \
     "#SBATCH --mail-type=END,FAIL    \n" + \
     f"#SBATCH --output={output_dir}/out_{job_name}.%j      #Send stdout/err to\n" + \
-    "#SBATCH --mail-user=atalukder@nygenome.org                    \n" + \
+    "#SBATCH --mail-user=nkeung@nygenome.org                    \n" + \
     f"{prg_file_path}"
 
     with open (slurm_file_path, "w") as f:
@@ -97,7 +98,8 @@ def get_file_name(kind, l0=0, l1=0, l2=0, l3=0, ext=True):
 
 
 server_name = 'NYGC'
-server_path = '/gpfs/commons/home/atalukder/'
+server_path = '/gpfs/commons/home/nkeung/'
+data_path = '/gpfs/commons/home/atalukder/'
 main_data_dir = server_path+"Contrastive_Learning/files/results"
 job_path = server_path+"Contrastive_Learning/files/cluster_job_submission_files"
 code_dir = server_path+"Contrastive_Learning/code/ML_model"
@@ -113,7 +115,7 @@ wandb_dir = create_job_dir(dir= data_dir, fold_name="wandb")
 
 
 """ Parameters: **CHANGE (AT)** """
-slurm_file_name = 'CLSupcon2augOne'
+slurm_file_name = 'CL_Supcon_2augOne'
 loss_name = "supcon"
 gpu_num = 1
 hour=4
@@ -134,15 +136,15 @@ TEST_FILE="test_3primeIntron_filtered.pkl"
 # VAL_FILE="val_ExonSeq_filtered.pkl"
 # TEST_FILE="test_ExonSeq_filtered.pkl"
 readme_comment = (
-    "supcon, 2 augmentation trial, one mode, 3p intron"
+    "supcon, 2 augmentation trial, 3p intron"
 )
-wandb_logger_NOTES="supcon one mode two aug" ## do NOT use any special character or new line
+wandb_logger_NOTES="supcon two aug" ## do NOT use any special character or new line
 
 """ Parameters: **CHANGE (AT)** """ 
 
-train_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
-val_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
-test_file = server_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
+train_file = data_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TRAIN_FILE
+val_file = data_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+VAL_FILE
+test_file = data_path+"Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/"+TEST_FILE
 
 
 name = slurm_file_name
