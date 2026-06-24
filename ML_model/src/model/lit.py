@@ -231,7 +231,7 @@ class LitModel(pl.LightningModule):
     #     return loss
 
     def configure_optimizers(self):
-        params = self.model.parameters()
+        params = list(self.model.parameters()) + list(self.loss_fn.parameters())
         optimizer = hydra.utils.instantiate(self.config.optimizer,params=params)
         return optimizer
     
