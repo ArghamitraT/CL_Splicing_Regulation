@@ -92,7 +92,7 @@ class hierSupConLoss(nn.Module):
             dist = self.dist_matrix[anchor_idx[:, None], contrast_idx[None, :]]
             # Only pass unique values through MLP to minimize computation from large batch sizes
             # For 10 species, there are at most 45 unique values in a symmetric matrix
-            unique_dist, inverse_idx = torch.unique(dist, inverse_indices=True)
+            unique_dist, inverse_idx = torch.unique(dist, return_inverse=True)
 
             # Apply MLP
             unique_weights = self.fire_bias(unique_dist.unsqueeze(-1)).squeeze(-1)
