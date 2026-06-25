@@ -319,7 +319,7 @@ def create_slurm_header_psi(cfg, paths):
         f"#SBATCH --cpus-per-task={cfg['nthred']}\n"
         f"#SBATCH --time={cfg['hour']}:30:00\n"
         f"#SBATCH --mem={cfg['memory']}G\n"
-        "#SBATCH --mail-type=END,FAIL\n"
+        "#SBATCH --mail-type=BEGIN,END,FAIL\n"
         f"#SBATCH --output={paths['output_dir']}/out_{cfg['job_name']}.%j      # job-wide stdout/err\n"
         "#SBATCH --mail-user=nkeung@nygenome.org\n"
         "\n"
