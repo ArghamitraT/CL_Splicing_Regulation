@@ -96,8 +96,19 @@ class hierSupConLoss(nn.Module):
 
             # Apply MLP
             unique_weights = self.fire_bias(unique_dist.unsqueeze(-1)).squeeze(-1)
+            # Add wandb logging
             # Reshape
-            return unique_weights[inverse_idx].reshape(dist.shape)
+            w = unique_weights[inverse_idx].reshape(dist.shape)
+            import wandb
+            if wandb.run is not None:
+                w_log = w.detach()
+                wandb.log({
+                    "weights/min": w_log.min().item(),
+                    "weights/max": w_log.max().item(),
+                    "weights/hist":   wandb.Histogram(w_log.cpu().float().numpy()),
+                    "weights/c": self.fire_bias.c.item()
+                })
+            return w
         else:
             raise ValueError(f"Unknown weight mode: {self.weight_mode}")
     
