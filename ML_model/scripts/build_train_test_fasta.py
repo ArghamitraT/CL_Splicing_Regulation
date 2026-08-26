@@ -7,7 +7,7 @@ data_dir = "/mnt/home/nlk2136/Contrastive_Learning/data/final_data/intronExonSeq
 
 def format_fasta(seq_id, species, sequence):
     """Format as FASTA entry"""
-    return f">{seq_id} | {species}\n{sequence}\n"
+    return f">{seq_id}__{species}\n{sequence}\n"
 
 
 def write_fasta_buffered(data, output_file, buffer_size=500):
