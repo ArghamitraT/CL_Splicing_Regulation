@@ -52,7 +52,7 @@ def main(target_split):
 
     print(f"Loaded {target_split}. {len(list(data.keys()))} exons to process")
 
-    output_file = os.path.join(data_dir, f"{target_split}_hg38_sequences.fa")
+    output_file = os.path.join(data_dir, f"{target_split}_all_species_sequences.fa")
 
     # Stream through data with buffered writes
     write_fasta_buffered(data, output_file, buffer_size=5000)
