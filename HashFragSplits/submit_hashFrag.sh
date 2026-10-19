@@ -1,0 +1,11 @@
+hashFrag blastn_array_module \
+--train-fasta-path /gpfs/commons/home/nkeung/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/chromSplit/hashFragData/sample_combined_hg38_sequences.fa \
+--test-fasta-path /gpfs/commons/home/nkeung/Contrastive_Learning/data/final_data/intronExonSeq_multizAlignment_noDash/trainTestVal_data/chromSplit/hashFragData/dinucleotide_shuffled_hg38.fa \
+--query-partition-size 3000 \
+--job-scheduler "slurm" \
+--job-account "dklab" \
+--job-time "2:00:00" \
+--job-memory "16GB" \
+--num-cpus 4 \
+--environment-path /gpfs/commons/home/nkeung/Contrastive_Learning/code/HashFragSplits/set_env.sh \
+-o /gpfs/commons/home/nkeung/hashFrag_CL/calibration_blastn_array_job.work
