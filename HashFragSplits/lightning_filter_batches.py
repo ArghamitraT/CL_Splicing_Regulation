@@ -17,12 +17,12 @@ WORK_DIR = Path(
     "/gpfs/commons/home/nkeung/hashFrag_CL/FULL_blastn_array_job.work"
 )
 INPUT_DIR = WORK_DIR / "blast_results"
-OUTPUT_DIR = WORK_DIR / "blast_filtered_individual"
+OUTPUT_DIR = WORK_DIR / "lightning_filtered_individual"
 
 INPUT_PATTERN = "test_hg38_sequences.part_*.blastn.processed.tsv"
 THRESHOLD = "62"
 
-COMBINED_OUTPUT = WORK_DIR / "combined.similar_pairs.tsv"
+COMBINED_OUTPUT = WORK_DIR / "lightning_combined.similar_pairs.tsv"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
